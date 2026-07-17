@@ -1,26 +1,106 @@
 from datetime import datetime
+from html import unescape
+import re
+from urllib.request import Request, urlopen
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 
-app = FastAPI(title="YemAkıl AI", version="1.0")
+app = FastAPI(title="YemAkıl AI", version="1.1")
 
-URUNLER = [
-    {"urun": "Mısır", "simge": "🌽", "karar": "İZLE"},
-    {"urun": "Arpa", "simge": "🌾", "karar": "İZLE"},
-    {"urun": "Buğday", "simge": "🌾", "karar": "İZLE"},
-    {"urun": "Soya Küspesi", "simge": "🌱", "karar": "İZLE"},
-    {"urun": "Ayçiçeği Küspesi", "simge": "🌻", "karar": "İZLE"},
-    {"urun": "Kanola Küspesi", "simge": "🌿", "karar": "İZLE"},
-]
+TURIB_URL = "https://www.turib.com.tr/"
+
+
+def turib_fiyatlarini_getir():
+    req = Request(
+        TURIB_URL,
+        headers={"User-Agent": "Mozilla/5.0 YemAkilAI/1.1"}
+    )
+
+    with urlopen(req, timeout=15) as response:
+        html = response.read().decode("utf-8", errors="ignore")
+
+    metin = re.sub(r"<[^>]+>", " ", html)
+    metin = unescape(metin)
+    metin = re.sub(r"\s+", " ", metin)
+
+    urunler = [
+        ("🌽", "Mısır", "Mısır"),
+        ("🌾", "Arpa", "Arpa"),
+        ("🌾", "Buğday", "Buğday Ekmeklik"),
+    ]
+
+    sonuc = []
+
+    for simge, ad, arama_adi in urunler:
+        desen = (
+            rf"{re.escape(arama_adi)}.*?"
+            rf"(\d+[.,]\d+).*?"
+            rf"%\s*([+-]?\d+[.,]\d+)"
+        )
+
+        eslesme = re.search(desen, metin, re.IGNORECASE)
+
+        if eslesme:
+            fiyat = eslesme.group(1).replace(",", ".")
+            degisim = eslesme.group(2).replace(",", ".")
+
+            degisim_sayisi = float(degisim)
+
+            if degisim_sayisi > 0:
+                karar = "YÜKSELİYOR"
+            elif degisim_sayisi < 0:
+                karar = "GERİLİYOR"
+            else:
+                karar = "YATAY"
+
+            sonuc.append({
+                "simge": simge,
+                "urun": ad,
+                "fiyat": f"{float(fiyat):.2f} TL/kg",
+                "degisim": f"%{degisim_sayisi:+.2f}",
+                "karar": karar,
+                "kaynak": "TÜRİB ELÜS"
+            })
+        else:
+            sonuc.append({
+                "simge": simge,
+                "urun": ad,
+                "fiyat": "Veri alınamadı",
+                "degisim": "-",
+                "karar": "KONTROL",
+                "kaynak": "TÜRİB"
+            })
+
+    bekleyenler = [
+        ("🌱", "Soya Küspesi"),
+        ("🌻", "Ayçiçeği Küspesi"),
+        ("🌿", "Kanola Küspesi"),
+    ]
+
+    for simge, ad in bekleyenler:
+        sonuc.append({
+            "simge": simge,
+            "urun": ad,
+            "fiyat": "Kaynak bağlanacak",
+            "degisim": "-",
+            "karar": "İZLE",
+            "kaynak": "Hazırlanıyor"
+        })
+
+    return sonuc
+
 
 SAYFA = """
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>YemAkıl AI</title>
+
     <style>
         body {
             margin: 0;
@@ -28,19 +108,25 @@ SAYFA = """
             color: white;
             font-family: Arial, sans-serif;
         }
+
         .container {
             max-width: 520px;
             margin: auto;
-            padding: 22px;
+            padding: 24px;
         }
+
         h1 {
-            color: #65e6a5;
+            color: #55dfa0;
             margin-bottom: 4px;
+            font-size: 42px;
         }
+
         .alt {
             color: #a8b9b1;
             margin-bottom: 24px;
+            font-size: 18px;
         }
+
         .ai {
             padding: 18px;
             border-radius: 18px;
@@ -48,72 +134,122 @@ SAYFA = """
             border: 1px solid #24523e;
             margin-bottom: 18px;
         }
+
         .kart {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             background: #122019;
-            padding: 16px;
-            margin-bottom: 10px;
-            border-radius: 15px;
+            padding: 17px;
+            margin-bottom: 12px;
+            border-radius: 16px;
         }
+
+        .ust {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
         .urun {
-            font-size: 18px;
+            font-size: 21px;
             font-weight: bold;
         }
-        .karar {
+
+        .fiyat {
             color: #ffd66b;
+            font-size: 20px;
             font-weight: bold;
         }
+
+        .detay {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            color: #9cb6aa;
+            font-size: 13px;
+        }
+
         button {
             width: 100%;
             border: 0;
             border-radius: 14px;
-            padding: 15px;
+            padding: 16px;
             background: #4cd890;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: bold;
             cursor: pointer;
         }
+
         #tarih {
-            color: #90a69b;
             text-align: center;
-            margin-top: 18px;
+            margin-top: 15px;
+            color: #90a69b;
             font-size: 13px;
         }
     </style>
 </head>
+
 <body>
 <div class="container">
     <h1>YemAkıl AI</h1>
-    <div class="alt">Akıllı yem hammaddesi satın alma asistanı</div>
 
-    <div class="ai">
-        <strong>🤖 Bugünün AI Yorumu</strong>
-        <p>Henüz canlı fiyat kaynağı bağlanmadı. Sistem başarıyla çalışıyor.</p>
+    <div class="alt">
+        Akıllı yem hammaddesi satın alma asistanı
     </div>
 
-    <div id="urunler"></div>
+    <div class="ai">
+        <strong>🤖 Bugünün Piyasa Özeti</strong>
+        <p>
+            TÜRİB hububat fiyatları canlı olarak kontrol ediliyor.
+        </p>
+    </div>
 
-    <button onclick="verileriGetir()">Piyasayı Yenile</button>
+    <div id="urunler">
+        Fiyatlar yükleniyor...
+    </div>
+
+    <button onclick="verileriGetir()">
+        Piyasayı Yenile
+    </button>
+
     <div id="tarih"></div>
 </div>
 
 <script>
 async function verileriGetir() {
-    const cevap = await fetch('/api/report');
-    const veri = await cevap.json();
+    const alan = document.getElementById("urunler");
+    alan.innerHTML = "Fiyatlar güncelleniyor...";
 
-    document.getElementById('urunler').innerHTML =
-        veri.urunler.map(item => `
+    try {
+        const cevap = await fetch("/api/report");
+        const veri = await cevap.json();
+
+        alan.innerHTML = veri.urunler.map(item => `
             <div class="kart">
-                <div class="urun">${item.simge} ${item.urun}</div>
-                <div class="karar">${item.karar}</div>
-            </div>
-        `).join('');
+                <div class="ust">
+                    <div class="urun">
+                        ${item.simge} ${item.urun}
+                    </div>
 
-    document.getElementById('tarih').innerText =
-        'Son güncelleme: ' + veri.guncelleme;
+                    <div class="fiyat">
+                        ${item.fiyat}
+                    </div>
+                </div>
+
+                <div class="detay">
+                    <span>${item.kaynak}</span>
+                    <span>${item.degisim}</span>
+                    <span>${item.karar}</span>
+                </div>
+            </div>
+        `).join("");
+
+        document.getElementById("tarih").innerText =
+            "Son güncelleme: " + veri.guncelleme;
+
+    } catch (hata) {
+        alan.innerHTML =
+            "Fiyat kaynağına şu anda ulaşılamadı.";
+    }
 }
 
 verileriGetir();
@@ -130,13 +266,23 @@ def ana_sayfa():
 
 @app.get("/api/report")
 def rapor():
+    try:
+        urunler = turib_fiyatlarini_getir()
+        durum = "canli"
+    except Exception as hata:
+        urunler = []
+        durum = f"hata: {str(hata)}"
+
     return JSONResponse({
-        "durum": "çalışıyor",
+        "durum": durum,
         "guncelleme": datetime.now().strftime("%d.%m.%Y %H:%M"),
-        "urunler": URUNLER
+        "urunler": urunler
     })
 
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "version": "1.0"}
+    return {
+        "status": "ok",
+        "version": "1.1"
+    }
