@@ -37,15 +37,22 @@ def fiyat_getir(symbol):
 
 def karar(degisim):
     if degisim is None:
-        return "İZLE"
-    if degisim >= 1:
-        return "YÜKSELİŞ"
+        return "VERİ BEKLENİYOR"
+
     if degisim <= -1:
-        return "GERİLEME"
-    return "YATAY"
+        return "BUGÜN AL"
+
+    if degisim < 1:
+        return "BEKLE"
+
+    if degisim < 3:
+        return "KADEMELİ AL"
+
+    return "YÜKSELİŞ RİSKİ - KADEMELİ AL"
 
 
 def rapor_hazirla():
+
     usdtry, _ = fiyat_getir("TRY=X")
     misir, misir_deg = fiyat_getir("ZC=F")
     bugday, bugday_deg = fiyat_getir("ZW=F")
