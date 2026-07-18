@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+venv/
+*.log
+*_yedek.py
+fiyat_gecmisi.db
+*.db-journal
