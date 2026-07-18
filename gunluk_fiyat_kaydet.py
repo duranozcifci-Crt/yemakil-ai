@@ -20,6 +20,12 @@ URUNLER = [
         "carpan": 1.10231131,
         "birim": "USD/short ton",
     },
+    {
+        "urun": "Bitkisel Yağ",
+        "sembol": "ZL=F",
+        "carpan": 22.0462262,
+        "birim": "US cent/lb",
+    },
 ]
 
 
