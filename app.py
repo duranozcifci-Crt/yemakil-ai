@@ -25,6 +25,8 @@ def fiyat_getir(symbol):
     if fiyat is None:
         closes = result.get("indicators", {}).get("quote", [{}])[0].get("close", [])
         closes = [x for x in closes if x is not None]
+        if not closes:
+            raise ValueError(f"{symbol} için güncel fiyat verisi bulunamadı")
         fiyat = closes[-1]
         onceki = closes[-2] if len(closes) > 1 else None
 
