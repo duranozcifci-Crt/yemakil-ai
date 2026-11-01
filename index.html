@@ -113,7 +113,7 @@ main>.s:first-of-type{display:none}
 
 <div class="seg" id="seg"></div>
 <div id="sutPanel" style="scroll-margin-top:8px"><h2>Irk ve verim</h2>
-<select id="mode" style="margin-bottom:8px"><option value="lak">Sağmal inek</option><option value="kuru">Kuru dönem (gebe, sağılmıyor)</option></select>
+<select id="mode" style="margin-bottom:8px"><option value="lak">Sağmal inek</option><option value="kuru">Kuru dönem (gebe, sağılmıyor)</option><option value="duve">Düve (büyütme)</option></select>
 <select id="breed"></select>
 <div class="g" id="bin"></div>
 <p class="s" style="margin-top:8px">Referanslar NASEM (2021) denklemleriyle hesaplanır: yem tüketimi (doğum sayısı, kondisyon, süt enerjisi, laktasyon günü), idame, süt ve gebelik ihtiyacı. Gebelik günü 190 ve üstünde gebelik ihtiyacı eklenir; 0 bırakırsanız boş sayılır. Aktivite ve büyüme dahil değildir.</p></div>
@@ -121,6 +121,7 @@ main>.s:first-of-type{display:none}
 <select id="bbreed"></select>
 <select id="bsex" style="margin-top:8px"><option value="b">Boğa / tosun (kastre edilmemiş)</option><option value="k">Kastre (öküz)</option><option value="d">Dişi</option></select>
 <div class="g" id="bbin"></div>
+<details class="dt"><summary>Tartım geçmişi ve kalibrasyon</summary><p class="s" style="margin:6px 0">Tarih ve canlı ağırlık girin; program gerçek artışı hesaplayıp tahminle karşılaştırır.</p><div id="wts"></div><div class="addrow"><input type="date" id="wtd" style="flex:1"><input type="number" inputmode="decimal" id="wtw" placeholder="kg" style="width:90px"><button class="btn" id="wtadd" style="margin:0;width:auto;padding:0 14px">Ekle</button></div><div id="wtr"></div><label style="margin-top:8px">Kalibrasyon katsayısı (varsayılan 0,85)<input type="number" inputmode="decimal" step="0.01" id="bcal"></label><button class="btn l" id="bcalAuto">Tartımlara göre kalibre et</button><p class="s">Katsayı NASEM 2016 idame ve büyüme ihtiyacını çarpar; 0,85 Avrupa boğa tablolarına (GfE, CVB) göre ayarlandı. Tartımlarınız sürekli tahminin altında/üstünde kalıyorsa düğme katsayıyı sürünüze göre düzeltir.</p></details>
 <p class="s" style="margin-top:8px">Besi referansları NASEM (2016) denklemleriyle hesaplanır: idame (ırk, cinsiyet, kondisyon, sıcaklık), büyüme enerjisi (eşdeğer ağırlık ölçeği), yem tüketimi, metabolik protein, Ca ve P. İdame ve büyüme ihtiyacı, Avrupa boğa tablolarına (GfE Gruber 2024, CVB 2022) göre 0,85 katsayısıyla kalibre edilmiştir. Hormon implantı Türkiye'de kullanılmadığı için hesapta yoktur.</p></div>
 <details class="dt"><summary>Hedefleri düzenle</summary><div class="g" id="targets"></div></details>
 
@@ -411,18 +412,21 @@ $("calc").onclick=function(){
  var chk=[["ME (Mcal/kg KM)",nut("me"),t.ME,1,2],["Ham protein %",nut("cp"),t.CP,1,1],["NDF %",nut("ndf"),t.NDFmin,1,1],["Kalsiyum %",nut("ca"),t.Ca,1,2],["Fosfor %",nut("ph"),t.P,1,2],["Kaba yem %",nut("",1)*100,t.kMin,1,0]];
  html+='<h2>Besin dengesi</h2><table><tr><th>Besin</th><th>Rasyon</th><th>Hedef (en az)</th></tr>'+chk.map(function(r){return '<tr><td>'+r[0]+'</td><td class="'+(r[1]+1e-6>=r[2]?"ok":"no")+'">'+f(r[1],r[4])+'</td><td>'+f(r[2],r[4])+'</td></tr>'}).join("")+'</table>';
  out.innerHTML=html+skH;out.scrollIntoView({behavior:"smooth",block:"start"})};
-function BLs(){return isDry()?[["bw","Canlı ağırlık, kg"],["dp","Gebelik günü"],["par","Doğum sayısı (gelecek doğum)"],["bcs","Kondisyon puanı (1–5)"]]:[["bw","Canlı ağırlık, kg"],["milk","Alınan süt, kg/gün/baş"],["fat","Süt yağı, %"],["pr","Süt proteini, %"],["wk","Laktasyon haftası"],["dp","Gebelik günü (0 = boş)"],["par","Doğum sayısı"],["bcs","Kondisyon puanı (1–5)"],["price","Süt fiyatı, TL/kg"]]}
+function BLs(){return isHf()?[["bw","Canlı ağırlık, kg"],["age","Yaş, ay"],["mw","Olgun ağırlık, kg (ırk)"],["cage","Hedef ilk doğum yaşı, ay"],["bcs","Kondisyon puanı (1–5)"],["dp","Gebelik günü (0 = boş)"]]:isDry()?[["bw","Canlı ağırlık, kg"],["dp","Gebelik günü"],["par","Doğum sayısı (gelecek doğum)"],["bcs","Kondisyon puanı (1–5)"]]:[["bw","Canlı ağırlık, kg"],["milk","Alınan süt, kg/gün/baş"],["fat","Süt yağı, %"],["pr","Süt proteini, %"],["wk","Laktasyon haftası"],["dp","Gebelik günü (0 = boş)"],["par","Doğum sayısı"],["bcs","Kondisyon puanı (1–5)"],["price","Süt fiyatı, TL/kg"]]}
 function renderBreed(){$("breed").innerHTML=Object.keys(BREEDS).map(function(k){return '<option value="'+k+'"'+(S.breed===k?' selected':'')+'>'+BREEDS[k].n+'</option>'}).join("")}
 function renderBin(){bDef();$("mode").value=S.b.mode;$("bin").innerHTML=BLs().map(function(a){return '<label>'+a[1]+'<input type="number" inputmode="decimal" step="any" data-b="'+a[0]+'" value="'+S.b[a[0]]+'"></label>'}).join("")}
 var KL=0.66;
-function bDef(){var b=S.b;if(!b.mode)b.mode="lak";if(!(b.par>0))b.par=2;if(!(b.bcs>0))b.bcs=3;if(!(b.dp>=0))b.dp=0}
+function bDef(){var b=S.b;if(!b.mode)b.mode="lak";if(!(b.age>0))b.age=12;if(!(b.mw>0))b.mw=MWB[S.breed]||650;if(!(b.cage>0))b.cage=24;if(!(b.par>0))b.par=2;if(!(b.bcs>0))b.bcs=3;if(!(b.dp>=0))b.dp=0}
 function isDry(){return S.b.mode==="kuru"}
+function isHf(){return S.type==="sut"&&S.b.mode==="duve"}
+var MWB={hol:680,esm:650,sim:700,jer:450,yer:350};
 function wkToCalv(){var dp=S.b.dp||0;return dp>0?Math.max(0,(282-dp)/7):4}
 function milkE(b){return 0.0929*b.fat+0.055*b.pr+0.192}
 function pregNEL(dp){if(!(dp>=190))return 0;if(dp<250)return (0.00318*dp-0.0352)/0.218;return 3.5+(Math.min(dp,282)-250)*0.076}
 function pregMP(dp){return dp>=190?Math.max(0,(0.69*dp-69.2)/0.33):0}
 function DRYT(){var c=wkToCalv()<=3;return c?{n:"Kuru dönem, yakın (doğuma 3 hafta ve az)",cp:14,ca:0.40,p:0.25,nm:30,nx:45,km:55,kx:85,cax:0.6,px:0.35}:{n:"Kuru dönem, uzak (doğuma 3 haftadan fazla)",cp:12,ca:0.35,p:0.22,nm:33,nx:60,km:70,kx:100,cax:0.6,px:0.35}}
 function SG(){return isDry()?DRYT():stg(S.b.wk)}
+function STR(){return isDry()?(wkToCalv()<=3?[12,18]:[10,16]):[20,30]}
 function REQ(){bDef();var b=S.b,w=Math.pow(b.bw,0.75),mt=0.10*w,dp=b.dp||0,pg=pregNEL(dp),mk=milkE(b),par=b.par>=2?1:0,bcs=b.bcs,dmi,cp,req;
  if(isDry()){var wk=-Math.min(3,wkToCalv()),nd=S.lastNdf||45;dmi=(1.47-(0.365-0.0028*nd)*wk-0.035*wk*wk)/100*b.bw;req=mt+pg;cp=DRYT().cp}
  else{var dim=Math.max(1,b.wk*7),ME=mk*b.milk;dmi=(3.7+par*5.7+0.305*ME+0.022*b.bw+(-0.689-1.87*par)*bcs)*(1-(0.212+par*0.136)*Math.exp(-0.053*dim));req=mt+ME+pg;cp=Math.min(19,Math.max(13.5,stg(b.wk).cp+0.08*(b.milk-32)));if(dp>200){var wg=dp/7;dmi*=0.8+0.2*(1-Math.exp(-0.25*Math.max(0,40-wg)))}var mp=pregMP(dp);if(mp>0&&dmi>0)cp+=Math.min(2,mp/0.64/(dmi*10))}
@@ -442,9 +446,10 @@ function renderFarm(){var rows=[];S.feeds.forEach(function(x,i){if(x.on)rows.pus
  var ot=S.type==="sut"?"besi":"sut",orr=(S.rat||{})[ot]||{},cb=$("copyRat");if(cb){cb.style.display=Object.keys(orr).some(function(k){return orr[k].kg>0})?"":"none";cb.textContent=(S.type==="sut"?"Besi":"Süt")+" tarafındaki rasyonu buraya kopyala"}
  $("farm").innerHTML=rows.length?'<div class="fa fh"><span>Hammadde</span><span>kg/baş</span><span>TL/kg</span><span></span></div>'+rows.join(""):'<div class="fa"><span style="color:var(--mu);font-size:13px">Henüz hammadde eklenmedi.</span></div>'}
 function renderCmp(){
- var el=$("cmp");if(S.type==="besi"){if(window.renderCmpBesi)renderCmpBesi();return}if(S.type!=="sut"){el.innerHTML="";return}
- var dm=0,asf=0,me=0,cp=0,ndf=0,adf=0,kb=0,cost=0,ca=0,ph=0,fn=0;
- S.feeds.forEach(function(x){var r=x;if(!x.on||!(r.kg>0))return;var d=r.kg*x.dm/100;asf+=r.kg;cost+=r.kg*x.p;dm+=d;me+=d*x.me;cp+=d*x.cp;ndf+=d*x.ndf;adf+=d*(x.adf||0);ca+=d*x.ca;ph+=d*x.ph;if(x.k){kb+=d;fn+=d*x.ndf}});
+ var el=$("cmp");if(S.type==="besi"||isHf()){if(window.renderCmpBesi)renderCmpBesi();else el.innerHTML="";return}if(S.type!=="sut"){el.innerHTML="";return}
+ var dm=0,asf=0,me=0,cp=0,ndf=0,adf=0,kb=0,cost=0,ca=0,ph=0,fn=0,sta=0;
+ S.feeds.forEach(function(x){var r=x;if(!x.on||!(r.kg>0))return;var d=r.kg*x.dm/100;asf+=r.kg;cost+=r.kg*x.p;dm+=d;me+=d*x.me;cp+=d*x.cp;ndf+=d*x.ndf;adf+=d*(x.adf||0);ca+=d*x.ca;ph+=d*x.ph;sta+=d*staOf(x);if(x.k){kb+=d;fn+=d*x.ndf}});
+ S.lastSta=dm>0?sta/dm:0;
  if(dm>0){S.lastNdf=ndf/dm;S.fL=fLv(me)}var R=refSut();if(dm<=0||!(R.dmi>0)){el.innerHTML="";return}
  var t=S.t.sut,kp=kb/dm*100,D=isDry(),G=SG();
  var P=[
@@ -452,6 +457,7 @@ function renderCmp(){
  ["Rasyon KM, %",dm/asf*100,D?40:45,D?88:60,1,"Rasyon çok sulu: tüketimi sınırlayabilir","Rasyon kuru: ayrışma ve tüketim düşüşü riski"],
  ["HP, %",cp/dm,R.cp-1,R.cp+1.5,1,"Protein yetersiz: küspe payı artırılabilir","Protein fazla: maliyet ve azot kaybı artar"],
  ["ME, Mcal/kg",me/dm,meRange(dm)[0],meRange(dm)[1],2,"Enerji düşük: tahıl veya kesif yem payı artırılabilir","Enerji fazla: asidoz ve aşırı yağlanma riski, kaba yemi artırın"],
+ ["Nişasta, %",sta/dm,STR()[0],STR()[1],1,"Nişasta düşük: enerji ve mikrobiyal protein için tahıl payı artırılabilir","Nişasta yüksek: asidoz ve süt yağı düşüklüğü riski"],
  ["NDF, %",ndf/dm,t.NDFmin,t.NDFmax,1,"NDF düşük: asidoz ve süt yağı düşüklüğü riski","NDF yüksek: tüketim ve enerji alımı düşer"],
  ["ADF, %",adf/dm,D?20:17,D?40:27,1,"ADF düşük: sindirim sağlığı için lifli kaba yem artırılabilir","ADF yüksek: sindirilebilirlik düşük, kaliteli kaba yem kullanın"],
  ["Kaba, %",kp,t.kMin,t.kMax,0,"Kaba yem az: asidoz riski","Kaba yem çok: enerji yetersiz kalabilir"],
@@ -463,8 +469,8 @@ function renderCmp(){
   if(v<lo-1e-9){st="↓ Düşük";c="no";notes.push({m:p[5],d:(lo-v)/Math.abs(lo||1)})}else if(v>hi+1e-9){st="↑ Yüksek";c="no";notes.push({m:p[6],d:(v-hi)/Math.abs(hi||1)})}else{st="✓ Uygun";c="ok";okc++}
   return '<tr><td>'+p[0]+'</td><td>'+f(v,p[4])+'</td><td>'+f(lo,p[4])+'–'+f(hi,p[4])+'</td><td class="'+c+'">'+st+'</td></tr>'}).join("");
  el.innerHTML=diag(dm,me,cp,cost,ca,ph)+risks(dm,me,cp,kb,fn,ndf,adf,ca,ph)+'<h2>Rasyon değerlendirmesi</h2><table class="c"><tr><th>Parametre</th><th>Çiftlik</th><th>Referans</th><th>Durum</th></tr>'+rows+'</table><p class="tot" style="margin:10px 0 4px">'+P.length+' parametreden '+okc+' tanesi uygun</p>'+(notes.length?'<ul class="nt">'+notes.sort(function(a,b){return b.d-a.d}).map(function(n,i){return '<li>'+(i===0?'<b>Öncelik: </b>':'')+n.m+'</li>'}).join("")+'</ul>':'<p class="s">Rasyon, seçilen ırk ve verim için referans aralığında.</p>')+'<p class="s">Kesif yem, kaba yem dışındaki tüm hammaddeleri (mineral dahil) kapsar.</p><p class="s"><b>'+(D?'Dönem: ':'Laktasyon dönemi: ')+G.n+'.</b> Dönem referansı: HP %'+f(G.cp,1)+', ME '+f(R.me,2)+' Mcal/kg KM, Ca %'+f(G.ca,2)+', P %'+f(G.p,2)+(D?'':', kaba NDF en az %19')+'. Yem tüketimi, idame (0,10 Mcal NEL/kg CA<sup>0,75</sup>), süt ve gebelik ihtiyacı NASEM (2021); ME→NEL dönüşümü 0,66; dönem HP, Ca ve P değerleri NRC 2001 / Merck Veterinary Manual; kuru dönem aralıkları NDSU, Merck, GfE ve CVB. Yüksek yem tüketiminde enerji değeri NASEM/CVB yaklaşımıyla indirilir (idamenin her katı için %1,8, en çok %6). '+(D?'':'Kaba yem NDF için NRC alt sınırı %19; CNCPS ve GfE kuru maddenin %25–31’ini önerir. ')+(R.pg>0?'Gebelik için günlük '+f(R.pg,1)+' Mcal NEL eklendi. ':'')+'</p>'+eco(dm,cost)}
-$("breed").onchange=function(){S.breed=this.value;var b=BREEDS[this.value];S.b={bw:b.bw,milk:b.milk,fat:b.fat,pr:b.pr,wk:S.b.wk||20,price:S.b.price||0,par:S.b.par||2,bcs:S.b.bcs||3,dp:S.b.dp||0,mode:S.b.mode||"lak"};renderBin();applyRef();save()};
-$("mode").onchange=function(){S.b.mode=this.value;if(isDry()&&!(S.b.dp>0))S.b.dp=250;S.man={};renderBin();applyRef();save()};
+$("breed").onchange=function(){S.breed=this.value;var b=BREEDS[this.value];S.b={mw:MWB[this.value]||650,age:S.b.age||12,cage:S.b.cage||24,bw:b.bw,milk:b.milk,fat:b.fat,pr:b.pr,wk:S.b.wk||20,price:S.b.price||0,par:S.b.par||2,bcs:S.b.bcs||3,dp:S.b.dp||0,mode:S.b.mode||"lak"};renderBin();applyRef();save()};
+$("mode").onchange=function(){S.b.mode=this.value;if(isDry()&&!(S.b.dp>0))S.b.dp=250;if(isHf()){S.b.mw=MWB[S.breed]||650;if(S.b.bw>500)S.b.bw=300}S.man={};renderBin();applyRef();renderCmp();save()};
 $("bin").oninput=function(e){var k=e.target.dataset.b;if(k){S.b[k]=num(e.target.value);applyRef();save()}};
 
 $("farm").oninput=function(e){var el=e.target,i=el.dataset.fi,k=el.dataset.fk;if(i===undefined)return;S.feeds[i][k]=num(el.value);renderCmp();save()};
@@ -485,6 +491,7 @@ function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
  var a=0,aw=[];
  var ks=100-kp;if(D&&ks>50){a+=2;aw.push('Kuru dönemde kesif payı %'+f(ks,0)+' (%50 üstü)')}else if(ks>60){a+=2;aw.push('Kesif yem payı %'+f(ks,0)+' (%60 üstü)')}else if(ks>55){a+=1;aw.push('Kesif yem payı %'+f(ks,0)+' yüksek sınırda')}
  if(kp<t.kMin){a+=1;aw.push('Kaba yem payı %'+f(kp,0)+' (en az %'+f(t.kMin,0)+' olmalı)')}
+ var stP=S.lastSta||0,stL=STR()[1];if(stP>stL+3){a+=2;aw.push('Nişasta %'+f(stP,0)+' (en çok %'+stL+')')}else if(stP>stL){a+=1;aw.push('Nişasta %'+f(stP,0)+' üst sınırda')}
  if(Math.round(ndf/dm*10)/10<t.NDFmin){a+=2;aw.push('Rasyon NDF %'+f(ndf/dm,1)+' (en az %'+f(t.NDFmin,0)+')')}
  if(fnp<19){a+=2;aw.push('Kaba yemden gelen NDF %'+f(fnp,1)+' (en az %19)')}
  if(Math.round(adf/dm*10)/10<17){a+=1;aw.push('ADF %'+f(adf/dm,1)+' (en az %17)')}
@@ -528,7 +535,7 @@ function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
  if(kraw>=2&&early){d+=1;dw.push('Ketozis riski: ilk haftalarda döl tutmayı olumsuz etkiler')}
  var ex='<div class="sum"><div><b>'+(fpr?f(fpr,2):'—')+'</b><span>Süt yağı/protein oranı (normal 1,1–1,5)</span></div></div>';
  return '<h2>Sağlık ve döl riskleri</h2>'+ex
- +card('Asidoz (işkembe asiditesi)',a,aw,'Kaba yemi artırın, kesifi kademeli azaltın; uzun kıyımlı kaba yem verin, yemi gün içinde bölün; gerekirse tampon (sodyum bikarbonat) için danışmanınıza sorun.','Asidoz yem tüketimini düşürür; gerçek enerji açığı hesaplanandan büyük olabilir. Hesapta nişasta ve TMR elek (parça boyu) yok; bunlar ayrıca kontrol edilmeli.')
+ +card('Asidoz (işkembe asiditesi)',a,aw,'Kaba yemi artırın, kesifi kademeli azaltın; uzun kıyımlı kaba yem verin, yemi gün içinde bölün; gerekirse tampon (sodyum bikarbonat) için danışmanınıza sorun.',(a>=2?'Bu risk düzeyinde yem tüketimi yaklaşık %'+(a>=4?'5–10':'3–5')+' düşebilir; enerji alımı '+f(sup*(a>=4?0.075:0.04),1)+' Mcal/gün kadar hesaplanandan az olabilir (program varsayımı: SARA çalışmalarında bildirilen tüketim düşüşü aralığı, kesin bir katsayı yayımlanmamıştır). ':'')+'Nişasta değerleri kütüphane tahminidir. TMR elek (parça boyu) ayrıca kontrol edilmeli.')
  +card('Ketozis (acetonemi)',k,kw,'Enerji yoğunluğunu ve yem tüketimini artırın; yem masasını boş bırakmayın; şüphede süt veya kan BHB testi için veterinere danışın.',kn)
  +(b.dp>=60?'<div class="rk"><h3>Döl tutma ve kızgınlık<em class="ok">Gebe</em></h3><small>İnek gebe ('+b.dp+'. gün); döl tutma riski değerlendirilmedi. Gebeliğin korunması için enerji dengesini ve kondisyonu izleyin.</small></div>':card('Döl tutma ve kızgınlık (boğaya gelme)',d,dw,'Enerji dengesini düzeltin, fazla proteini azaltın, fosforu tamamlayın; selenyum, E ve A vitamini, bakır, çinko ve kondisyon puanını da kontrol edin.','Hesaba katılmayanlar: vitamin ve iz mineraller, kondisyon puanı, doğum sorunları, boğa, sıcak stresi. Bu bir risk göstergesidir, teşhis değildir.'))
 }
@@ -633,11 +640,11 @@ document.getElementById("close").addEventListener("click",function(){fsr.value="
 </script><script>
 (function(){
 var $s=function(i){return document.getElementById(i)};
-var NOTS=/^(Düve|Buzağı|Besi|Toklu|Yemcibey (Besi|Ekstra|Toklu)|Başaran (Besi|Toklu|Düve|Buzağı))/,OWNS=/^(Süt \d|Prenses|Yemcibey|Başaran)/,NOTB=/^(Süt|Prenses|Düve|Buzağı|Bypass|Toklu|Yemcibey (Süt|Kuru|Yem 7|Çiftlikte|Protein|Toklu)|Başaran (Süt|Kuru|Yem 7|Çiftlikte|Düve|Buzağı|Toklu))/,OWNB=/^(Besi|Yemcibey|Başaran)/,NOT=NOTS,OWN=OWNS,LOCKOWN=false;
+var NOTS=/^(Düve|Buzağı|Besi|Toklu|Yemcibey (Besi|Ekstra|Toklu)|Başaran (Besi|Toklu|Düve|Buzağı))/,OWNS=/^(Süt \d|Prenses|Yemcibey|Başaran)/,NOTB=/^(Süt|Prenses|Düve|Buzağı|Bypass|Toklu|Yemcibey (Süt|Kuru|Yem 7|Çiftlikte|Protein|Toklu)|Başaran (Süt|Kuru|Yem 7|Çiftlikte|Düve|Buzağı|Toklu))/,OWNB=/^(Besi|Yemcibey|Başaran)/,NOTH=/^(Süt|Prenses|Besi|Toklu|Bypass|Buzağı|Yemcibey (Süt|Kuru|Yem 7|Çiftlikte|Protein|Toklu|Besi|Ekstra)|Başaran (Süt|Kuru|Yem 7|Çiftlikte|Besi|Toklu|Buzağı))/,OWNH=/^(Düve|Yemcibey|Başaran)/,NOT=NOTS,OWN=OWNS,LOCKOWN=false;
 function isMin(x){return !(x.me>0)&&!(x.cp>0)&&x.dm>90}
 function capOf(x){if(/Bypass/.test(x.n))return 0.03;if(OWN.test(x.fam||x.n))return S.type==="besi"?0.6:0.45;if(isMin(x))return /Tuz/.test(x.n)?0.005:0.015;if(/Melas/.test(x.n))return 0.06;if(/tam yağlı|bütün|Ayçiçeği tohumu/.test(x.n))return 0.10;if(x.k)return /saman|koçan/i.test(x.n)?0.2:0.6;if(x.ndf>55||x.me<2.1)return 0.15;return 0.35}
 function tgt(Dc){var R=refSut(),t=S.t.sut,s=SG(),D=isDry(),fL=S.fL||1,low=Dc<0.85*R.dmi,dlo=Dc*0.98,dhi=low?Math.max(dlo,R.dmi):Math.max(dlo,Math.min(Dc*1.08,R.dmi*1.05));
- var e=enBal();return{fL:fL,low:low,Dc:Dc,R:R,s:s,e:e,rlo:e.lim[0]+0.03,rhi:e.lim[1]-0.01,dlo:dlo,dhi:dhi,par:[["cp",R.cp-1,R.cp+1.5],["ndf",t.NDFmin,t.NDFmax>0?t.NDFmax:80],["adf",D?20:17,D?40:27],["kb",t.kMin,t.kMax],["ca",s.ca,s.cax||1.2],["ph",s.p,s.px||0.7]]}}
+ var e=enBal();return{fL:fL,low:low,Dc:Dc,R:R,s:s,e:e,rlo:e.lim[0]+0.03,rhi:e.lim[1]-0.01,dlo:dlo,dhi:dhi,par:[["cp",R.cp-1,R.cp+1.5],["ndf",t.NDFmin,t.NDFmax>0?t.NDFmax:80],["adf",D?20:17,D?40:27],["kb",t.kMin,t.kMax],["ca",s.ca,s.cax||1.2],["ph",s.p,s.px||0.7],["sta",STR()[0],STR()[1]]]}}
 function val(x,k){return k==="kb"?(x.k?100:0):k==="sta"?staOf(x):x[k]}
 /* items: [{x:feed,d:kgDM}] -> metrikler */
 function metrics(items){var m={dm:0,asf:0,me:0,cp:0,ndf:0,adf:0,kb:0,ca:0,ph:0,fn:0,cost:0,sta:0};
@@ -671,14 +678,14 @@ function run(){
  var cur=S.feeds.filter(function(x){return x.on&&x.kg>0&&x.dm>0});
  if(!cur.length){out.innerHTML='<p class="s">Önce rasyondaki hammaddelerin miktarını girin.</p>';return}
  var pr=cur.filter(function(x){return x.p>0});var fb=pr.length?pr.reduce(function(s,x){return s+x.p},0)/pr.length:10;
- var BES=S.type==="besi";NOT=BES?NOTB:NOTS;OWN=BES?OWNB:OWNS;
+ var BES=S.type==="besi"||isHf(),HF=isHf();NOT=HF?NOTH:BES?NOTB:NOTS;OWN=HF?OWNH:BES?OWNB:OWNS;
  var Dc=cur.reduce(function(s,x){return s+x.kg*x.dm/100},0),T=BES?tgtB(Dc):tgt(Dc);if(!BES&&$s("solFull")&&$s("solFull").checked)T.rlo=Math.max(T.rlo,0.97);
  var curKg=cur.map(function(x){return x.kg}),curD=cur.map(function(x){return x.kg*x.dm/100});
  var cls=function(x){return isMin(x)?"m":x.k?"k":"c"},cp_={};
  S.feeds.forEach(function(y){if(y.p>0&&y.dm>0){var c=cls(y);(cp_[c]=cp_[c]||[]).push(y.p*100/y.dm)}});
  var PP=function(x){if(x.p>0)return x.p;var a=cp_[cls(x)];return a?a.reduce(function(s,v){return s+v},0)/a.length*x.dm/100:fb};
- var BPHr=[/Besi Başlangıç|Besi Plus/,/Besi Geliştirme/,/Besi Bitiş|Ekstra Besi/][BES?bPhase():0];
- var lib=S.feeds.filter(function(x){if(x.on&&x.kg>0)return false;if(BES&&OWN.test(x.fam||x.n)&&/Besi/.test(x.fam||x.n)&&!BPHr.test(x.fam||x.n))return false;if(!(x.dm>0)||!(x.me>0||x.cp>0||x.ca>0))return false;if(NOT.test(x.fam||x.n))return false;if(/simit/i.test(x.n))return false;var mn=isMin(x);if(!mn&&!x.k&&x.me<2.0)return false;if(!mn&&!(x.ndf>0)&&!/Melas|Bypass/.test(x.n))return false;return true});
+ var BPHr=HF?/Düve/:[/Besi Başlangıç|Besi Plus/,/Besi Geliştirme/,/Besi Bitiş|Ekstra Besi/][BES?bPhase():0];
+ var lib=S.feeds.filter(function(x){if(x.on&&x.kg>0)return false;var fnm=x.fam||x.n;if(BES&&OWN.test(fnm)&&(HF?!/Düve/.test(fnm):(/Besi/.test(fnm)&&!BPHr.test(fnm))))return false;if(!(x.dm>0)||!(x.me>0||x.cp>0||x.ca>0))return false;if(NOT.test(x.fam||x.n))return false;if(/simit/i.test(x.n))return false;var mn=isMin(x);if(!mn&&!x.k&&x.me<2.0)return false;if(!mn&&!(x.ndf>0)&&!/Melas|Bypass/.test(x.n))return false;return true});
  var mode=0,res=null,added=[],alts=[],cand,price,curv;
  function pack(c,list){cand=c;price=c.map(function(x){return OWN.test(x.fam||x.n)?PP(x)*0.8:PP(x)});curv=c.map(function(x){var q=cur.indexOf(x);return q>=0?curD[q]:0});return solve(cand,curv,price,T)}
  var relaxed=false;
@@ -706,7 +713,7 @@ function run(){
  var before=cur.map(function(x){return{x:x,d:x.kg*x.dm/100,p:PP(x)}});
  var mb=metrics(before),ma=metrics(after);
  var MR=BES?[T.meLo,T.meHi]:meRange(ma.dmi);
- var rf=BES?[["KM alımı, kg","dmi",T.R.dmi*0.9,T.R.dmi*1.1,1],["Rasyon KM, %","dmp",T.dmLo,T.dmHi,1],["HP, %","cp",T.par[0][1],T.par[0][2],1],["ME, Mcal/kg","me",T.meLo,T.meHi,2],["Nişasta, %","sta",T.par[6][1],T.par[6][2],1],["NDF, %","ndf",T.par[1][1],T.par[1][2],1],["ADF, %","adf",T.par[2][1],T.par[2][2],1],["Kaba, %","kaba",T.par[3][1],T.par[3][2],0],["Kaba yem NDF, %","fn",T.fnMin,45,1],["Kalsiyum, %","ca",T.par[4][1],T.par[4][2],2],["Fosfor, %","ph",T.par[5][1],T.par[5][2],2]]:[["KM alımı, kg","dmi",T.R.dmi*0.9,T.R.dmi*1.1,1],["Rasyon KM, %","dmp",isDry()?40:45,isDry()?88:60,1],["HP, %","cp",T.par[0][1],T.par[0][2],1],["ME, Mcal/kg","me",MR[0],MR[1],2],["NDF, %","ndf",T.par[1][1],T.par[1][2],1],["ADF, %","adf",T.par[2][1],T.par[2][2],1],["Kaba, %","kaba",40,60,0],["Kesif, %","kesif",40,60,0],["Kaba yem NDF, %","fn",isDry()?25:19,isDry()?60:45,1],["Kalsiyum, %","ca",T.par[4][1],T.par[4][2],2],["Fosfor, %","ph",T.par[5][1],T.par[5][2],2]];
+ var rf=BES?[["KM alımı, kg","dmi",T.R.dmi*0.9,T.R.dmi*1.1,1],["Rasyon KM, %","dmp",T.dmLo,T.dmHi,1],["HP, %","cp",T.par[0][1],T.par[0][2],1],["ME, Mcal/kg","me",T.meLo,T.meHi,2],["Nişasta, %","sta",T.par[6][1],T.par[6][2],1],["NDF, %","ndf",T.par[1][1],T.par[1][2],1],["ADF, %","adf",T.par[2][1],T.par[2][2],1],["Kaba, %","kaba",T.par[3][1],T.par[3][2],0],["Kaba yem NDF, %","fn",T.fnMin,45,1],["Kalsiyum, %","ca",T.par[4][1],T.par[4][2],2],["Fosfor, %","ph",T.par[5][1],T.par[5][2],2]]:[["KM alımı, kg","dmi",T.R.dmi*0.9,T.R.dmi*1.1,1],["Rasyon KM, %","dmp",isDry()?40:45,isDry()?88:60,1],["HP, %","cp",T.par[0][1],T.par[0][2],1],["ME, Mcal/kg","me",MR[0],MR[1],2],["Nişasta, %","sta",T.par[6][1],T.par[6][2],1],["NDF, %","ndf",T.par[1][1],T.par[1][2],1],["ADF, %","adf",T.par[2][1],T.par[2][2],1],["Kaba, %","kaba",40,60,0],["Kesif, %","kesif",40,60,0],["Kaba yem NDF, %","fn",isDry()?25:19,isDry()?60:45,1],["Kalsiyum, %","ca",T.par[4][1],T.par[4][2],2],["Fosfor, %","ph",T.par[5][1],T.par[5][2],2]];
  var okf=function(v,lo,hi){return v>=lo-1e-9&&v<=hi+1e-9};
  var nb=0,na=0;
  var prow=rf.map(function(r){var vb=mb[r[1]],va=ma[r[1]],ob=okf(vb,r[2],r[3]),oa=okf(va,r[2],r[3]);if(ob)nb++;if(oa)na++;
@@ -717,8 +724,10 @@ function run(){
  var head=mode===1?'Mevcut hammaddelerle çözülebiliyor. Yalnızca miktarları değiştirmeniz yeterli.':mode===2?'Mevcut hammaddelerle tam çözülmüyor. <b>'+esc(items.filter(function(i){return i.isNew}).map(function(i){return i.x.n.replace(/, ?KM %[0-9]+/,"")}).join(", "))+'</b> eklenerek çözülüyor.':'Mevcut hammaddelerle ve tek bir ek hammaddeyle çözülmüyor. Kütüphaneden birden fazla hammadde birlikte öneriliyor.';
  var h='<h2 style="margin-top:22px">Çözüm önerisi</h2><p style="margin:0 0 10px;font-weight:600">'+head+'</p>'+(T.low?'<p class="s">Verilen yem ('+f(T.Dc,1)+' kg KM) beklenen tüketimin ('+f(T.R.dmi,1)+' kg) altında; öneri miktarı artırıyor. Geçişi 1-2 haftada kademeli yapın.</p>':'')+(eRel?'<p class="s" style="color:var(--wa)"><b>Dikkat:</b> Yem tüketimi sınırlı olduğu için enerji hedefi tam sağlanamadı; en iyi uygulanabilir çözüm gösteriliyor. '+(BES?'Hedef artışa ulaşılamayabilir; tartımla izleyin.':'Enerji açığı kalacağından ketozis riskini izleyin.')+'</p>':'')+(relaxed&&items.some(function(i){return i.was>0&&OWN.test(i.x.fam||i.x.n)&&i.now<i.was-0.05})?'<p class="s" style="color:var(--wa)"><b>Dikkat:</b> Yemci Bey yemini azaltmadan çözüm bulunamadı; öneride miktarı azaltılan ürün var.</p>':'')+(items.some(function(i){return i.isNew&&OWN.test(i.x.fam||i.x.n)})?'<p class="s">Öncelik kendi ürünlerimizde: öneride Yemci Bey yemi kullanıldı.</p>':'');
  h+='<table class="c"><tr><th>Hammadde</th><th>Şimdi</th><th>Öneri</th><th>Fark</th></tr>'+items.map(function(i){var d=i.now-i.was,dd=isMin(i.x)?2:1;return '<tr><td>'+esc(i.x.n.replace(/, ?KM %[0-9]+/,""))+(i.isNew?' <span style="color:var(--ac);font-weight:600">yeni</span>':'')+'</td><td>'+f(i.was,dd)+'</td><td><b>'+f(i.now,dd)+'</b></td><td class="'+(Math.abs(d)<0.05?'':(d>0?'ok':'no'))+'">'+(d>0?'+':'')+f(d,dd)+'</td></tr>'}).join("")+'<tr class="tot"><td>Toplam (kg yaş/baş)</td><td>'+f(items.reduce(function(s,i){return s+i.was},0),1)+'</td><td>'+f(items.reduce(function(s,i){return s+i.now},0),1)+'</td><td></td></tr></table>';
+ if(BES&&!HF&&ma.kesif-mb.kesif>8){var nst=Math.min(5,Math.max(3,Math.ceil((ma.kesif-mb.kesif)/10))),sh='';for(var st=1;st<=nst;st++){var fr=st/nst,dd=Math.round(5+2*(st-1));sh+='<li><b>'+st+'. adım ('+(st===nst?'hedef':dd+' gün')+'):</b> '+items.filter(function(i){return i.now>0||i.was>0}).map(function(i){var v=i.was+(i.now-i.was)*fr;return esc(i.x.n.replace(/,.*$/,''))+' '+f(v,isMin(i.x)?2:1)}).join(', ')+' kg</li>'}
+  h+='<h2>Kesif yeme geçiş takvimi</h2><p class="s">Kesif payı %'+f(mb.kesif,0)+'\'dan %'+f(ma.kesif,0)+'\'a çıkıyor; bir adımda en çok 10 puan artırın, her adımda 5–9 gün bekleyin, yem artığı ve dışkı kıvamını izleyin (NASEM 2016: 3–4 haftalık kademeli geçiş).</p><ol class="nt">'+sh+'</ol>'}
  h+='<h2>Parametre karşılaştırması</h2><table class="c"><tr><th>Parametre</th><th>Şimdi</th><th>Öneri</th><th>Referans</th></tr>'+prow+'</table><p class="tot" style="margin:10px 0 4px">Uygun parametre: '+nb+' → '+na+' / '+rf.length+'</p>';
- h+=BES?'<div class="sum"><div><b>'+f(mb.cost)+' → '+f(ma.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div><div><b>'+f(Math.min(bb.adg,bb.adgp),0)+' → '+f(Math.min(ba.adg,ba.adgp),0)+' g</b><span>günlük canlı ağırlık artışı (hedef '+f(S.bb.adg,0)+')</span></div><div><b>'+f(bb.fcr,1)+' → '+f(ba.fcr,1)+'</b><span>yem dönüşümü, kg KM / kg artış</span></div><div><b>'+f(bb.ckg)+' → '+f(ba.ckg)+' TL</b><span>kg canlı ağırlık artışı maliyeti</span></div></div>':'<div class="sum"><div><b>'+f(mb.cost)+' → '+f(ma.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div>'+(isDry()?'':'<div><b>'+f(bb.allow,1)+' → '+f(ba.allow,1)+' kg</b><span>rasyonun taşıdığı süt (alınan '+f(S.b.milk,1)+')</span></div>')+'<div><b>'+f(bb.dbw,0)+' → '+f(ba.dbw,0)+' kg</b><span>30 günde canlı ağırlık</span></div></div>';
+ h+=BES?'<div class="sum"><div><b>'+f(mb.cost)+' → '+f(ma.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div><div><b>'+f(Math.min(bb.adg,bb.adgp),0)+' → '+f(Math.min(ba.adg,ba.adgp),0)+' g</b><span>günlük canlı ağırlık artışı (hedef '+f(BA().adg,0)+')</span></div><div><b>'+f(bb.fcr,1)+' → '+f(ba.fcr,1)+'</b><span>yem dönüşümü, kg KM / kg artış</span></div><div><b>'+f(bb.ckg)+' → '+f(ba.ckg)+' TL</b><span>kg canlı ağırlık artışı maliyeti</span></div></div>':'<div class="sum"><div><b>'+f(mb.cost)+' → '+f(ma.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div>'+(isDry()?'':'<div><b>'+f(bb.allow,1)+' → '+f(ba.allow,1)+' kg</b><span>rasyonun taşıdığı süt (alınan '+f(S.b.milk,1)+')</span></div>')+'<div><b>'+f(bb.dbw,0)+' → '+f(ba.dbw,0)+' kg</b><span>30 günde canlı ağırlık</span></div></div>';
  var est=items.filter(function(i){return i.est});
  if(est.length)h+='<p class="s">Fiyatı girilmemiş hammaddelerde benzer yemlerin ortalama fiyatı varsayıldı: '+esc(est.map(function(i){return i.x.n.replace(/, ?KM %[0-9]+/,"")+' ('+f(PP(i.x))+' TL/kg)'}).join(", "))+'. Gerçek fiyatı girin.</p>';
  if(alts.length)h+='<p class="s">Alternatif eklemeler (aynı sonucu veren): '+esc(alts.map(function(L){return L.n.replace(/, ?KM %[0-9]+/,"")}).join(", "))+'.</p>';
@@ -739,41 +748,56 @@ window.metrics=metrics;window.isMin=isMin;window.solve=solve;window.setLock=func
 
 <script>
 /* ===== BESİ (NASEM 2016 / BCNRM; GfE Gruber 2024 ve CVB 2022 ile kalibre) ===== */
-var BB={hol:{n:"Holstein (erkek)",be:1.2,fin:550,adg:1300,y:53},sim:{n:"Simmental (Alaca)",be:1.2,fin:700,adg:1450,y:58},esm:{n:"Esmer (Montofon)",be:1.2,fin:650,adg:1300,y:56},ang:{n:"Angus",be:1.0,fin:620,adg:1400,y:58},cha:{n:"Şarole / Limuzin",be:1.0,fin:720,adg:1500,y:60},mel:{n:"Melez / yerli",be:1.0,fin:450,adg:1000,y:52}};
-var CALB=0.85;
+var BB={hol:{n:"Holstein (erkek)",be:1.2,fin:550,adg:1300,y:53},sim:{n:"Simmental (Alaca)",be:1.2,fin:700,adg:1450,y:58},esm:{n:"Esmer (Montofon)",be:1.2,fin:650,adg:1300,y:56},ang:{n:"Angus",be:1.0,fin:620,adg:1400,y:58},cha:{n:"Şarole / Limuzin",be:1.0,fin:720,adg:1500,y:60},mel:{n:"Melez / yerli",be:1.0,fin:450,adg:1000,y:52},duve:{n:"Düve",be:1.2,fin:680,adg:800,y:0}};
+var CALB=0.85;function CALv(){var b=S.bb||{};return b.cal>0?b.cal:CALB}
+function BA(){if(isHf()){bDef();var b=S.b,mw=b.mw||680,tgtW=0.85*mw,mo=Math.max(1,b.cage-b.age),adg=Math.max(300,Math.min(1100,(tgtW-b.bw)/(mo*30.4)*1000));return{breed:"duve",sex:"d",bw:b.bw,fin:mw,adg:adg,bcs:b.bcs||3,temp:20,ion:0,price:0,dp:b.dp||0,hf:1,age:b.age,cage:b.cage}}return B_def()}
 function B_def(){if(!S.bb)S.bb={breed:"hol",sex:"b",bw:350,fin:550,adg:1300,bcs:3,temp:20,ion:0,price:0};var b=S.bb;if(!BB[b.breed])b.breed="hol";if(!(b.bw>0))b.bw=350;if(!(b.fin>0))b.fin=BB[b.breed].fin;if(!(b.adg>0))b.adg=BB[b.breed].adg;if(!(b.bcs>0))b.bcs=3;if(b.temp===undefined||b.temp==="")b.temp=20;return b}
 var BLB=[["bw","Canlı ağırlık, kg"],["fin","Hedef kesim ağırlığı, kg"],["adg","Hedef günlük artış, g"],["bcs","Kondisyon (1–5)"],["temp","Ortam sıcaklığı, °C"],["price","Canlı ağırlık fiyatı, TL/kg"]];
 function renderBesiIn(){var b=B_def();$("bbreed").innerHTML=Object.keys(BB).map(function(k){return '<option value="'+k+'"'+(b.breed===k?' selected':'')+'>'+BB[k].n+'</option>'}).join("");$("bsex").value=b.sex;
  $("bbin").innerHTML=BLB.map(function(a){return '<label>'+a[1]+'<input type="number" inputmode="decimal" step="any" data-bb="'+a[0]+'" value="'+b[a[0]]+'"></label>'}).join("")+'<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="bion" style="width:auto;margin:0"'+(b.ion?' checked':'')+'>İyonofor (monensin) kullanılıyor</label>';
- $("bion").onchange=function(){S.bb.ion=this.checked?1:0;renderCmp();save()}}
+ $("bion").onchange=function(){S.bb.ion=this.checked?1:0;renderCmp();save()};renderWts()}
+function wtStats(){var w=(S.bb.wts||[]).slice().sort(function(a,b){return a.d<b.d?-1:1});if(w.length<2)return null;var a=w[0],z=w[w.length-1],days=(new Date(z.d)-new Date(a.d))/864e5;if(days<7)return null;var p=w[w.length-2],d2=(new Date(z.d)-new Date(p.d))/864e5;return{days:days,adg:(z.w-a.w)/days*1000,last:z,first:a,adgL:d2>=7?(z.w-p.w)/d2*1000:null}}
+function renderWts(){var w=(S.bb.wts||[]).slice().sort(function(a,b){return a.d<b.d?-1:1});$("wts").innerHTML=w.length?'<table class="c"><tr><th>Tarih</th><th>kg</th><th></th></tr>'+w.map(function(x,i){return '<tr><td>'+x.d+'</td><td>'+f(x.w,0)+'</td><td><button class="del" data-wi="'+i+'">✕</button></td></tr>'}).join("")+'</table>':'';
+ var st=wtStats();$("wtr").innerHTML=st?'<p class="s"><b>Gerçek artış:</b> '+f(st.adg,0)+' g/gün ('+f(st.days,0)+' günde '+f(st.first.w,0)+' → '+f(st.last.w,0)+' kg)'+(st.adgL!==null?'; son aralıkta '+f(st.adgL,0)+' g/gün':'')+'.</p>':'';
+ $("bcal").value=S.bb.cal>0?S.bb.cal:CALB;
+ $("wts").onclick=function(e){var b=e.target.closest("button");if(!b||b.dataset.wi===undefined)return;var ws=(S.bb.wts||[]).slice().sort(function(a,b){return a.d<b.d?-1:1});ws.splice(+b.dataset.wi,1);S.bb.wts=ws;renderWts();renderCmp();save()}}
+$("wtadd").onclick=function(){var d=$("wtd").value,w=num($("wtw").value);if(!d||!(w>0))return;S.bb.wts=(S.bb.wts||[]).concat([{d:d,w:w}]);if(w>0){S.bb.bw=w;renderBesiIn()}$("wtw").value="";renderWts();renderCmp();save()};
+$("bcal").onchange=function(){var v=num(this.value);S.bb.cal=(v>=0.6&&v<=1.2)?v:CALB;this.value=S.bb.cal;renderCmp();save()};
+$("bcalAuto").onclick=function(){var st=wtStats();if(!st){$("wtr").innerHTML='<p class="s" style="color:var(--wa)">En az 7 gün arayla iki tartım gerekir.</p>';return}
+ var it=[];S.feeds.forEach(function(x){if(x.on&&x.kg>0&&x.dm>0)it.push({x:x,d:x.kg*x.dm/100,p:x.p||0})});if(!it.length)return;var m=metrics(it);
+ var g0=bGain(m.dm_,m.meT,m.cp*m.dm_*10);if(g0.adgp<g0.adg*0.95){renderWts();$("wtr").innerHTML+='<p class="s" style="color:var(--wa)">Bu rasyonda artışı protein sınırlıyor; kalibrasyon enerji katsayısını ayarlar. Önce protein değerlerini ve analizleri kontrol edin.</p>';return}
+ var cal0=CALv(),cal=cal0;for(var k=0;k<12;k++){var g=bGain(m.dm_,m.meT,m.cp*m.dm_*10),pred=Math.min(g.adg,g.adgp);if(!(pred>50))break;var r=pred/st.adg;if(Math.abs(r-1)<0.02)break;cal=Math.max(cal0*0.75,Math.min(cal0*1.25,Math.max(0.6,Math.min(1.2,cal*Math.pow(r,0.5)))));S.bb.cal=cal}
+ S.bb.cal=Math.round(cal*100)/100;renderWts();renderCmp();save();$("wtr").innerHTML+='<p class="s">Katsayı '+f(cal0,2)+' → '+f(S.bb.cal,2)+' (tek seferde en çok %25 değişir; tahmin gerçek artışa yaklaştırıldı).</p>'};
 $("bbreed").onchange=function(){var b=B_def();b.breed=this.value;b.fin=BB[b.breed].fin;b.adg=BB[b.breed].adg;renderBesiIn();renderCmp();save()};
 $("bsex").onchange=function(){B_def().sex=this.value;renderCmp();save()};
 $("bbin").oninput=function(e){var k=e.target.dataset.bb;if(k){S.bb[k]=num(e.target.value);renderCmp();save()}};
 function nemF(me){return 1.37*me-0.138*me*me+0.0105*me*me*me-1.12}
 function negF(me){return 1.42*me-0.174*me*me+0.0122*me*me*me-1.65}
-function bPhase(){var b=B_def(),fr=b.bw/bFin();return fr<0.55?0:fr<0.8?1:2}
+function bPhase(){var b=BA(),fr=b.bw/bFin();if(b.hf)return fr<0.4?0:fr<0.65?1:2;return fr<0.55?0:fr<0.8?1:2}
+var HPH=[{n:"Genç düve (tohumlama öncesi)",me:[2.2,2.65],sta:[8,22],ndf:[32,50],adf:[18,32],kb:[50,100],fn:25,dm:[30,85]},{n:"Tohumlama çağı düve",me:[2.1,2.55],sta:[8,20],ndf:[35,55],adf:[20,35],kb:[60,100],fn:30,dm:[30,88]},{n:"Gebe düve",me:[2.1,2.55],sta:[8,18],ndf:[38,60],adf:[22,38],kb:[65,100],fn:30,dm:[30,88]}];
+function PHT(){return (BA().hf?HPH:BPH)[bPhase()]}
 var BPH=[{n:"Başlangıç (adaptasyon)",me:[2.5,2.85],sta:[12,30],ndf:[28,45],adf:[14,28],kb:[25,70],fn:15,dm:[35,70]},{n:"Geliştirme",me:[2.6,2.9],sta:[18,35],ndf:[22,38],adf:[11,24],kb:[20,55],fn:10,dm:[35,75]},{n:"Bitiş",me:[2.65,2.95],sta:[22,40],ndf:[18,32],adf:[9,20],kb:[15,45],fn:8,dm:[35,80]}];
-function bFin(){var b=B_def(),B=BB[b.breed],mx=Math.round(B.fin*1.25),mn=b.bw+30;return Math.max(mn,Math.min(mx,b.fin))}
-function BREQ(){var b=B_def(),B=BB[b.breed],sbw=0.96*b.bw,sx=b.sex==="b"?1.15:1,fin=0.96*bFin(),comp=0.8+0.05*((b.bcs-1)*2),a2=0.0007*(20-b.temp);
- var w=Math.pow(sbw,0.75),nem=w*(0.077*B.be*comp*sx+a2)*CALB;
+function bFin(){var b=BA(),B=BB[b.breed],mx=Math.round((b.hf?b.fin:B.fin)*1.25),mn=b.bw+30;return Math.max(mn,Math.min(mx,b.fin))}
+function BREQ(){var b=BA(),B=BB[b.breed],sbw=0.96*b.bw,sx=b.sex==="b"?1.15:1,fin=0.96*bFin(),comp=0.8+0.05*((b.bcs-1)*2),a2=0.0007*(20-b.temp),CAL=b.hf?0.95:CALv();
+ var w=Math.pow(sbw,0.75),nem=w*(0.077*B.be*comp*sx+a2)*CAL+(b.hf&&b.dp>=190?pregNEL(b.dp):0);
  var eqsbw=sbw*478/fin,eqebw=0.891*eqsbw,swg=b.adg/1000*0.96,ebg=0.956*swg;
- var re0=0.0635*Math.pow(eqebw,0.75)*Math.pow(ebg,1.097),re=re0*CALB;
+ var re0=0.0635*Math.pow(eqebw,0.75)*Math.pow(ebg,1.097),re=re0*CAL;
  var mpm=3.8*w,npg=Math.max(0,swg*(268-29.4*re0/swg)),eff=Math.max(0.492,0.834-0.00114*eqsbw),mpg=npg/eff;
  var ca=(0.0154*sbw+0.071*npg)/0.5,ph=(0.016*sbw+0.039*npg)/0.68;
- return{sbw:sbw,w:w,nem:nem,re:re,eqsbw:eqsbw,eqebw:eqebw,eff:eff,mpm:mpm,mpg:mpg,mp:mpm+mpg,ca:ca,ph:ph,swg:swg,phase:bPhase()}}
-function bDMI(nema){var b=B_def();nema=Math.max(0.95,nema);var d=0.96*b.bw*(0.01245+0.019218*nema-0.007259*nema*nema);d*=0.94;if(b.ion)d*=0.97;return d}
+ return{cal:CAL,sbw:sbw,w:w,nem:nem,re:re,eqsbw:eqsbw,eqebw:eqebw,eff:eff,mpm:mpm,mpg:mpg,mp:mpm+mpg,ca:ca,ph:ph,swg:swg,phase:bPhase()}}
+function bDMI(nema){var b=BA();nema=Math.max(0.95,nema);var d=0.96*b.bw*(0.01245+0.019218*nema-0.007259*nema*nema);if(!b.hf)d*=0.94;if(b.ion)d*=0.97;return d}
 /* dm kg KM, meT Mcal ME toplam, cpG g HP toplam -> enerji ve proteine göre artış */
 function bGain(dm,meT,cpG){var R=BREQ(),mec=dm>0?meT/dm:0,nema=nemF(mec),nega=negF(mec);if(!(dm>0)||nega<=0.05)return{adg:0,adgp:0,re:0,nema:nema,nega:nega,ffm:0};
  var cap=bDMI(nema)*1.15,capped=dm>cap;if(capped){var k=cap/dm;meT*=k;cpG*=k;dm=cap}
- var ffm=R.nem/nema,nefg=Math.max(0,(dm-ffm)*nega),re=nefg/CALB,ebg=re>0?12.341*Math.pow(re,0.9116)*Math.pow(R.eqebw,-0.6837):0,adg=ebg/0.956/0.96*1000;
+ var ffm=R.nem/nema,nefg=Math.max(0,(dm-ffm)*nega),re=nefg/R.cal,ebg=re>0?12.341*Math.pow(re,0.9116)*Math.pow(R.eqebw,-0.6837):0,adg=ebg/0.956/0.96*1000;
  var mps=cpG*0.66,mpg=mps-R.mpm,npg=Math.max(0,mpg*R.eff),swgp=(npg+29.4*re)/268,adgp=Math.max(0,swgp/0.96*1000);
  return{adg:adg,adgp:adgp,re:re,nema:nema,nega:nega,ffm:ffm,mps:mps,capped:capped,cap:cap}}
 function bMEreq(mec){var R=BREQ(),nema=nemF(mec),nega=negF(mec);if(nema<=0.1||nega<=0.05)return 1e9;return (R.nem/nema+R.re/nega)*mec}
 function cardB(name,sc,why,act,note){var l=sc>=4?["Yüksek risk","no"]:sc>=2?["Orta risk","wa"]:["Düşük risk","ok"];return '<div class="rk"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'+(why.length?'<ul class="nt">'+why.map(function(x){return '<li>'+x+'</li>'}).join("")+'</ul>':'<p class="nt" style="padding:0;margin:2px 0;color:var(--mu)">Belirgin risk işareti yok.</p>')+(sc>=2&&act?'<p style="margin:4px 0;font-size:13px"><b>Ne yapılmalı:</b> '+act+'</p>':'')+(note?'<small>'+note+'</small>':'')+'</div>'}
-function renderCmpBesi(){var el=$("cmp"),b=B_def(),B=BB[b.breed];
+function renderCmpBesi(){var el=$("cmp"),b=BA(),B=BB[b.breed],HF=!!b.hf;
  var it=[];S.feeds.forEach(function(x){if(x.on&&x.kg>0&&x.dm>0)it.push({x:x,d:x.kg*x.dm/100,p:x.p||0})});
  if(!it.length){el.innerHTML="";return}
- var m=metrics(it),dm=m.dmi,R=BREQ(),P=BPH[R.phase],g=bGain(dm,m.meT,m.cp*dm*10),dmiR=bDMI(g.nema);
+ var m=metrics(it),dm=m.dmi,R=BREQ(),P=PHT(),g=bGain(dm,m.meT,m.cp*dm*10),dmiR=bDMI(g.nema);
  var cpT=Math.min(17,Math.max(11.5,R.mp/0.66/(dmiR*10)));
  var adg=Math.min(g.adg,g.adgp),lim=g.adg<=g.adgp?"enerji":"protein",days=adg>50?(bFin()-b.bw)/(adg/1000):0,fcr=adg>50?dm/(adg/1000):0,ckg=adg>50?m.cost/(adg/1000):0;
  var caP=m.ca,pP=m.ph,cpr=pP>0?caP/pP:0,kp=m.kaba,sta=m.sta;
@@ -793,21 +817,22 @@ function renderCmpBesi(){var el=$("cmp"),b=B_def(),B=BB[b.breed];
   if(v<lo-1e-9){st="↓ Düşük";c="no";notes.push({m:p[5],d:(lo-v)/Math.abs(lo||1)})}else if(v>hi+1e-9){st="↑ Yüksek";c="no";notes.push({m:p[6],d:(v-hi)/Math.abs(hi||1)})}else{st="✓ Uygun";c="ok";okc++}
   return '<tr><td>'+p[0]+'</td><td>'+f(v,p[4])+'</td><td>'+f(lo,p[4])+'–'+f(hi,p[4])+'</td><td class="'+c+'">'+st+'</td></tr>'}).join("");
  /* durum */
- var finW=bFin()!==b.fin?'<p class="wa" style="margin:0 0 6px;font-size:13px"><b>Hedef kesim ağırlığı '+f(b.fin,0)+' kg bu ırk için olağan dışı;</b> hesapta '+f(bFin(),0)+' kg kullanıldı ('+B.n+' için tipik '+B.fin+' kg). Hedef ağırlık, hayvanın yağlanıp kesime geldiği ağırlıktır; mevcut ağırlıktan en az 30 kg, ırk tipik değerinin en çok %25 üstü olabilir.</p>':'';
+ var finW=HF?'':bFin()!==b.fin?'<p class="wa" style="margin:0 0 6px;font-size:13px"><b>Hedef kesim ağırlığı '+f(b.fin,0)+' kg bu ırk için olağan dışı;</b> hesapta '+f(bFin(),0)+' kg kullanıldı ('+B.n+' için tipik '+B.fin+' kg). Hedef ağırlık, hayvanın yağlanıp kesime geldiği ağırlıktır; mevcut ağırlıktan en az 30 kg, ırk tipik değerinin en çok %25 üstü olabilir.</p>':'';
  var tgtA=b.adg,ratio=tgtA>0?adg/tgtA:1,vd=ratio<0.85?["Artış hedefin altında","no"]:ratio>1.15?["Artış hedefin üstünde","ok"]:["Artış hedefe uygun","ok"];
  var fut=[],sol=[],li=function(t){return '<li>'+t+'</li>'};
- fut.push('Bu rasyonla günlük artış yaklaşık '+f(adg,0)+' g ('+lim+' sınırlıyor). Hedef '+f(bFin(),0)+' kg\'a yaklaşık '+f(days,0)+' günde ulaşılır'+(tgtA>0&&adg>50?'; hedef artışla '+f((bFin()-b.bw)/(tgtA/1000),0)+' gün.':'.'));
+ if(HF){var tw=0.85*b.fin,bw1=0.55*b.fin,dT=adg>50?(tw-b.bw)/(adg/1000):0,ageC=b.age+dT/30.4;fut.push('Bu rasyonla günlük artış yaklaşık '+f(adg,0)+' g ('+lim+' sınırlıyor); hedef '+f(tgtA,0)+' g (ilk doğumu '+f(b.cage,0)+' ayda yapmak için). Bu gidişle doğum öncesi ağırlığa ('+f(tw,0)+' kg, olgun ağırlığın %85\'i) yaklaşık '+f(ageC,0)+' aylıkken ulaşır.'+(b.bw<bw1?' Tohumlama ağırlığına ('+f(bw1,0)+' kg, %55) yaklaşık '+f((bw1-b.bw)/Math.max(0.05,adg/1000),0)+' gün var.':''));}
+ else fut.push('Bu rasyonla günlük artış yaklaşık '+f(adg,0)+' g ('+lim+' sınırlıyor). Hedef '+f(bFin(),0)+' kg\'a yaklaşık '+f(days,0)+' günde ulaşılır'+(tgtA>0&&adg>50?'; hedef artışla '+f((bFin()-b.bw)/(tgtA/1000),0)+' gün.':'.'));
  if(g.capped)fut.push('Verilen yem ('+f(dm,1)+' kg KM) hayvanın yiyebileceğinin üstünde; hesapta en çok '+f(g.cap,1)+' kg KM yenebileceği varsayıldı, fazlası yem artığı olur.');
  if(g.adg<g.adgp*0.9)fut.push('Enerji sınırlayıcı: protein '+f(g.adgp,0)+' g/gün taşıyabilir, enerji '+f(g.adg,0)+' g/gün. Enerji yoğunluğunu artırmadan fazla protein boşa gider.');
  else if(g.adgp<g.adg*0.9)fut.push('Protein sınırlayıcı: enerji '+f(g.adg,0)+' g/gün taşıyabilir, protein '+f(g.adgp,0)+' g/gün. Protein artırmak artışı yükseltir.');
- fut.push('Tahmini karkas: '+f(bFin()*B.y/100,0)+' kg (randıman %'+B.y+', ırk ortalaması).');
+ if(!HF)fut.push('Tahmini karkas: '+f(bFin()*B.y/100,0)+' kg (randıman %'+B.y+', ırk ortalaması).');
  if(ratio<0.85){var need=bMEreq(m.me)-Math.min(m.meT,(g.cap||dm)*m.me);sol.push('Hedef artış için günlük yaklaşık '+f(Math.max(0,need),1)+' Mcal ME daha gerekiyor. Tüketim beklenenin altındaysa önce yem miktarını, değilse rasyonun enerji yoğunluğunu (besi yemi, flake, tahıl) artırın.')}
  if(m.cp<cpT-1)sol.push('Protein düşük (%'+f(m.cp,1)+', hedef %'+f(cpT,1)+'): besi yemi payını veya küspeyi artırın.');
  if(cpr<1.5)sol.push('Ca:P oranı '+f(cpr,1)+': üriner taş için kritik. Kireç taşı ekleyip oranı 2:1\'e getirin; tuz ve su erişimini kontrol edin.');
  if(!sol.length)sol.push('Rasyon hedefe uygun. Tartımla doğrulayın; faz değişiminde kesif yemi kademeli artırın.');
  else sol.push('Tüm rasyonu en düşük maliyetle dengelemek için Çözüm asistanını kullanın.');
- var head='<h2>Durum</h2>'+finW+'<p class="'+vd[1]+'" style="margin:0 0 4px;font-weight:600">'+vd[0]+' <span style="font-weight:400;font-size:13px;color:var(--mu)">'+P.n+', '+f(b.bw,0)+' kg, '+BB[b.breed].n+'</span></p>'
- +'<div class="sum"><div><b>'+f(adg,0)+' g</b><span>Günlük canlı ağırlık artışı (hedef '+f(tgtA,0)+')</span></div><div><b>'+f(g.adg,0)+' / '+f(g.adgp,0)+' g</b><span>Enerjiye / proteine göre artış</span></div><div><b>'+f(fcr,1)+'</b><span>Yem dönüşümü (kg KM / kg artış)</span></div><div><b>'+(m.cost>0?f(ckg)+' TL':'—')+'</b><span>kg canlı ağırlık artışı maliyeti'+(m.cost>0?'':' (yem fiyatları girilmedi)')+'</span></div>'+(b.price>0&&adg>50&&m.cost>0?'<div><b>'+f(adg/1000*b.price-m.cost)+' TL</b><span>Günlük brüt kazanç (artış × fiyat − yem)</span></div>':'')+'</div>'
+ var head='<h2>Durum</h2>'+finW+'<p class="'+vd[1]+'" style="margin:0 0 4px;font-weight:600">'+vd[0]+' <span style="font-weight:400;font-size:13px;color:var(--mu)">'+P.n+', '+f(b.bw,0)+' kg, '+(HF?BREEDS[S.breed].n+' düve, '+f(b.age,0)+' ay':BB[b.breed].n)+'</span></p>'
+ +'<div class="sum"><div><b>'+f(adg,0)+' g</b><span>Günlük canlı ağırlık artışı (hedef '+f(tgtA,0)+')</span></div>'+(function(){var st=!HF&&window.wtStats?wtStats():null;return st?'<div><b>'+f(st.adg,0)+' g</b><span>Gerçek artış, tartımlardan ('+f(st.days,0)+' gün; tahminden '+(st.adg>adg?'+':'')+f(st.adg-adg,0)+' g)</span></div>':''})()+'<div><b>'+f(g.adg,0)+' / '+f(g.adgp,0)+' g</b><span>Enerjiye / proteine göre artış</span></div><div><b>'+f(fcr,1)+'</b><span>Yem dönüşümü (kg KM / kg artış)</span></div><div><b>'+(m.cost>0?f(ckg)+' TL':'—')+'</b><span>kg canlı ağırlık artışı maliyeti'+(m.cost>0?'':' (yem fiyatları girilmedi)')+'</span></div>'+(b.price>0&&adg>50&&m.cost>0?'<div><b>'+f(adg/1000*b.price-m.cost)+' TL</b><span>Günlük brüt kazanç (artış × fiyat − yem)</span></div>':'')+'</div>'
  +'<h2>Gelecek</h2><ul class="nt">'+fut.map(li).join("")+'</ul><h2>Çözümler</h2><ul class="nt">'+sol.map(li).join("")+'</ul>';
  /* riskler */
  var a=0,aw=[],bl=0,bw=[],u=0,uw=[],h=0,hw=[];
@@ -828,7 +853,19 @@ function renderCmpBesi(){var el=$("cmp"),b=B_def(),B=BB[b.breed];
  if(R.phase===2&&days>120){h+=1;hw.push('Uzun bitiş dönemi ('+f(days,0)+' gün): rumen hasarı birikir')}
  if(a>=2){h+=1;hw.push('Asidoz riski karaciğer apsesine zemin hazırlar')}
  var heat=b.temp>=30?'<p class="wa" style="margin:4px 0;font-size:13px"><b>Isı stresi:</b> '+f(b.temp,0)+' °C; yem tüketimi NASEM\'e göre %10–35 düşer, gece serinliği önemli. Gölge, su ve sabah-akşam yemleme uygulayın.</p>':'';
- var risks='<h2>Sağlık riskleri (besi)</h2>'+heat
+ var risks;
+ if(HF){var ov=0,ovw=[],ug=0,ugw=[],pre=b.bw<0.55*b.fin;
+  if(pre&&adg>1000){ov+=3;ovw.push('Tohumlama öncesi dönemde artış '+f(adg,0)+' g/gün (900–1.000 g üstü: meme dokusu yağlanır, ileride süt verimi düşer)')}else if(pre&&adg>900){ov+=1;ovw.push('Artış '+f(adg,0)+' g/gün, üst sınırda')}
+  if(b.bcs>=3.75){ov+=2;ovw.push('Kondisyon '+f(b.bcs,2)+' (3,75 üstü: yağlı düve, güç doğum ve doğum sonrası sorun riski)')}
+  if(m.me>P.me[1]){ov+=1;ovw.push('Enerji yoğunluğu '+f(m.me,2)+' Mcal/kg dönem için yüksek')}
+  if(adg<600){ug+=2;ugw.push('Artış '+f(adg,0)+' g/gün (600 g altı: ilk doğum gecikir)')}
+  if(adg<tgtA*0.8){ug+=1;ugw.push('Hedefin ('+f(tgtA,0)+' g) %80\'inin altında; ilk doğum yaşı '+f(b.cage,0)+' ayı aşar')}
+  if(m.cp<cpT-1){ug+=1;ugw.push('Protein düşük: iskelet ve kas gelişimi yavaşlar')}
+  risks='<h2>Sağlık ve gelişim riskleri (düve)</h2>'+heat
+  +cardB('Aşırı besleme / yağlanma',ov,ovw,'Tohumlama öncesi artışı 700–900 g/gün aralığında tutun; enerji yoğunluğunu düşürün, kaba yemi artırın; kondisyonu 3,0–3,5 arasında hedefleyin.','NRC 2001: puberte öncesi Holstein düvelerde 0,9–1,0 kg/gün üstü artış meme gelişimini olumsuz etkiler.')
+  +cardB('Yetersiz büyüme',ug,ugw,'Enerji ve protein yoğunluğunu artırın; tohumlama için olgun ağırlığın %55\'i (ör. Holstein ~375 kg, 13–15 ay) hedeflenir.','')
+  +cardB('Asidoz (rumen asiditesi)',a,aw,'Kaba yemi artırın, nişastayı düşürün; kesif yemi kademeli artırın.','Düvelerde kaba yem payı en az %50–65 olmalı.')}
+ else risks='<h2>Sağlık riskleri (besi)</h2>'+heat
  +cardB('Asidoz (rumen asiditesi)',a,aw,'Kaba yemi dönem alt sınırının üstüne çıkarın, nişastayı düşürün; kesif yemi en az 3–4 haftada kademeli artırın; uzun kıyımlı saman verin; iyonofor ve tampon için danışmanınıza sorun.','GfE rumende çözünen nişasta+şeker için en çok %28, NASEM ABD bitiş rasyonlarında %5–10 kaba yem bildirir; bu program Türkiye koşulları için ara değerleri kullanır. Elek (peNDF) ölçümü ayrıca kontrol edilmeli.')
  +cardB('Şişme (timpani)',bl,bw,'Kaba yemi artırın, yoncayı sınırlayın, tahılı kaba kırın; şişme görülürse veterinere danışın.','')
  +cardB('Üriner taş (idrar taşı)',u,uw,'Ca:P oranını 2:1\'e getirin (kireç taşı), rasyona %0,5–1 tuz ekleyin, su her zaman bol ve temiz olsun; gerekirse amonyum klorür için danışmanınıza sorun.','NASEM 2016: Ca:P en az 2:1 fosfat taşlarını önler; kabul edilebilir aralık 1:1–4:1.')
@@ -836,13 +873,13 @@ function renderCmpBesi(){var el=$("cmp"),b=B_def(),B=BB[b.breed];
  el.innerHTML=head+risks+'<h2>Rasyon değerlendirmesi</h2><table class="c"><tr><th>Parametre</th><th>Çiftlik</th><th>Referans</th><th>Durum</th></tr>'+tr+'</table><p class="tot" style="margin:10px 0 4px">'+rows.length+' parametreden '+okc+' tanesi uygun</p>'+(notes.length?'<ul class="nt">'+notes.sort(function(x,y){return y.d-x.d}).map(function(n,i){return '<li>'+(i===0?'<b>Öncelik: </b>':'')+n.m+'</li>'}).join("")+'</ul>':'')
  +'<p class="s"><b>Dönem: '+P.n+'.</b> İdame '+f(R.nem,1)+' Mcal NEm, hedef artış için '+f(R.re,1)+' Mcal NEg; metabolik protein '+f(R.mp,0)+' g/gün (HP hedefi %'+f(cpT,1)+'); beklenen KM tüketimi '+f(dmiR,1)+' kg (NASEM 2016, implant yok'+(b.ion?', iyonofor':'')+'). Dönem aralıkları: GfE Gruber 2024 (ME 11,1–11,7 MJ/kg KM, kaba yem NDF ≥ %25 ile %35 kaba), NASEM 2016 (ABD bitiş: %5–10 kaba, Ca:P ≥ 2:1), CNCPS (peNDF ≥ %7–10). Nişasta değerleri kütüphane tahminidir; analizle düzeltin.</p>'
  +'<div class="sum"><div><b>'+f(m.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div></div>'}
-function tgtB(Dc){var R=BREQ(),P=BPH[R.phase],b=B_def();
+function tgtB(Dc){var R=BREQ(),P=PHT(),b=BA();
  var it=[];S.feeds.forEach(function(x){if(x.on&&x.kg>0&&x.dm>0)it.push({x:x,d:x.kg*x.dm/100,p:x.p||0})});var m=metrics(it);
  var g=bGain(Dc,m.meT,m.cp*Dc*10),dmiR=bDMI(g.nema),low=Dc<0.85*dmiR,dlo=Math.min(Dc*0.98,dmiR*1.1),dhi=low?Math.max(dlo,dmiR*1.1):Math.max(dlo,Math.min(Dc*1.08,dmiR*1.05));
  var mec=Math.min(P.me[1],Math.max(P.me[0],m.me||2.7)),mer=bMEreq(mec);
  var cpT=Math.min(17,Math.max(11.5,R.mp/0.66/(dmiR*10)));
  return{fL:1/KL,low:low,Dc:Dc,R:{dmi:dmiR,cp:cpT},s:{ca:R.ca/Dc/10,p:R.ph/Dc/10},e:{req:mer,lim:[0.98,1.12]},rlo:0.98,rhi:Math.max(1.15,(m.meT/mer)*1.05),dlo:dlo,dhi:dhi,meLo:P.me[0],meHi:P.me[1],fnMin:P.fn,dmLo:P.dm[0],dmHi:P.dm[1],
   par:[["cp",cpT-1,Math.max(cpT+2.5,13.5)],["ndf",P.ndf[0],P.ndf[1]],["adf",P.adf[0],P.adf[1]],["kb",P.kb[0],P.kb[1]],["ca",R.ca/Dc/10,1.0],["ph",R.ph/Dc/10,0.5],["sta",P.sta[0],P.sta[1]]]}}
-if(S.type==="besi"){renderBesiIn();renderCmp()}
+if(S.type==="besi"||isHf()){if(S.type==="besi")renderBesiIn();renderCmp()}
 </script>
 </body></html>
