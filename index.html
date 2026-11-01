@@ -211,7 +211,7 @@ FAM["Buzağı Plus"]=FY(11.81,18.49,8.68,6.79);
 FAM["Buzağı Büyütme"]=FY(11.81,18.49,8.61,6.75);
 FAM["Besi Plus"]=FY(11.77,16.33,9.67,7.28);
 FAM["Besi Geliştirme"]=FY(11.88,16.54,9.12,7.22);
-function LB(cp,meMid,ni,o,extra){o=o||{};return L("Etiket değeri",88,meMid,cp,o.ndf||24.9,o.adf||11.6,o.ca||0.92,o.p||0.63,"Etiket tablosu: ham protein %"+cp+", nişasta %"+ni+", ME "+meMid+" kcal/kg (KM bazında kabul edildi; yaş yem bazındaysa söyleyin). KM %88, NDF, ADF, Ca ve P tabloda yok, Yemci Bey yaş analizlerine benzer tahmin. Gerçek analizinizi girin."+(extra||""))}
+function LB(cp,meMid,ni,o,extra){o=o||{};return L("Etiket değeri",88,meMid,cp,o.ndf||24.9,o.adf||11.6,o.ca||0.92,o.p||0.63,"Etiket tablosu: ham protein %"+cp+", nişasta %"+ni+", ME "+meMid+" kcal/kg (KM bazında). KM %88, NDF, ADF, Ca ve P tabloda yok, Yemci Bey yaş analizlerine benzer tahmin. Gerçek analizinizi girin."+(extra||""))}
 FAM["Süt 21"].push(LB(21,2875,28));FAM["Süt 20 Plus"].push(LB(20,2775,28));FAM["Süt 19 Plus"].push(LB(19,2725,28));FAM["Prenses 19"].push(LB(20,2825,29));
 FAM["Yemcibey Süt Pik Yemi"]=[LB(23,2975,27)];FAM["Yemcibey Kuru Dönem Yemi"]=[LB(16,2625,28)];FAM["Yemcibey Yem 7 Süt"]=[LB(19,2675,21)];FAM["Yemcibey Çiftlikte Süt"]=[LB(19,2675,21)];
 FAM["Yemcibey Tahıl Kardeşliği"]=[LB(13,2775,50,{ndf:15,adf:4.5,ca:0.6,p:0.45})];FAM["Yemcibey Protein Kardeşliği"]=[LB(35,3125,10,{ndf:14,adf:8,ca:0.7,p:0.7})];
