@@ -685,7 +685,7 @@ function solve(cand,cur,price,T){var D=isDry();
  var it=cand.map(function(f,q){return{x:f,d:Math.max(0,x[q]),p:price[q]}}).filter(function(o){return o.d>0.004});
  var obj=0;for(i=0;i<nv;i++)obj+=c[i]*x[i];
  return{x:x.slice(0,n),obj:obj}}
-var last=null;
+var last=null,FORCE=null;
 function run(){
  var out=$s("solOut");
  var cur=S.feeds.filter(function(x){return x.on&&x.kg>0&&x.dm>0});
@@ -714,7 +714,8 @@ function run(){
   singles.sort(function(a,b){return a.r.obj-b.r.obj});
   var ownS=singles.filter(function(z){return OWN.test(z.L.fam||z.L.n)});
   if(ownS.length&&singles.length&&ownS[0].r.obj<=singles[0].r.obj*1.15+1){var o=ownS[0];singles=[o].concat(singles.filter(function(z){return z!==o}))}
-  if(singles.length){mode=2;res=singles[0].r;cand=singles[0].cand;price=singles[0].price;alts=singles.slice(1,4).map(function(s){return s.L})}
+  if(FORCE){var fs=singles.filter(function(z){return z.L===FORCE})[0];if(fs)singles=[fs].concat(singles.filter(function(z){return z!==fs}))}
+  if(singles.length){mode=2;res=singles[0].r;cand=singles[0].cand;price=singles[0].price;alts=singles.slice(1,9).map(function(z){var it2=[];z.cand.forEach(function(x,q){if(z.r.x[q]>0.004)it2.push({x:x,d:z.r.x[q],p:z.price[q]})});return{L:z.L,cost:metrics(it2).cost,own:OWN.test(z.L.fam||z.L.n)}}).sort(function(a,b){return (b.own?1:0)-(a.own?1:0)||a.cost-b.cost})}
   else{var own=lib.filter(function(L){return OWN.test(L.fam||L.n)}),ownm=own.concat(lib.filter(function(L){return isMin(L)}));var r=own.length?pack(cur.concat(own),cur):null;if(!r&&own.length)r=pack(cur.concat(ownm),cur);if(r){mode=3;res=r}else{var all=cur.concat(lib.filter(function(L){return PP(L)>0||true}));r=pack(all,cur);if(r){mode=3;res=r}}}
  }
  }
@@ -745,18 +746,19 @@ function run(){
  h+=GEN?T.sum(bb,ba,mb,ma):BES?'<div class="sum"><div><b>'+f(mb.cost)+' → '+f(ma.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div><div><b>'+f(Math.min(bb.adg,bb.adgp),0)+' → '+f(Math.min(ba.adg,ba.adgp),0)+' g</b><span>günlük canlı ağırlık artışı (hedef '+f(BA().adg,0)+')</span></div><div><b>'+(bb.fcr?f(bb.fcr,1):'—')+' → '+(ba.fcr?f(ba.fcr,1):'—')+'</b><span>yem dönüşümü, kg KM / kg artış</span></div><div><b>'+(bb.ckg?f(bb.ckg):'—')+' → '+(ba.ckg?f(ba.ckg):'—')+' TL</b><span>kg canlı ağırlık artışı maliyeti</span></div></div>':'<div class="sum"><div><b>'+f(mb.cost)+' → '+f(ma.cost)+' TL</b><span>baş başına günlük yem maliyeti</span></div>'+(isDry()?'':'<div><b>'+f(bb.allow,1)+' → '+f(ba.allow,1)+' kg</b><span>rasyonun taşıdığı süt (alınan '+f(S.b.milk,1)+')</span></div>')+'<div><b>'+f(bb.dbw,0)+' → '+f(ba.dbw,0)+' kg</b><span>30 günde canlı ağırlık</span></div></div>';
  var est=items.filter(function(i){return i.est});
  if(est.length)h+='<p class="s">Fiyatı girilmemiş hammaddelerde benzer yemlerin ortalama fiyatı varsayıldı: '+esc(est.map(function(i){return i.x.n.replace(/, ?KM %[0-9]+/,"")+' ('+f(PP(i.x))+' TL/kg)'}).join(", "))+'. Gerçek fiyatı girin.</p>';
- if(alts.length)h+='<p class="s">Alternatif eklemeler (aynı sonucu veren): '+esc(alts.map(function(L){return L.n.replace(/, ?KM %[0-9]+/,"")}).join(", "))+'.</p>';
+ if(alts.length)h+='<h2>Çiftlikte hangisi varsa</h2><p class="s">Aynı hedefi tek ek hammaddeyle sağlayan diğer seçenekler (günlük yem maliyeti). Elinizde olanı seçin; öneri o hammaddeyle yeniden hesaplanır.</p><div class="fl">'+alts.map(function(a,i){return '<div class="fi fr" style="gap:8px"><div class="fn"><b>'+esc(a.L.n.replace(/, ?KM %[0-9]+/,""))+(a.own?' <span style="color:var(--ac);font-weight:600">bizim</span>':'')+'</b><span>'+f(a.cost)+' TL/baş/gün</span></div><button class="ed" data-alt="'+i+'">Bununla çöz</button></div>'}).join("")+'</div>';
  h+='<div class="addrow" style="margin-top:10px"><button class="btn" id="solApply" style="margin:0">Öneriyi rasyona uygula</button>'+(S.undo?'<button class="btn l" id="solUndo" style="margin:0;width:auto;padding:0 16px">Geri al</button>':'')+'</div>';
  h+='<p class="s" style="margin-top:8px">Miktarlar yaş yem, baş başına günlük. Değişikliği 1-2 hafta içinde kademeli yapın; kesif yemi bir günde %10-15\'ten fazla artırmayın. Öneri hesaplanmış bir tahmindir; analiz değerlerinizle ve '+(BES||(GEN&&KT==='buzagi')||(GEN&&kuzu())?'tartım':'süt kontrolü')+'yle doğrulayın.</p>';
- out.innerHTML=h;last={items:items};
- $s("solApply").onclick=apply;var u=$s("solUndo");if(u)u.onclick=undo}
+ out.innerHTML=h;last={items:items,alts:alts};
+ $s("solApply").onclick=apply;var u=$s("solUndo");if(u)u.onclick=undo;
+ Array.prototype.forEach.call(out.querySelectorAll("[data-alt]"),function(b){b.onclick=function(){FORCE=last.alts[+b.dataset.alt].L;b.textContent="Hesaplanıyor...";setTimeout(function(){try{run()}catch(e){out.innerHTML='<div class="err">Hesaplama sırasında hata oluştu.</div>'}FORCE=null;var so=$s("solOut");if(so)so.scrollIntoView({behavior:"smooth",block:"start"})},30)}})}
 function apply(){if(!last)return;S.undo=S.feeds.map(function(x){return{on:x.on,kg:x.kg||0}});
  var m={};last.items.forEach(function(i){m[S.feeds.indexOf(i.x)]=i.now});
  S.feeds.forEach(function(x,q){if(x.on&&x.kg>0&&!(q in m))x.kg=0;if(q in m){x.kg=m[q];x.on=true}});
  renderFarm();renderCmp();save();$s("solOut").innerHTML='<p class="ok" style="font-weight:600">Öneri rasyona uygulandı.</p><p class="s">Yeni eklenen hammaddelerin fiyatını girmeyi unutmayın. <button class="ed" id="solUndo2">Geri al</button></p>';$s("solUndo2").onclick=undo}
 function undo(){if(!S.undo)return;S.feeds.forEach(function(x,q){var u=S.undo[q];if(u){x.on=u.on;x.kg=u.kg}});S.undo=null;renderFarm();renderCmp();save();$s("solOut").innerHTML='<p class="s">Önceki rasyona dönüldü.</p>'}
 var box=$s("sol");box.innerHTML='<h2>Çözüm asistanı</h2><p class="s">Önce mevcut hammaddelerin miktarlarını değiştirerek, yetmezse kütüphaneden hammadde ekleyerek rasyonu referans aralıklarına getirir.</p><label style="display:flex;gap:8px;align-items:flex-start;margin:6px 0;font-size:13px"><input type="checkbox" id="solFull" style="width:auto;margin-top:3px"><span>Enerji açığını da kapat (daha pahalı olabilir)</span></label><button class="btn" id="solBtn">Çözüm öner</button><div id="solOut"></div>';
-$s("solBtn").onclick=function(){var b=this;b.textContent="Hesaplanıyor...";setTimeout(function(){try{run()}catch(e){$s("solOut").innerHTML='<div class="err">Hesaplama sırasında hata oluştu.</div>'}b.textContent="Çözüm öner"},30)};
+$s("solBtn").onclick=function(){var b=this;FORCE=null;b.textContent="Hesaplanıyor...";setTimeout(function(){try{run()}catch(e){$s("solOut").innerHTML='<div class="err">Hesaplama sırasında hata oluştu.</div>'}b.textContent="Çözüm öner"},30)};
 window.metrics=metrics;window.isMin=isMin;window.solve=solve;window.setLock=function(v){LOCKOWN=v};
 })();
 </script>
