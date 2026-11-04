@@ -718,7 +718,8 @@ function run(){
  var BPHr=HF?/Düve/:[/Besi Başlangıç|Besi Plus/,/Besi Geliştirme/,/Besi Bitiş|Ekstra Besi/][BES?bPhase():0];
  var CW=KT==="buzagi"?cWeaned():false;
  var EXL=EX();
- var lib=S.feeds.filter(function(x){if(x.on&&x.kg>0)return false;var fnm=x.fam||x.n;if(EXL.indexOf(fnm)>=0)return false;if(KT==="buzagi"&&OWN.test(fnm)&&(CW?!/Büyütme/.test(fnm):/Büyütme/.test(fnm)))return false;if(BES&&OWN.test(fnm)&&(HF?!/Düve/.test(fnm):(/Besi/.test(fnm)&&!BPHr.test(fnm))))return false;if(!(x.dm>0)||!(x.me>0||x.cp>0||x.ca>0))return false;if(NOT.test(x.fam||x.n))return false;if(/simit/i.test(x.n))return false;var mn=isMin(x);if(!mn&&!x.k&&x.me<2.0)return false;if(!mn&&!(x.ndf>0)&&!/Melas|Bypass/.test(x.n))return false;return true});
+ var curF={};cur.forEach(function(c){if(c.fam)curF[c.fam]=1});
+ var lib=S.feeds.filter(function(x){if(x.on&&x.kg>0)return false;var fnm=x.fam||x.n;if(EXL.indexOf(fnm)>=0)return false;if(x.fam&&curF[x.fam])return false;if(KT==="buzagi"&&OWN.test(fnm)&&(CW?!/Büyütme/.test(fnm):/Büyütme/.test(fnm)))return false;if(BES&&OWN.test(fnm)&&(HF?!/Düve/.test(fnm):(/Besi/.test(fnm)&&!BPHr.test(fnm))))return false;if(!(x.dm>0)||!(x.me>0||x.cp>0||x.ca>0))return false;if(NOT.test(x.fam||x.n))return false;if(/simit/i.test(x.n))return false;var mn=isMin(x);if(!mn&&!x.k&&x.me<2.0)return false;if(!mn&&!(x.ndf>0)&&!/Melas|Bypass/.test(x.n))return false;return true});
  var mode=0,res=null,added=[],alts=[],cand,price,curv;
  function pack(c,list){cand=c;price=c.map(function(x){return OWN.test(x.fam||x.n)?PP(x)*0.8:PP(x)});curv=c.map(function(x){var q=cur.indexOf(x);return q>=0?curD[q]:0});return solve(cand,curv,price,T)}
  var relaxed=false;
