@@ -1260,7 +1260,7 @@ function microMix(m){var K=S.type,P=xProf(),D=m.dm_;if(!(D>0))return "";
  /* --- Fosfor ve kalsiyum (ana tablo hedefleri) --- */
  var caT,pT,caX;if(sut&&!hf){var G=SG();caT=G.ca;pT=G.p;caX=G.cax||1.2}else if(K==="besi"||hf){var RB=BREQ(),dR=Math.max(D,bDMI(nemF(2.7)));caT=RB.ca/dR/10;pT=RB.ph/dR/10;caX=1.0}else if(K==="koyun"){var KP=KPT();caT=KP.ca[0];pT=KP.p[0];caX=KP.ca[1]}else{caT=0.6;pT=0.4;caX=1.1}
  var anion=dry&&P.dcad&&m.dcad<0,anionPlan=dry&&P.dcad&&(m.dcad<0||m.dcad>P.dcad[1]);if(anionPlan){caT=1.0;caX=1.5}
- var ca=m.ca,ph=m.ph;
+ var ca=K==="buzagi"?m.sca:m.ca,ph=K==="buzagi"?m.sph:m.ph;if(K==="buzagi"&&!(m.sdm>0))return '<p class="s">Katkı önerisi için katı yem (başlangıç yemi) girilmeli; süt döneminde mineral sütten gelir.</p>';
  if(ph<pT-0.005){var dcp=gPer(pT+0.01-ph)/0.18;add("dcp",dcp,"fosfor açığı; DCP her 100 g'da 18 g P ve 23 g Ca verir");ca+=Math.min(MICRO.dcp.mx,dcp)*0.23/1000/D*100;ph=pT+0.01}
  if(ca<caT-0.005)add("kir",gPer(caT+0.02-ca)/0.38,"kalsiyum açığı; kireç taşı %38 Ca");
  if(ca>caX+0.02)notes.push("Kalsiyum hedefin üstünde (%"+f(ca,2)+"): rasyondaki kireç taşı/mermer tozunu azaltın"+(dry?", yoncayı sınırlayın":"")+".");if(anionPlan&&ca<1.0)notes.push("Anyonik programda rasyon kalsiyumu %1,0–1,5 olmalı; yukarıdaki kireç taşı bunun için eklendi.");
