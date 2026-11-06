@@ -102,6 +102,8 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('lbNum: 1.000.000→1e6, 0,3→0.3, 1 000→1000, 1.000,5→1000.5',await E(()=>lbNum('1.000.000 IU')===1e6&&lbNum('0,3 mg')===0.3&&lbNum('1 000 mg')===1000&&lbNum('1.000,5')===1000.5));
  const fl=await E(()=>{var L=FL_def();L.v={};flParse("SÜT YEMİ 19\nKullanım: günde 8 kg\nÖnemli: serin yerde saklayın\nAnalitik bileşenler: Ham protein %19, Ham yağ %3,5, Ham selüloz %11, Ham kül %9, Nem %12, Kalsiyum %1,1, Fosfor %0,55, Sodyum %0,3\nSelenyum (Sodyum selenit) 0,3 mg");return {v:L.v,t:L.t}});
  ok('Yem etiketi: kullanım/önemli satırları kül/nem sanılmıyor; selenit→Se',fl.v.kul===9&&fl.v.nem===12&&fl.v.se===0.3&&fl.v.na===0.3&&fl.t==="sut19",JSON.stringify(fl));
+ const gb=await E(()=>{var L=FL_def();L.v={};flParse("Ham protein ©: 19,00| e672 vitamina :90001u\nham yag :%383 | 27490 vitamine :28mg | es çinko 40 mg\nsodyum i x 50 * 17 mg e2 iyot 0,8 mg");return {v:L.v,flag:L.flag}});
+ ok('Karışık OCR metni: sütun ayracı aşılmıyor, eksik virgül ve şüpheli değer ⚠ işaretli',gb.v.hp===19&&gb.v.hy===3.83&&gb.flag.hy&&gb.flag.na&&gb.v.zn===undefined&&gb.v.i===undefined,JSON.stringify(gb));
  const fc=await E(()=>flCalc({hp:19,hy:3.5,hs:11,kul:9,nem:12}));
  ok('Yem etiketi ME tahmini 2.550–2.900 kcal/kg KM',approx(fc.meKM,2550,2900),JSON.stringify({me:fc.meKM,sta:fc.sta}));
  /* Sıfırlama her sekmede hatasız ve premiks/ym korunur */
