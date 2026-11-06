@@ -104,6 +104,8 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Yem etiketi: kullanım/önemli satırları kül/nem sanılmıyor; selenit→Se',fl.v.kul===9&&fl.v.nem===12&&fl.v.se===0.3&&fl.v.na===0.3&&fl.t==="sut19",JSON.stringify(fl));
  const gb=await E(()=>{var L=FL_def();L.v={};flParse("Ham protein ©: 19,00| e672 vitamina :90001u\nham yag :%383 | 27490 vitamine :28mg | es çinko 40 mg\nsodyum i x 50 * 17 mg e2 iyot 0,8 mg");return {v:L.v,flag:L.flag}});
  ok('Karışık OCR metni: sütun ayracı aşılmıyor, eksik virgül ve şüpheli değer ⚠ işaretli',gb.v.hp===19&&gb.v.hy===3.83&&gb.flag.hy&&gb.flag.na&&gb.v.zn===undefined&&gb.v.i===undefined,JSON.stringify(gb));
+ const cem=await E(()=>flCalc({hp:18.03,hy:3.95,hs:7.52,kul:6.6,nem:12.02}).sta);
+ ok('Nişasta tahmini: Cemre Plus NIR %29,4 (etiket HP18/HY3,95/HS7,5/kül6,6) → 25–33',approx(cem,25,33),String(cem));
  const fc=await E(()=>flCalc({hp:19,hy:3.5,hs:11,kul:9,nem:12}));
  ok('Yem etiketi ME tahmini 2.550–2.900 kcal/kg KM',approx(fc.meKM,2550,2900),JSON.stringify({me:fc.meKM,sta:fc.sta}));
  /* Sıfırlama her sekmede hatasız ve premiks/ym korunur */
