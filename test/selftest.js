@@ -179,6 +179,19 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Paylaşım metni ham metin (&amp; yok)',/Arpa & Buğday <ezme>/.test(rt)&&!/&amp;/.test(rt));
  /* Negatif kg kabul edilmiyor */
  ok('Negatif kg/fiyat 0\'a çekiliyor',/S\.feeds\[i\]\[k\]=Math\.max\(0,num\(el\.value\)\)/.test(html)&&/x\[k\]=Math\.max\(0,num\(el\.value\)\)/.test(html));
+ /* Rasyon eksiklerini Premiks sekmesine aktar (V101) */
+ await E(()=>{S.type="sut";S.t.sut.n=40;S.feeds.forEach(x=>{x.on=false;x.kg=0});var set=(re,kg)=>{var x=S.feeds.filter(y=>re.test(y.n))[0];x.on=true;x.kg=kg};set(/^Mısır silajı/,30);set(/^Buğday samanı/,3);set(/^Arpa/,7);set(/^Soya küspesi/,2);S.mk.sel=[];S.mk.rx=null;save();renderSeg();showPanels();renderCmp()});
+ await p.click('#tabs button[data-t="3"]');await p.waitForTimeout(400);
+ const mmb=await p.$('#mmToMk');ok('Süt analizinde "Premiks sekmesine aktar" düğmesi var',!!mmb);
+ if(mmb){await p.click('#mmToMk');await p.waitForTimeout(800);
+  const tx=await E(()=>({type:S.type,an:S.mk.an,n:S.mk.n,conc:S.mk.conc,k:(S.mk.rx&&S.mk.rx.items||[]).map(o=>o.k),out:document.getElementById('mkOut').innerText,w:document.documentElement.scrollWidth}));
+  ok('Aktarım: Premiks sekmesi açılıyor, süt ineği, 40 baş, kesif 9 kg, DCP/kireç/Zn/Se aktarıldı',tx.type==="mikro"&&tx.an==="sut"&&tx.n===40&&tx.conc===9&&['dcp','kir','zn','se'].every(k=>tx.k.includes(k)),JSON.stringify({type:tx.type,an:tx.an,n:tx.n,conc:tx.conc,k:tx.k}));
+  ok('Aktarılan eksikler reçetede: sürü/dönem/g-ton tablosu, "hesap" kanıtı, 390 px',/Katkı reçetesi: Rasyon eksikleri/.test(tx.out)&&/g\/ton kesif/.test(tx.out)&&/hesap/.test(tx.out)&&tx.w<=390,tx.out.slice(0,120)+' w='+tx.w);
+  const cb=await E(()=>{S.mk.sel=["tirnak"];save();mikroSolve();var t=document.getElementById('mkOut').innerText;S.mk.sel=[];return t});
+  ok('Rasyon eksikleri ve seçilen sorun birlikte (Rasyon eksikleri + Tırnak)',/Rasyon eksikleri \+ Tırnak/.test(cb)&&/Biotin/.test(cb)&&/Dikalsiyum fosfat/.test(cb),cb.slice(0,120));
+  const ot=await E(()=>{S.mk.an="koyun";save();renderMikro();var c=document.getElementById('mkBody').innerText,o=document.getElementById('mkOut').innerText;S.mk.an="sut";S.mk.rx.on=false;save();mikroSolve();var off=document.getElementById('mkOut').innerText;document.getElementById('mkRxDel')&&document.getElementById('mkRxDel').click();return {c:c,o:o,off:off,rx:S.mk.rx}});
+  ok('Başka hayvanda aktarılan eksikler reçeteye girmiyor, uyarı var; kapatılınca ve Kaldır ile siliniyor',/Hayvan olarak onu seçin/.test(ot.c)&&!/Rasyon eksikleri/.test(ot.o)&&/En az bir sorun/.test(ot.off)&&ot.rx===null,JSON.stringify({o:ot.o.slice(0,60),off:ot.off.slice(0,60),rx:ot.rx}));}
+ ok('MICRO→MKA eşlemesindeki her katkının Premiks kaydı var',await E(()=>Object.keys(MM2MK).every(k=>MICRO[k]&&MKA[MM2MK[k]])));
  /* Sıfırlama: onay ister; vazgeçilirse değişmez; onaylanırsa kayıtlar, API anahtarı ve kendi hammaddeleri korunur */
  const rs0=await E(()=>{AI_def().key="sk-keep";S.feeds.push({n:"Benim silajım",k:1,on:true,p:0,dm:30,me:2.4,cp:8,ndf:45,adf:28,ca:0.3,ph:0.2,mn:0,mx:"",fam:"",v:0,src:"analiz"});save();window.confirm=()=>false;var n=S.feeds.length;document.getElementById('reset').click();return {n0:n,n1:S.feeds.length}});
  ok('Sıfırlama vazgeçilince hiçbir şey silinmiyor',rs0.n0===rs0.n1,JSON.stringify(rs0));
