@@ -327,6 +327,13 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Mikrobiyal protein rumende yıkılan proteine bağlı (RDP %40 azalınca Vm düşer, MiCP belirgin azalır)',nr.lowRdp.mcp<nr.a.mcp*0.85,JSON.stringify({mcp:nr.lowRdp.mcp,lim:nr.lowRdp.rdpLim}));
  ok('Dinamik: daha çok nişasta → rumende sindirilen nişasta artar; daha çok KM tüketimi → sindirim oranı düşer',nr.moreSt&&nr.moreDmi);
  ok('Analizde "Rumen (NASEM 2021)" özeti: sindirilen nişasta/NDF, bakteri proteini, MP dengesi',/Rumen \(NASEM 2021\)/.test(nr.txt)&&/Metabolik protein = bakteri/.test(nr.txt),'');
+ /* V111: yem protein parçaları (A/B/C, kd, RUP sindirimi) → yem başına bypass protein */
+ const pf=await E(()=>{var o={},kp={f:4.87,c:5.28},R=function(n){var x=S.feeds.filter(y=>y.n.indexOf(n)===0)[0];return rupOf(x,mx(x),kp)};o.sbm=R("Soya küspesi");o.corn=R("Mısır tane");o.barley=R("Arpa");o.cgm=R("Mısır gluteni");
+  var x=S.feeds.filter(y=>y.n.indexOf("Soya küspesi")===0)[0],keep=JSON.stringify(x.ext||{});x.ext=Object.assign({},x.ext,{pA:15,pB:80,kd:4});o.user=rupOf(x,mx(x),kp);x.ext=JSON.parse(keep);o.ed=XL.map(a=>a[0]).join(',');
+  o.pfr=Object.keys(PFR).length;return o});
+ ok('Protein parçaları tablosu (≥ 40 yem; açık literatür tipik değerleri, NASEM kütüphanesi değil)',pf.pfr>=40,String(pf.pfr));
+ ok('Yem başına RUP = B·kp/(kd+kp) + C: soya küspesi ≈ %35, mısır ≈ %44, arpa ≈ %20, mısır gluteni ≈ %73',Math.abs(pf.sbm.r-35)<3&&Math.abs(pf.corn.r-44)<3&&Math.abs(pf.barley.r-20)<3&&Math.abs(pf.cgm.r-73)<3&&pf.sbm.src==="parça",JSON.stringify([pf.sbm.r,pf.corn.r,pf.barley.r,pf.cgm.r].map(v=>Math.round(v))));
+ ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
  ok('Buzağı süt KM alt sınırı doğum ağırlığına göre (metinle aynı)',/minLq:0\.015\*\(c\.bwb>0\?c\.bwb:c\.bw\)/.test(html));
