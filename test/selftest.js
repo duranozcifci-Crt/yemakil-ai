@@ -318,6 +318,15 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  await p.waitForTimeout(200);const fbn=await E(()=>{var b=document.getElementById("lblBan");var o={ban:b?b.innerText:''};document.getElementById('lblBanUndo').click();o.undo=curItems().map(x=>x.x.n.replace(/,.*$/,'')+':'+x.x.kg);o.gone=!document.getElementById('lblBan');return o});
  ok('Yem etiketi → "Rasyona ekle ve değerlendir": Süt sekmesine geçer, Süt 19 yerine aynı miktarla (8 kg) konur, sağlık riskleri rasyonla birlikte',fr.an==="sut"&&fr.type==="sut"&&fr.items.includes("Yem (etiket): Rakip Süt 21:8")&&!fr.items.some(x=>/^Süt 19/.test(x))&&/Sağlık ve döl riskleri/.test(fr.cmp),JSON.stringify(fr.items));
  ok('Analiz üstünde bilgi kutusu (yerine kondu: Süt 19 …) ve "Geri al" eski rasyonu geri getirir',/Etiketten eklendi: Rakip Süt 21/.test(fbn.ban)&&/yerine kondu: Süt 19/.test(fbn.ban)&&fbn.undo.some(x=>/^Süt 19/.test(x))&&!fbn.undo.some(x=>/Rakip/.test(x))&&fbn.gone,JSON.stringify(fbn.undo));
+ /* V110: NASEM 2021 rumen modeli (rumende sindirilen nişasta/NDF, mikrobiyal protein, MP ihtiyacı) */
+ const nr=await E(()=>{var o={};S.type="sut";Object.assign(S.b,{bw:650,milk:40,fat:3.7,pr:3.2,wk:12,mode:"lak",dp:0});var setR=function(L){S.feeds.forEach(x=>{x.on=false;x.kg=0});L.forEach(([re,kg])=>{var x=S.feeds.filter(y=>re.test(y.n))[0];x.on=true;x.kg=kg})};
+  setR([[/^Mısır silajı/,30],[/^Kuru yonca/,4],[/^Mısır tane/,6],[/^Arpa/,2],[/^Soya küspesi/,3.5],[/^Ayçiçeği küspesi/,1]]);var m=metrics(curItems()),Q=MPsut(m);o.a={dcSt:Q.dcSt,dcNDF:Q.dcNDF,mcp:Q.mcp,mp:Q.mp,req:Q.req,model:Q.model};
+  var m2=Object.assign({},m,{rdp:m.rdp*0.6});o.lowRdp=MPsut(m2);var m3=Object.assign({},m,{sta:m.sta+6});o.moreSt=MPsut(m3).rdSt>Q.rdSt;var m4=Object.assign({},m,{dm_:m.dm_+4});o.moreDmi=MPsut(m4).dcSt<Q.dcSt;
+  renderCmp();o.txt=document.getElementById('cmp').textContent;return o});
+ ok('NASEM 2021 rumen: sindirilen nişasta %55–80, NDF %35–55; bakteri proteini 1,5–2,2 kg/gün (23 kg KM)',nr.a.model==="NASEM 2021"&&nr.a.dcSt>=55&&nr.a.dcSt<=80&&nr.a.dcNDF>=35&&nr.a.dcNDF<=55&&nr.a.mcp>=1500&&nr.a.mcp<=2200,JSON.stringify(nr.a));
+ ok('Mikrobiyal protein rumende yıkılan proteine bağlı (RDP %40 azalınca Vm düşer, MiCP belirgin azalır)',nr.lowRdp.mcp<nr.a.mcp*0.85,JSON.stringify({mcp:nr.lowRdp.mcp,lim:nr.lowRdp.rdpLim}));
+ ok('Dinamik: daha çok nişasta → rumende sindirilen nişasta artar; daha çok KM tüketimi → sindirim oranı düşer',nr.moreSt&&nr.moreDmi);
+ ok('Analizde "Rumen (NASEM 2021)" özeti: sindirilen nişasta/NDF, bakteri proteini, MP dengesi',/Rumen \(NASEM 2021\)/.test(nr.txt)&&/Metabolik protein = bakteri/.test(nr.txt),'');
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
  ok('Buzağı süt KM alt sınırı doğum ağırlığına göre (metinle aynı)',/minLq:0\.015\*\(c\.bwb>0\?c\.bwb:c\.bw\)/.test(html));
