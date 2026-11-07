@@ -1,4 +1,5 @@
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import json
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -111,7 +112,7 @@ def rapor_hazirla():
 
     return {
         "durum": "canli",
-        "guncelleme": datetime.now().strftime("%d.%m.%Y %H:%M"),
+        "guncelleme": datetime.now(ZoneInfo("Europe/Istanbul")).strftime("%d.%m.%Y %H:%M"),
         "usdtry": usdtry,
         "urunler": urunler,
         "not": "TL/ton değerleri uluslararası vadeli piyasa fiyatlarının USD/TL kuru ile çevrilmiş referansıdır; navlun, vergi ve kalite farklarını içermez."
