@@ -119,13 +119,82 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Nişasta tahmini: Cemre Plus NIR %29,4 (etiket HP18/HY3,95/HS7,5/kül6,6) → 25–33',approx(cem,25,33),String(cem));
  const fc=await E(()=>flCalc({hp:19,hy:3.5,hs:11,kul:9,nem:12}));
  ok('Yem etiketi ME tahmini 2.550–2.900 kcal/kg KM',approx(fc.meKM,2550,2900),JSON.stringify({me:fc.meKM,sta:fc.sta}));
- /* Sıfırlama her sekmede hatasız ve premiks/ym korunur */
- const rs=await E(()=>{var before=JSON.stringify(S.mk).length;document.getElementById('reset').click();return {after:JSON.stringify(S.mk||{}).length,before:before,ym:!!S.ym}});
+ /* ===== V100 bağımsız denetim altın örnekleri ===== */
+ const g=await E(()=>{const o={};
+  lbParse("Vitamin A 1.000.000 IU\nKolin 20.000 mg\nNiasin 6.000 mg");lbParse("Vitamin A 500.000 IU\nÇinko 6.000 mg");o.lb2=Object.assign({},LB_def().v);
+  lbParse("VİTAMİN AD3E PREMİKSİ - Net 25 kg\nVitamin A 1.000.000 IU");o.ad3e=LB_def().v.vitA;
+  lbParse("Kalsiyum 160 g/kg\nFosfor 40 g/kg\nSodyum 60 g/kg");o.lbg=Object.assign({},LB_def().v);
+  lbParse("Vitamin A 1,000,000 IU/kg\nVitamin D3 200,000 IU/kg\nVitamin E 3,000 mg/kg");o.thou=Object.assign({},LB_def().v);
+  lbParse("Vitamin A 1000 KIU/kg");o.kiu=LB_def().v.vitA;
+  flParse("Yem maddeleri: Mısır, Arpa, Bitkisel yağ %2, Kalsiyum karbonat %1,5, Sodyum bikarbonat %1, Magnezyum oksit %0,3\nHam protein %19\nHam yağ %3,5\nHam selüloz %9\nHam kül %8\nKalsiyum %1,0\nSodyum %0,3\nMagnezyum %0,25");o.ing=Object.assign({},FL_def().v);
+  flParse("Ham protein 180 g/kg\nHam yağ 35 g/kg\nHam selüloz 90 g/kg");o.gkg=Object.assign({},FL_def().v);
+  flParse("HP:18,5 HY:3 HS:9 HK:8 Nem:12");o.abbr=Object.assign({},FL_def().v);
+  flParse("Ham protein %19 Ham yağ %3,5 Ham selüloz %9 Ham kül %8 Nem %12");o.one=Object.assign({},FL_def().v);
+  flParse("Crude protein 18% / Fat 4% / Fibre 8% / Ash 7%");o.en=Object.assign({},FL_def().v);
+  o.st=[flCalc({hp:19,hy:3.5,hs:8.9,kul:8,nem:12}).sta,flCalc({hp:19,hy:3.5,hs:9,kul:8,nem:12}).sta];
+  var L=FL_def();L.t="sut19";L.v={hp:19};feedLabelEval();o.miss=document.getElementById('flOut').innerText;
+  L.v={hp:19,hy:3.5,hs:9,kul:8,nem:12,vitA:20000};feedLabelEval();o.vitA=(document.getElementById('flOut').innerText.match(/A vitamini[^\n]*/)||[''])[0];
+  var P=MKP.filter(x=>x.k==="beyazkas")[0];o.bk=[mkItems(P,"sut")[0][1],mkItems(P,"koyun")[0][1]];
+  o.ysh=[ySheep({grp:"kuzu",premN:"Premiks süt"}),ySheep({grp:"sut",premN:"Premiks süt"})];
+  S.type="besi";var bb=B_def();Object.assign(bb,{bw:350,adg:1300,temp:20,bcs:3,ion:0,breed:"hol",sex:"b",hf:0});var G=()=>bGain(8.8,8.8*2.7,8.8*130).adg;o.g20=G();bb.temp=30;o.g30=G();o.d30=bDMI(nemF(2.7));bb.temp=20;o.d20=bDMI(nemF(2.7));bb.ion=1;o.gi=G();bb.ion=0;bb.bcs=9;B_def();o.bcs=bb.bcs;bb.bcs=3;
+  S.b.bcs=8;bDef();o.bcsS=S.b.bcs;S.b.bcs=3;
+  o.sx=simplex([1e6,2e6],[{a:[1,1],op:"=",b:1},{a:[-1,0],op:">=",b:-0.3}]);o.urea=FAM["Üre"][0][3];
+  S.type="koyun";S.k=Object.assign(S.k||{},{mode:"gebe",bw:15,nl:3,dg:147,temp:15});o.gebe=KREQ().me;
+  S.k=Object.assign(S.k,{mode:"kuzu",bw:10,adg:250,sex:"m"});var R=KREQ();o.lamb=R.me/R.dmi;
+  return o});
+ ok('Etiket: yeni çözümleme önceki etiketin değerlerini taşımıyor',JSON.stringify(g.lb2)==='{"vitA":500000,"zn":6000}',JSON.stringify(g.lb2));
+ ok('Etiket: "Vitamin AD3E premiksi" başlığı A vitamini sanılmıyor',g.ad3e===1e6,String(g.ad3e));
+ ok('Etiket: g/kg değerleri % alanlarına çevriliyor (premiks Ca 16/P 4/Na 6, yem HP 18/HY 3,5/HS 9)',g.lbg.ca===16&&g.lbg.p===4&&g.lbg.na===6&&g.gkg.hp===18&&g.gkg.hy===3.5&&g.gkg.hs===9,JSON.stringify([g.lbg,g.gkg]));
+ ok('Etiket: İngilizce binlik virgül ve KIU (1,000,000 IU→1e6; 3,000 mg→3000; 1000 KIU→1e6)',g.thou.vitA===1e6&&g.thou.vitD===2e5&&g.thou.vitE===3000&&g.kiu===1e6,JSON.stringify([g.thou,g.kiu]));
+ ok('Etiket: hammadde listesi (kalsiyum karbonat %1,5, bitkisel yağ %2) analiz değerini kapmıyor',g.ing.hy===3.5&&g.ing.ca===1&&g.ing.na===0.3&&g.ing.mg===0.25,JSON.stringify(g.ing));
+ ok('Etiket: HP/HY/HS/HK kısaltmaları, tek satır ve "Fat/Fibre/Ash" okunuyor',g.abbr.hp===18.5&&g.abbr.kul===8&&g.one.hy===3.5&&g.one.nem===12&&g.en.hy===4&&g.en.hs===8&&g.en.kul===7,JSON.stringify([g.abbr,g.one,g.en]));
+ ok('Nişasta tahmini HS 8,9→9,0 sıçramıyor (<1 puan)',Math.abs(g.st[0]-g.st[1])<1,JSON.stringify(g.st));
+ ok('Eksik HY/HS/kül 0 sayılmıyor: değerlendirme eksikleri söylüyor',/Eksik etiket değeri/.test(g.miss)&&!/ME tahmini/.test(g.miss),g.miss.slice(0,120));
+ ok('A vitamini 20.000 IU: referans "8.000–15.000 yüksek" (kendisiyle çelişen "≥" yok)',/8\.000–15\.000/.test(g.vitA)&&!/≥/.test(g.vitA),g.vitA);
+ ok('Beyaz kas: inek 3 g Se maya, koyun 0,15 g (≤0,5 mg/kg KM)',g.bk[0]===3&&g.bk[1]===0.15,JSON.stringify(g.bk));
+ ok('Koyun bakır sınırı premiks adına değil hayvan grubuna bağlı',g.ysh[0]===true&&g.ysh[1]===false,JSON.stringify(g.ysh));
+ ok('Kuzuya pamuk tohumu/PTK/üre önerilmiyor (NOTKL)',/NOTKL=new RegExp\(NOTK\.source\.slice\(0,-1\)\+"\|Pamuk tohumu\|PTK\|Üre\)"\)/.test(html)&&/kuzu\(\)\?NOTKL:NOTK/.test(html));
+ ok('Besi: sıcakta (30 °C) artış ve KMA 20 °C\'den yüksek değil',g.g30<=g.g20&&g.d30<g.d20,JSON.stringify([g.g20,g.g30,g.d20,g.d30]));
+ ok('Besi: iyonofor aynı yemde artışı yükseltiyor (NEm +%12)',g.gi>g.g20,JSON.stringify([g.g20,g.gi]));
+ ok('VKS 1–5 ile sınırlı (besi 9→5, süt 8→5)',g.bcs===5&&g.bcsS===5,JSON.stringify([g.bcs,g.bcsS]));
+ ok('Simplex büyük maliyetlerde de çözüyor (Big-M ölçekli)',g.sx&&Math.abs(g.sx[0]-0.3)<1e-6,JSON.stringify(g.sx));
+ ok('Üre HP %290 (KM)',g.urea===290,String(g.urea));
+ ok('Gebe hafif koyunda NaN yok',isFinite(g.gebe)&&g.gebe>0,String(g.gebe));
+ ok('Kuzu 10 kg/250 g: ME yoğunluğu ≤ 4 Mcal/kg KM (CSIRO L≤3)',g.lamb<=4,String(g.lamb));
+ ok('Kuru dönem anyonik rasyon: Ca hedefi 1,0–1,5 ve DCAD sınırı çözücüde',/\["ca",AN\?1\.0:s\.ca,AN\?1\.5:/.test(html)&&/dc\(x\)-XD\[0\]/.test(html));
+ ok('Gebe düve MP hedefi gebelik MP\'sini içeriyor',/mp:mpm\+mpg\+\(b\.hf&&b\.dp>=190\?pregMP\(b\.dp\):0\)/.test(html));
+ ok('Protein ekle/azalt önerisi KM seyrelmesini hesaba katıyor',/gap\*dm\/\(pf\.cp-R\.cp\)/.test(html)&&/-gap\*dm\/\(pr\.cp-R\.cp\)/.test(html));
+ ok('Süt çözücüsü koyun/buzağı premiksi önermez',/var NOTS=\/\^\(Premiks \(koyun\|buzağı\)\|/.test(html));
+ ok('API anahtarı alanı gizli (password)',/type="password" id="'\+kind\+'AiKey"/.test(html));
+ ok('SW hatalı yanıtı önbelleğe yazmıyor',/if\(!r\.ok\)return caches\.match/.test(sw));
+ /* Mikro: türe göre kesif yem varsayılanı */
+ await E(()=>{S.type="mikro";S.mk.an="sut";S.mk.conc=8;save();renderSeg();showPanels();renderMikro()});await p.waitForTimeout(200);
+ await p.selectOption('#mkAn','koyun');await p.waitForTimeout(200);
+ ok('Mikro: koyuna geçince kesif yem 0,6 kg/baş/gün',await E(()=>S.mk.conc===0.6),String(await E(()=>S.mk.conc)));
+ /* Premiks reçetesi düşük katımda uyarı */
+ const pm=await E(()=>{var d=document.getElementById('pmxR');if(!d)return 'yok';d.value='0.04';d.dispatchEvent(new Event('input',{bubbles:true}));return 1});await p.waitForTimeout(1000);const pm2=await E(()=>{var t=document.getElementById('pmxDet')?document.getElementById('pmxDet').textContent:'';var d=document.getElementById('pmxR');d.value='0.4';d.dispatchEvent(new Event('input',{bubbles:true}));return t});await p.waitForTimeout(1000);
+ ok('Premiks reçetesi %0,04 katımda "1 ton premikse sığmıyor" uyarısı',pm!=='yok'&&/sığmıyor/.test(pm2),String(pm2).slice(0,80));
+ /* Paylaşım metninde HTML kaçışı yok */
+ const rt=await E(()=>{S.type="sut";save();renderSeg();showPanels();var x=S.feeds.filter(y=>y.n==="Arpa")[0]||S.feeds[0];var old=x.n;x.n="Arpa & Buğday <ezme>";x.on=true;x.kg=3;var t=reportText();x.n=old;return t});
+ ok('Paylaşım metni ham metin (&amp; yok)',/Arpa & Buğday <ezme>/.test(rt)&&!/&amp;/.test(rt));
+ /* Negatif kg kabul edilmiyor */
+ ok('Negatif kg/fiyat 0\'a çekiliyor',/S\.feeds\[i\]\[k\]=Math\.max\(0,num\(el\.value\)\)/.test(html)&&/x\[k\]=Math\.max\(0,num\(el\.value\)\)/.test(html));
+ /* Sıfırlama: onay ister; vazgeçilirse değişmez; onaylanırsa kayıtlar, API anahtarı ve kendi hammaddeleri korunur */
+ const rs0=await E(()=>{AI_def().key="sk-keep";S.feeds.push({n:"Benim silajım",k:1,on:true,p:0,dm:30,me:2.4,cp:8,ndf:45,adf:28,ca:0.3,ph:0.2,mn:0,mx:"",fam:"",v:0,src:"analiz"});save();window.confirm=()=>false;var n=S.feeds.length;document.getElementById('reset').click();return {n0:n,n1:S.feeds.length}});
+ ok('Sıfırlama vazgeçilince hiçbir şey silinmiyor',rs0.n0===rs0.n1,JSON.stringify(rs0));
+ const rs=await E(()=>{var before=JSON.stringify(S.mk).length;window.confirm=()=>true;document.getElementById('reset').click();return {after:JSON.stringify(S.mk||{}).length,before:before,ym:!!S.ym,key:S.ai&&S.ai.key,own:S.feeds.some(x=>x.n==="Benim silajım")}});
  ok('Sıfırlama Premiks sekmesinde çalışıyor ve kayıtları koruyor',rs.after===rs.before&&rs.ym,JSON.stringify(rs));
+ ok('Sıfırlama API anahtarını ve kendi eklenen hammaddeyi koruyor',rs.key==="sk-keep"&&rs.own,JSON.stringify(rs));
+ /* Açık <details> içinde 360 px taşma yok */
+ await p.setViewportSize({width:360,height:800});await E(()=>{S.type="sut";save();renderSeg();showPanels();document.querySelectorAll('details').forEach(d=>d.open=true)});await p.waitForTimeout(300);
+ const w360=await E(()=>document.documentElement.scrollWidth);ok('360 px, tüm açılır bölümler açıkken taşma yok',w360<=360,String(w360));
+ await E(()=>document.querySelectorAll('details').forEach(d=>d.open=false));await p.setViewportSize({width:390,height:844});
  /* Sekme geçişleri ve genişlik */
  const widths={};for(const t of ["sut","besi","koyun","buzagi","yem","mikro"]){await p.click('#seg button[data-t="'+t+'"]');await p.waitForTimeout(300);widths[t]=await E(()=>document.documentElement.scrollWidth)}
  ok('Hiçbir sekme 390 px\'i taşmıyor',Object.values(widths).every(w=>w<=390),JSON.stringify(widths));
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
+ /* Bozuk kayıt: uygulama varsayılanlarla açılıyor */
+ for(const bad of ['{"type":"sut","t":{},"feeds":[null]}','{"feeds":{"a":1},"t":{}}']){const q=await b.newPage({viewport:{width:390,height:844}});const qe=[];q.on('pageerror',e=>qe.push(e.message));await q.goto('file://'+path.resolve(FILE));await q.evaluate(v=>localStorage.setItem(KEY,v),bad);await q.reload();await q.waitForTimeout(500);const nb=await q.evaluate(()=>document.querySelectorAll('#seg button').length);ok('Bozuk kayıtla açılış hatasız: '+bad.slice(0,30),!qe.length&&nb>0,qe.join('|')+' seg='+nb);await q.evaluate(()=>localStorage.clear());await q.close()}
  await b.close();done();
 })().catch(e=>{ok('Test koşucusu',false,e.message);done()});
 
