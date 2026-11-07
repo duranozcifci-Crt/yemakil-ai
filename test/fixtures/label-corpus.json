@@ -1,0 +1,648 @@
+[
+ {
+  "id": "F01_clean_sut19",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nAnalitik Bileşenler\nHam Protein (en az) % 19,00\nHam Yağ (en az) % 3,00\nHam Selüloz (en çok) % 10,00\nHam Kül (en çok) % 9,00\nNem (en çok) % 13,00\nKalsiyum % 0,80 - 1,20\nFosfor (en az) % 0,50\nSodyum % 0,20 - 0,50\nNişasta (en az) % 25\nMetabolik Enerji (en az) 2650 kcal/kg\nYem Katkı Maddeleri (kg'da)\nVitamin A (3a672a) 10.000 IU\nVitamin D3 (E671) 2.000 IU\nVitamin E (3a700) 30 mg\nBakır (E4) 10 mg\nÇinko (3b605) 50 mg\nMangan (E5) 40 mg\nİyot (3b202) 0,8 mg\nKobalt (3b304) 0,2 mg\nSelenyum (3b801) 0,3 mg",
+  "exp": {
+   "hp": 19,
+   "hy": 3,
+   "hs": 10,
+   "kul": 9,
+   "nem": 13,
+   "ca": [
+    0.8,
+    1
+   ],
+   "p": 0.5,
+   "na": [
+    0.2,
+    0.35
+   ],
+   "sta": 25,
+   "vitA": 10000,
+   "vitD": 2000,
+   "vitE": 30,
+   "cu": 10,
+   "zn": 50,
+   "mn": 40,
+   "i": 0.8,
+   "co": 0.2,
+   "se": 0.3
+  }
+ },
+ {
+  "id": "F02_two_col_wide_gap",
+  "kind": "fl",
+  "text": "SÜT YEMİ 21\nANALİTİK DEĞERLER          YEM KATKI MADDELERİ (1 kg'da)\nHam Protein %21            Vitamin A 12.000 IU\nHam Yağ %4                 Vitamin D3 2.500 IU\nHam Selüloz %8             Vitamin E 40 mg\nHam Kül %8                 Çinko 60 mg\nNem %12                    Mangan 45 mg\nKalsiyum %1                Bakır 12 mg\nFosfor %0,5                Selenyum 0,3 mg\nSodyum %0,35               İyot 1 mg",
+  "exp": {
+   "hp": 21,
+   "hy": 4,
+   "hs": 8,
+   "kul": 8,
+   "nem": 12,
+   "ca": 1,
+   "p": 0.5,
+   "na": 0.35,
+   "vitA": 12000,
+   "vitD": 2500,
+   "vitE": 40,
+   "zn": 60,
+   "mn": 45,
+   "cu": 12,
+   "se": 0.3,
+   "i": 1
+  }
+ },
+ {
+  "id": "F03_two_col_single_space_lens",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nHam Protein %19 Vitamin A 10.000 IU\nHam Yağ %3,5 Vitamin D3 2.000 IU\nHam Selüloz %10 Vitamin E 30 mg\nHam Kül %9 Çinko 50 mg\nNem %12 Mangan 40 mg\nKalsiyum %0,9 Bakır 10 mg\nFosfor %0,5 Selenyum 0,3 mg\nSodyum %0,3 İyot 0,8 mg",
+  "exp": {
+   "hp": 19,
+   "hy": 3.5,
+   "hs": 10,
+   "kul": 9,
+   "nem": 12,
+   "ca": 0.9,
+   "p": 0.5,
+   "na": 0.3,
+   "vitA": 10000,
+   "vitD": 2000,
+   "vitE": 30,
+   "zn": 50,
+   "mn": 40,
+   "cu": 10,
+   "se": 0.3,
+   "i": 0.8
+  }
+ },
+ {
+  "id": "F04_column_block_values_after_names",
+  "kind": "fl",
+  "text": "BESİ YEMİ\nAnalitik Bileşenler\nHam Protein\nHam Yağ\nHam Selüloz\nHam Kül\nNem\n% 14\n% 2,5\n% 10\n% 8\n% 13",
+  "exp": {
+   "hp": 14,
+   "hy": 2.5,
+   "hs": 10,
+   "kul": 8,
+   "nem": 13
+  }
+ },
+ {
+  "id": "F05_ocr_letter_errors",
+  "kind": "fl",
+  "text": "BESİ YEMİ\nHam Pr0tein % l4\nHam Yag % 2,5\nHam Selüloz % 1O\nHam Kul % 8\nNem % 13\nKalsiyurn % 0,9\nFosfar % 0,4\nSodyum % 0,3",
+  "exp": {
+   "hp": 14,
+   "hy": 2.5,
+   "hs": 10,
+   "kul": 8,
+   "nem": 13,
+   "ca": 0.9,
+   "p": 0.4,
+   "na": 0.3
+  }
+ },
+ {
+  "id": "F06_percent_as_96_and_9pct",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nHam Protein 9619\nHam Yağ 9%3,5\nHam Selüloz %o10\nHam Kül 969\nNem 9612",
+  "exp": {
+   "hp": 19,
+   "hy": 3.5,
+   "hs": 10,
+   "kul": 9,
+   "nem": 12
+  }
+ },
+ {
+  "id": "F07_missing_decimal_comma",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nHam Protein % 1900\nHam Yağ % 350\nHam Selüloz % 1000\nHam Kül % 900\nKalsiyum % 090\nFosfor % 050\nSodyum % 030",
+  "exp": {
+   "hp": 19,
+   "hy": 3.5,
+   "hs": 10,
+   "kul": 9,
+   "ca": 0.9,
+   "p": 0.5,
+   "na": 0.3
+  }
+ },
+ {
+  "id": "F08_english_turkish_mixed_calf",
+  "kind": "fl",
+  "text": "BUZAĞI BAŞLANGIÇ YEMİ / CALF STARTER\nCrude Protein / Ham Protein: 20 %\nCrude Fat / Ham Yağ: 3.5 %\nCrude Fibre / Ham Selüloz: 7 %\nCrude Ash / Ham Kül: 7.5 %\nMoisture / Nem: 12 %\nCalcium / Kalsiyum: 0.9 %\nPhosphorus / Fosfor: 0.55 %\nSodium / Sodyum: 0.3 %\nVitamin A: 15,000 IU/kg\nVitamin D3: 3,000 IU/kg\nVitamin E: 50 mg/kg",
+  "exp": {
+   "hp": 20,
+   "hy": 3.5,
+   "hs": 7,
+   "kul": 7.5,
+   "nem": 12,
+   "ca": 0.9,
+   "p": 0.55,
+   "na": 0.3,
+   "vitA": 15000,
+   "vitD": 3000,
+   "vitE": 50
+  }
+ },
+ {
+  "id": "F09_ham_lif_elyaf_selulioz",
+  "kind": "fl",
+  "text": "SÜT YEMİ 18\nHam protein %18\nHam yağ %3\nHam elyaf %11\nHam kül %9\nNem %12",
+  "exp": {
+   "hp": 18,
+   "hy": 3,
+   "hs": 11,
+   "kul": 9,
+   "nem": 12
+  }
+ },
+ {
+  "id": "F10_kuzu_one_paragraph_en_az",
+  "kind": "fl",
+  "text": "KUZU BÜYÜTME YEMİ\nAnalitik Bileşenler: Ham protein en az %16, Ham yağ en az %2,5, Ham selüloz en çok %10, Ham kül en çok %9, Nem en çok %13, Kalsiyum %0,9-1,2, Fosfor en az %0,4, Sodyum %0,3-0,6\nYem maddeleri: Arpa, Mısır, Buğday kepeği, Ayçiçeği tohumu küspesi, Melas, Kalsiyum karbonat, Tuz, Amonyum klorür\nKullanım talimatı: Kuzulara 2. haftadan itibaren serbest olarak verilir.",
+  "exp": {
+   "hp": 16,
+   "hy": 2.5,
+   "hs": 10,
+   "kul": 9,
+   "nem": 13,
+   "ca": [
+    0.9,
+    1.05
+   ],
+   "p": 0.4,
+   "na": [
+    0.3,
+    0.45
+   ]
+  }
+ },
+ {
+  "id": "F11_ingredients_first_with_protein_note",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nYem maddeleri: Mısır, Arpa, Ayçiçeği tohumu küspesi (%28 protein), Buğday kepeği, Pamuk tohumu küspesi, Melas (%3), Kireç taşı, Tuz, Premiks\nAnalitik bileşenler\nHam protein %19\nHam yağ %3\nHam selüloz %11\nHam kül %9\nNem %12",
+  "exp": {
+   "hp": 19,
+   "hy": 3,
+   "hs": 11,
+   "kul": 9,
+   "nem": 12
+  }
+ },
+ {
+  "id": "F12_range_and_postfix_percent",
+  "kind": "fl",
+  "text": "Süt Yemi 19\nHam Protein 18-19 %\nHam Yağ 3 %\nHam Selüloz 10 %\nHam Kül 9 %\nNem 13 %",
+  "exp": {
+   "hp": [
+    18,
+    18.5,
+    19
+   ],
+   "hy": 3,
+   "hs": 10,
+   "kul": 9,
+   "nem": 13
+  }
+ },
+ {
+  "id": "F13_space_thousands_iukg",
+  "kind": "fl",
+  "text": "Süt yemi 19\nHam protein %19\nVitamin A 10 000 IU/kg\nVitamin D3 2 000 IU/kg\nVitamin E 30 mg/kg\nSelenyum 0,3 mg/kg",
+  "exp": {
+   "hp": 19,
+   "vitA": 10000,
+   "vitD": 2000,
+   "vitE": 30,
+   "se": 0.3
+  }
+ },
+ {
+  "id": "F14_starch_sugar_ndf_bypass",
+  "kind": "fl",
+  "text": "YÜKSEK VERİM SÜT YEMİ 21\nHam Protein % 21\nHam Yağ % 4,5\nHam Selüloz % 8\nNDF % 24\nADF % 11\nHam Kül % 8\nNem % 12\nNişasta % 28\nŞeker % 5\nYem maddeleri: Mısır, Soya fasulyesi küspesi, Arpa, Bypass yağ, Melas, Kalsiyum karbonat, Sodyum bikarbonat, Magnezyum oksit",
+  "exp": {
+   "hp": 21,
+   "hy": 4.5,
+   "hs": 8,
+   "kul": 8,
+   "nem": 12,
+   "sta": 28,
+   "sek": 5
+  }
+ },
+ {
+  "id": "F15_lens_single_line_all",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19 Ham protein %19 Ham yağ %3 Ham selüloz %11 Ham kül %9 Nem %12 Kalsiyum %0,9 Fosfor %0,5 Sodyum %0,3 Vitamin A 10000 IU Vitamin D3 2000 IU Vitamin E 25 mg Çinko 50 mg Mangan 40 mg Bakır 10 mg",
+  "exp": {
+   "hp": 19,
+   "hy": 3,
+   "hs": 11,
+   "kul": 9,
+   "nem": 12,
+   "ca": 0.9,
+   "p": 0.5,
+   "na": 0.3,
+   "vitA": 10000,
+   "vitD": 2000,
+   "vitE": 25,
+   "zn": 50,
+   "mn": 40,
+   "cu": 10
+  }
+ },
+ {
+  "id": "F16_symbols_ca_p_na",
+  "kind": "fl",
+  "text": "BESİ BİTİŞ YEMİ\nHP: %13  HY: %3  HS: %9  HK: %7  Nem: %13\nCa: %0,8  P: %0,4  Na: %0,3  Mg: %0,25",
+  "exp": {
+   "hp": 13,
+   "hy": 3,
+   "hs": 9,
+   "kul": 7,
+   "nem": 13,
+   "ca": 0.8,
+   "p": 0.4,
+   "na": 0.3,
+   "mg": 0.25
+  }
+ },
+ {
+  "id": "F17_compact_vitamin_trace_lines",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nHam protein %19\nVitaminler (kg'da): A 10.000 IU, D3 2.000 IU, E 30 mg\nİz mineraller (mg/kg): Cu 10, Zn 50, Mn 40, I 0,8, Co 0,2, Se 0,3",
+  "exp": {
+   "hp": 19,
+   "vitA": 10000,
+   "vitD": 2000,
+   "vitE": 30,
+   "cu": 10,
+   "zn": 50,
+   "mn": 40,
+   "i": 0.8,
+   "co": 0.2,
+   "se": 0.3
+  }
+ },
+ {
+  "id": "F18_codes_without_parens",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nHam protein %19\nYem katkı maddeleri (1 kg yemde):\n3a672a Vitamin A: 10.000 IU\nE671 Vitamin D3: 2.000 IU\n3a700 Vitamin E: 30 mg\n3b605 Çinko: 50 mg\n3b502 Mangan: 40 mg\nE4 Bakır: 10 mg\n3b202 İyot: 0,8 mg\n3b304 Kobalt: 0,2 mg\n3b801 Selenyum: 0,3 mg",
+  "exp": {
+   "hp": 19,
+   "vitA": 10000,
+   "vitD": 2000,
+   "vitE": 30,
+   "zn": 50,
+   "mn": 40,
+   "cu": 10,
+   "i": 0.8,
+   "co": 0.2,
+   "se": 0.3
+  }
+ },
+ {
+  "id": "F19_code_after_name_no_parens",
+  "kind": "fl",
+  "text": "SÜT YEMİ 19\nVitamin A E-672: 10.000 IU/kg\nÇinko 3b605: 50 mg/kg\nMangan 3b502 40 mg/kg\nSelenyum 3b801 0,3 mg/kg",
+  "exp": {
+   "vitA": 10000,
+   "zn": 50,
+   "mn": 40,
+   "se": 0.3
+  }
+ },
+ {
+  "id": "F20_kuru_donem_mg",
+  "kind": "fl",
+  "text": "KURU DÖNEM YEMİ\nHam Protein (min.) % 15,00\nHam Yağ (min.) % 2,50\nHam Selüloz (maks.) % 13,00\nHam Kül (maks.) % 9,00\nNem (maks.) % 13,00\nKalsiyum (maks.) % 0,50\nFosfor (min.) % 0,40\nSodyum (maks.) % 0,15\nMagnezyum (min.) % 0,40",
+  "exp": {
+   "hp": 15,
+   "hy": 2.5,
+   "hs": 13,
+   "kul": 9,
+   "nem": 13,
+   "ca": 0.5,
+   "p": 0.4,
+   "na": 0.15,
+   "mg": 0.4
+  }
+ },
+ {
+  "id": "F21_ocr_sel_uioz_kul1",
+  "kind": "fl",
+  "text": "SÜT YEMI 19\nHAM PROTEIN % 19,0\nHAM YAG % 3,0\nHAM SELÜIOZ % 10,0\nHAM KÜ1 % 9,0\nNEM % 13,0",
+  "exp": {
+   "hp": 19,
+   "hy": 3,
+   "hs": 10,
+   "kul": 9,
+   "nem": 13
+  }
+ },
+ {
+  "id": "P01_clean_dairy_premix_ton",
+  "kind": "lb",
+  "text": "SÜT İNEĞİ VİTAMİN-MİNERAL PREMİKSİ\nBileşimi (1 kg'da):\nVitamin A (3a672a) 2.000.000 IU\nVitamin D3 (E671) 400.000 IU\nVitamin E (3a700) 10.000 mg\nBiotin (3a880) 50 mg\nNiasin (3a314) 3.000 mg\nBakır (E4, bakır sülfat pentahidrat) 2.500 mg\nÇinko (3b605, çinko sülfat monohidrat) 10.000 mg\nMangan (E5, mangan oksit) 8.000 mg\nİyot (3b202, kalsiyum iyodat susuz) 150 mg\nKobalt (3b304, kaplanmış kobalt karbonat) 40 mg\nSelenyum (3b801, sodyum selenit) 50 mg\nKalsiyum %18\nFosfor %6\nSodyum %7\nMagnezyum %4\nKullanım: 1 ton yeme 2,5 kg katılır.",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "biotin": 50,
+   "nia": 3000,
+   "cu": 2500,
+   "zn": 10000,
+   "mn": 8000,
+   "i": 150,
+   "co": 40,
+   "se": 50,
+   "ca": 18,
+   "p": 6,
+   "na": 7,
+   "mg": 4
+  },
+  "ton": 2.5
+ },
+ {
+  "id": "P02_uppercase_dot_leaders",
+  "kind": "lb",
+  "text": "VITAMIN A ....... 2.000.000 IU\nVITAMIN D3 ...... 400.000 IU\nVITAMIN E ....... 10.000 mg\nBAKIR ........... 2.500 mg\nÇINKO ........... 10.000 mg\nMANGAN .......... 8.000 mg\nIYOT ............ 150 mg\nKOBALT .......... 40 mg\nSELENYUM ........ 50 mg\nGünlük 50 g/baş",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "cu": 2500,
+   "zn": 10000,
+   "mn": 8000,
+   "i": 150,
+   "co": 40,
+   "se": 50
+  },
+  "dose": 50
+ },
+ {
+  "id": "P03_iu_ocr_l1",
+  "kind": "lb",
+  "text": "Vitamin A 2.000.000 lU/kg\nVitamin D3 400.000 1U/kg\nVitamin E 10.000 mg/kg\nÇinko 10.000 mg/kg",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "zn": 10000
+  }
+ },
+ {
+  "id": "P04_thousands_variants",
+  "kind": "lb",
+  "text": "Vitamin A 2 000 000 IU\nVitamin D3 400,000 IU\nVitamin E 10,000 mg\nBakır 2,500 mg\nÇinko 10 000 mg\nMangan 8.000 mg/kg\nSelenium 50 mg/kg",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "cu": 2500,
+   "zn": 10000,
+   "mn": 8000,
+   "se": 50
+  }
+ },
+ {
+  "id": "P05_miu_and_g_units",
+  "kind": "lb",
+  "text": "Vitamin A 2 MIU\nVitamin D3 0,4 MIU\nVitamin E 10 g\nÇinko 10 g\nMangan 8 g/kg\nBakır 2,5 g",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "zn": 10000,
+   "mn": 8000,
+   "cu": 2500
+  }
+ },
+ {
+  "id": "P06_macro_single_line",
+  "kind": "lb",
+  "text": "MİNERAL PREMİKS\nKalsiyum %18 Fosfor %6 Sodyum %7 Magnezyum %4\nVitamin A 500.000 IU Vitamin D3 100.000 IU Vitamin E 2.000 mg\nGünlük 50 g/baş",
+  "exp": {
+   "ca": 18,
+   "p": 6,
+   "na": 7,
+   "mg": 4,
+   "vitA": 500000,
+   "vitD": 100000,
+   "vitE": 2000
+  },
+  "dose": 50
+ },
+ {
+  "id": "P07_names_then_values_block",
+  "kind": "lb",
+  "text": "Vitamin A\nVitamin D3\nVitamin E\nÇinko\nMangan\n2.000.000 IU\n400.000 IU\n10.000 mg\n10.000 mg\n8.000 mg",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "zn": 10000,
+   "mn": 8000
+  }
+ },
+ {
+  "id": "P08_mineral_feed_gkg_commas",
+  "kind": "lb",
+  "text": "SIĞIR MİNERAL YEMİ\nAnalitik bileşenler: Kalsiyum 180 g/kg, Fosfor 60 g/kg, Sodyum 70 g/kg, Magnezyum 40 g/kg\nKatkı maddeleri/kg: Çinko 5.000 mg, Mangan 4.000 mg, Bakır 1.200 mg, İyot 60 mg, Kobalt 15 mg, Selenyum 20 mg\nKullanım: Günde hayvan başına 100 g verilir.",
+  "exp": {
+   "ca": 18,
+   "p": 6,
+   "na": 7,
+   "mg": 4,
+   "zn": 5000,
+   "mn": 4000,
+   "cu": 1200,
+   "i": 60,
+   "co": 15,
+   "se": 20
+  },
+  "dose": 100
+ },
+ {
+  "id": "P09_sheep_no_copper_dose_hayvan",
+  "kind": "lb",
+  "text": "KOYUN-KEÇİ PREMİKSİ (BAKIR İÇERMEZ)\nVitamin A 1.000.000 IU\nVitamin D3 200.000 IU\nVitamin E 3.000 mg\nÇinko 6.000 mg\nMangan 5.000 mg\nKobalt 50 mg\nİyot 100 mg\nSelenyum 25 mg\nBakır: -\nGünlük doz: 20 g/hayvan",
+  "exp": {
+   "vitA": 1000000,
+   "vitD": 200000,
+   "vitE": 3000,
+   "zn": 6000,
+   "mn": 5000,
+   "co": 50,
+   "i": 100,
+   "se": 25
+  },
+  "dose": 20
+ },
+ {
+  "id": "P10_bvitamins_k3_carrier",
+  "kind": "lb",
+  "text": "BUZAĞI VİTAMİN PREMİKSİ (1 kg'da)\nVitamin A (3a672a) 4.000.000 IU\nVitamin D3 (E671) 800.000 IU\nVitamin E (3a700, all-rac-alfa-tokoferil asetat) 20.000 mg\nVitamin K3 (3a710, menadion sodyum bisülfit) 1.000 mg\nVitamin B1 (3a821, tiamin mononitrat) 1.500 mg\nVitamin B2 (riboflavin) 2.000 mg\nVitamin B5 (3a841, kalsiyum D-pantotenat) 5.000 mg\nVitamin B12 (siyanokobalamin) 10 mg\nBiotin (3a880) 40 mg\nKolin klorür 50.000 mg\nTaşıyıcı: Kalsiyum karbonat ad 1000 g",
+  "exp": {
+   "vitA": 4000000,
+   "vitD": 800000,
+   "vitE": 20000,
+   "biotin": 40,
+   "chol": 50000
+  }
+ },
+ {
+  "id": "P11_dose_percent_and_kgton",
+  "kind": "lb",
+  "text": "Vitamin A 2.000.000 IU\nÇinko 10.000 mg\nKullanım: Karma yeme %0,25 oranında katılır.",
+  "exp": {
+   "vitA": 2000000,
+   "zn": 10000
+  },
+  "ton": 2.5
+ },
+ {
+  "id": "P12_dose_kg_per_ton_text",
+  "kind": "lb",
+  "text": "Vitamin A 1.200.000 IU/kg\nSelenyum 30 mg/kg\nTavsiye edilen kullanım: 3 kg / ton yem",
+  "exp": {
+   "vitA": 1200000,
+   "se": 30
+  },
+  "ton": 3
+ },
+ {
+  "id": "P13_dose_range_and_cow_phrase",
+  "kind": "lb",
+  "text": "Vitamin A 1.000.000 IU\nÇinko 8.000 mg\nSüt ineklerine günde 100-150 g verilir.",
+  "exp": {
+   "vitA": 1000000,
+   "zn": 8000
+  },
+  "dose": [
+   100,
+   125
+  ]
+ },
+ {
+  "id": "P14_ocr_rn_m_errors",
+  "kind": "lb",
+  "text": "Kalsiyurn % 18\nFosfar % 6\nSodyurn % 7\nMagnezyurn % 4\nSelenyurn 50 mg\nlyot 150 mg\nKobaIt 40 mg\nÇlnko 10.000 mg",
+  "exp": {
+   "ca": 18,
+   "p": 6,
+   "na": 7,
+   "mg": 4,
+   "se": 50,
+   "i": 150,
+   "co": 40,
+   "zn": 10000
+  }
+ },
+ {
+  "id": "P15_english_semicolons",
+  "kind": "lb",
+  "text": "Composition per kg: Vitamin A 2,000,000 IU; Vitamin D3 400,000 IU; Vitamin E 10,000 mg; Copper 2,500 mg; Zinc 10,000 mg; Manganese 8,000 mg; Iodine 150 mg; Cobalt 40 mg; Selenium 50 mg; Calcium 18 %; Phosphorus 6 %; Sodium 7 %",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "cu": 2500,
+   "zn": 10000,
+   "mn": 8000,
+   "i": 150,
+   "co": 40,
+   "se": 50,
+   "ca": 18,
+   "p": 6,
+   "na": 7
+  }
+ },
+ {
+  "id": "P16_mgo_source_mention",
+  "kind": "lb",
+  "text": "Magnezyum (magnezyum oksit) %4\nKalsiyum (kalsiyum karbonat) %20\nSodyum (sodyum klorür) %8",
+  "exp": {
+   "mg": 4,
+   "ca": 20,
+   "na": 8
+  }
+ },
+ {
+  "id": "P17_ad3e_high_conc",
+  "kind": "lb",
+  "text": "VİTAMİN AD3E PREMİKSİ\nVitamin A 15.000.000 IU\nVitamin D3 3.000.000 IU\nVitamin E 30.000 mg\nKullanım: 1 ton yeme 0,5 kg",
+  "exp": {
+   "vitA": 15000000,
+   "vitD": 3000000,
+   "vitE": 30000
+  },
+  "ton": 0.5
+ },
+ {
+  "id": "P18_two_col_single_space_premix",
+  "kind": "lb",
+  "text": "Vitamin A 2.000.000 IU Bakır 2.500 mg\nVitamin D3 400.000 IU Çinko 10.000 mg\nVitamin E 10.000 mg Mangan 8.000 mg\nKalsiyum %18 Selenyum 50 mg",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "vitE": 10000,
+   "cu": 2500,
+   "zn": 10000,
+   "mn": 8000,
+   "ca": 18,
+   "se": 50
+  }
+ },
+ {
+  "id": "P19_symbol_table_sheep_mineral",
+  "kind": "lb",
+  "text": "KOYUN MİNERAL YEMİ\nKalsiyum (en az) %20, Fosfor (en az) %5, Sodyum %8, Magnezyum %3\nZn 4.000 mg/kg; Mn 3.000 mg/kg; Co 20 mg/kg; I 80 mg/kg; Se 20 mg/kg\nVitamin A 500.000 IU/kg\nKullanım: Günlük 20-30 g/baş",
+  "exp": {
+   "ca": 20,
+   "p": 5,
+   "na": 8,
+   "mg": 3,
+   "zn": 4000,
+   "mn": 3000,
+   "co": 20,
+   "i": 80,
+   "se": 20,
+   "vitA": 500000
+  },
+  "dose": [
+   20,
+   25
+  ]
+ },
+ {
+  "id": "P20_codes_first_no_parens",
+  "kind": "lb",
+  "text": "3a672a Vitamin A 2.000.000 IU\nE671 Vitamin D3 400.000 IU\n3b605 Çinko 10.000 mg\n3b502 Mangan 8.000 mg\nE4 Bakır 2.500 mg\n3b202 İyot 150 mg\n3b304 Kobalt 40 mg\n3b801 Selenyum 50 mg",
+  "exp": {
+   "vitA": 2000000,
+   "vitD": 400000,
+   "zn": 10000,
+   "mn": 8000,
+   "cu": 2500,
+   "i": 150,
+   "co": 40,
+   "se": 50
+  }
+ },
+ {
+  "id": "P21_ppm_percent_trace",
+  "kind": "lb",
+  "text": "Çinko 10.000 ppm\nMangan %0,8\nSelenyum 0,005 %\nKalsiyum 18,5 %",
+  "exp": {
+   "zn": 10000,
+   "mn": 8000,
+   "se": 50,
+   "ca": 18.5
+  }
+ }
+]
