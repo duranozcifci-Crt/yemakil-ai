@@ -179,6 +179,31 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Paylaşım metni ham metin (&amp; yok)',/Arpa & Buğday <ezme>/.test(rt)&&!/&amp;/.test(rt));
  /* Negatif kg kabul edilmiyor */
  ok('Negatif kg/fiyat 0\'a çekiliyor',/S\.feeds\[i\]\[k\]=Math\.max\(0,num\(el\.value\)\)/.test(html)&&/x\[k\]=Math\.max\(0,num\(el\.value\)\)/.test(html));
+ /* V103: çözüm önerisi ↔ alt tablo tutarlılığı, çiftlik rasyonuna dönüş, referans düzeltmeleri */
+ const setR=async(feeds,milk)=>{await E(([feeds,milk])=>{S.type="sut";Object.assign(S.b,{bw:650,milk:milk,fat:3.7,pr:3.2,wk:10,mode:"lak",dp:0});S.fsnap=null;S.undo=null;S.feeds.forEach(x=>{x.on=false;x.kg=0});feeds.forEach(([n,kg])=>{var x=S.feeds.filter(y=>y.n.indexOf(n)===0)[0];x.on=true;x.kg=kg});save();renderSeg();showPanels();renderFarm();renderCmp()},[feeds,milk]);await p.click('#tabs button[data-t="3"]');await p.waitForTimeout(300)};
+ const solve=async()=>{await E(()=>{document.getElementById('solOut').innerHTML='';document.getElementById('solBtn').click()});await p.waitForFunction(()=>/Parametre karşılaştırması/.test(document.getElementById('solOut').innerText),null,{timeout:15000}).catch(()=>{});return E(()=>document.getElementById('solOut').innerText)};
+ await setR([["Mısır silajı",30],["Kuru yonca",3],["Mısır tane",7],["Soya küspesi",3.5],["Bypass yağ",0.6]],30);
+ const lys0=await E(()=>MPsut(metrics(curItems())).lys);const so=await solve();
+ ok('Çözüm önerisinde "Ek parametreler" tablosu (ham yağ, lizin, mineral)',/Ek parametreler/.test(so)&&/Lizin, % MP/.test(so)&&/Ham yağ, %/.test(so),so.slice(0,80));
+ ok('Çözücü lizini düşürmüyor ve çelişki uyarısı yok (soya çıkarılıp lizin notu soya önermesin)',!/Lizin (daha da uzaklaşıyor|hedef dışına)/.test(so),(so.match(/Dikkat — ek[\s\S]{0,200}/)||[''])[0]);
+ await p.click('#solApply');await p.waitForTimeout(400);
+ const ap=await E(()=>({ee:metrics(curItems()).ee,lys:MPsut(metrics(curItems())).lys,bar:document.getElementById('farmSnap').innerText}));
+ ok('Uygulanan öneride ham yağ referansta (3–7) ve lizin düşmemiş',ap.ee>=3&&ap.ee<=7&&ap.lys>=lys0-0.01,JSON.stringify({ee:ap.ee,lys:ap.lys,lys0}));
+ ok('Öneri uygulanınca "Çiftlik rasyonu kayıtlı" çubuğu: şu an uygulanan öneri',/Çiftlik rasyonu kayıtlı/.test(ap.bar)&&/uygulanan öneri/.test(ap.bar),ap.bar.slice(0,120));
+ await p.click('#fsFarm');await p.waitForTimeout(300);
+ const fb=await E(()=>({kg:S.feeds.filter(x=>x.on).map(x=>x.kg).join(','),st:document.getElementById('farmSnap').innerText}));
+ ok('"Çiftlik rasyonuna dön" eski miktarları birebir geri getiriyor',fb.kg==="30,3,7,3.5,0.6"&&/Şu an ekrandaki: çiftlik rasyonu/.test(fb.st),JSON.stringify(fb).slice(0,160));
+ await p.click('#fsProp');await p.waitForTimeout(300);await p.click('#fsCmp');await p.waitForTimeout(300);
+ const fsc=await E(()=>({st:document.getElementById('farmSnap').innerText,w:document.documentElement.scrollWidth}));
+ ok('"Uygulanan öneriye dön" ve "Karşılaştır" (maliyet, ME, HP, ham yağ), 390 px',/uygulanan öneri/.test(fsc.st)&&/Maliyet, TL\/baş\/gün/.test(fsc.st)&&/Ham yağ/.test(fsc.st)&&fsc.w<=390,fsc.st.slice(0,100)+' w='+fsc.w);
+ const fp=await E(()=>{S.type="besi";save();renderSeg();showPanels();renderCmp();var a=document.getElementById('farmSnap').innerText;S.type="sut";save();renderSeg();showPanels();renderCmp();return {besi:a,sut:document.getElementById('farmSnap').innerText}});
+ ok('Kayıt hayvan türüne özel (besi sekmesinde görünmez, süte dönünce durur)',fp.besi===''&&/Çiftlik rasyonu kayıtlı/.test(fp.sut),JSON.stringify(fp).slice(0,120));
+ await setR([["Mısır silajı",28],["Buğday samanı",3],["Arpa",8],["Soya küspesi",3]],28);
+ const ee0=await E(()=>metrics(curItems()).ee);const so2=await solve();const ee2=(so2.match(/Ham yağ, %\t[\d,]+\t([\d,]+)/)||[])[1];
+ ok('Yağı düşük rasyonda öneri ham yağı en az %3\'e getiriyor (çözücü kısıtı)',ee2&&parseFloat(ee2.replace(',','.'))>=2.95,'şimdi '+ee0.toFixed(2)+' öneri '+ee2);
+ ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
+ ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
+ ok('Buzağı süt KM alt sınırı doğum ağırlığına göre (metinle aynı)',/minLq:0\.015\*\(c\.bwb>0\?c\.bwb:c\.bw\)/.test(html));
  /* Rasyon eksiklerini Premiks sekmesine aktar (V101) */
  await E(()=>{S.type="sut";S.t.sut.n=40;S.feeds.forEach(x=>{x.on=false;x.kg=0});var set=(re,kg)=>{var x=S.feeds.filter(y=>re.test(y.n))[0];x.on=true;x.kg=kg};set(/^Mısır silajı/,30);set(/^Buğday samanı/,3);set(/^Arpa/,7);set(/^Soya küspesi/,2);S.mk.sel=[];S.mk.rx=null;save();renderSeg();showPanels();renderCmp()});
  await p.click('#tabs button[data-t="3"]');await p.waitForTimeout(400);
