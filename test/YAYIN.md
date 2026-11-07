@@ -5,3 +5,4 @@
 3. Yeni modül eklenince: tutarlılık kontrolü (veri tabloları birbirini görüyor mu), bir sayısal altın örnek (ders kitabı değeriyle), bir UI kontrolü (390 px, JS hatası) ekle.
 4. Sürüm etiketini ve sw.js önbellek adını artır; index.html'yi rfind(`</body></html>`) ile üret; commit; GitHub Pages yayını tamamlanınca linki gönder.
 5. Her 5 sürümde bir bağımsız gözden geçirme (taze gözle 4 paralel denetim) yaptır.
+6. **Otomatik yayın (kullanıcı onayı, 2026-11-07):** Öz-denetim tamamen geçerse (tek ✗ yok) değişiklik çalışma dalına commit+push edilir, PR açılır ve kullanıcıya ayrıca sormadan `main`'e birleştirilir (GitHub Pages yayını). Tek bir ✗ varsa birleştirme yapılmaz, kullanıcıya bildirilir. Birleştirmeden sonra kullanıcıya yeni sürüm numarası ve telefonda bir kez yeniden açması gerektiği söylenir.
