@@ -201,6 +201,18 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  await setR([["Mısır silajı",28],["Buğday samanı",3],["Arpa",8],["Soya küspesi",3]],28);
  const ee0=await E(()=>metrics(curItems()).ee);const so2=await solve();const ee2=(so2.match(/Ham yağ, %\t[\d,]+\t([\d,]+)/)||[])[1];
  ok('Yağı düşük rasyonda öneri ham yağı en az %3\'e getiriyor (çözücü kısıtı)',ee2&&parseFloat(ee2.replace(',','.'))>=2.95,'şimdi '+ee0.toFixed(2)+' öneri '+ee2);
+ /* V104: tek tuşla tam çözüm (ek tablo + katkı planı), sıfırdan karışımda fabrika yemleri */
+ await setR([["Mısır silajı",25],["Kuru yonca",5],["Mısır tane",6],["Soya küspesi",3],["Ayçiçeği küspesi",1.5]],32);const so3=await solve();
+ ok('Çözüm önerisi katkı planını da veriyor (öneri rasyonu için) ve aktarma düğmesi var',/Öneri rasyonu için katkı \(mineral\/vitamin\) planı/.test(so3)&&!!(await p.$('#mmToMkSol')),so3.slice(0,60));
+ ok('Çözücüde ek tablo kısıtları: yağ, peNDF, mineral üst sınırı, MP, RDP, Lys/Met',/keep\("pendf"/.test(html)&&/\["k","mg","s","na","cu","zn","se"\]/.test(html)&&/T1=Math\.min\(0\.95\*Q\.req/.test(html)&&/Rq=Math\.min\(0\.95\*Q\.rdpReq/.test(html));
+ ok('Bu rasyonda öneri hiçbir ek parametreyi bozmuyor (çelişki uyarısı yok)',!/Dikkat — ek parametreler/.test(so3),(so3.match(/Dikkat — ek[\s\S]{0,160}/)||[''])[0]);
+ const solIt=await E(()=>JSON.stringify(window._mmStore.sol.items));await p.click('#mmToMkSol');await p.waitForTimeout(600);
+ ok('Öneri katkı planı Premiks sekmesine aktarılıyor (öneri rasyonunun eksikleri)',await E(s=>S.type==="mikro"&&JSON.stringify(S.mk.rx.items)===s,solIt));
+ await E(()=>{S.mk.rx=null;save();document.querySelector('#seg button[data-t="sut"]').click()});await p.waitForTimeout(300);
+ const cmx=await E(()=>{S.feeds.forEach(x=>{x.on=false;x.kg=0});[["Kuru yonca",6],["Buğday samanı",4],["Arpa",14],["Soya küspesi",24]].forEach(([n,pr])=>{var x=S.feeds.filter(y=>y.n.indexOf(n)===0)[0];x.on=true;x.p=pr});var r={};[true,false].forEach(o=>{document.getElementById('calcOwn').checked=o;document.getElementById('calc').click();r[o]=document.getElementById('out').textContent});return r});
+ ok('Sıfırdan karışım fabrika yemlerimizi öncelikli dahil ediyor; kutu kapalıyken etmiyor',/bizim/.test(cmx.true)&&/Fabrika yemlerimiz karışımın/.test(cmx.true)&&!/bizim/.test(cmx.false),cmx.true.slice(0,140));
+ const cz=await E(()=>{S.type="buzagi";save();renderSeg();showPanels();var it=curItems(),m=metrics(it);m.lqd=m.lqd||1;var rows=xTable(m,1).map(r=>r[0]);S.type="sut";save();renderSeg();showPanels();return rows});
+ ok('Sütle beslenen buzağıda ek tabloda süt yağını içeren "Ham yağ" satırı yok',!cz.includes("Ham yağ, %"),cz.join(','));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
  ok('Buzağı süt KM alt sınırı doğum ağırlığına göre (metinle aynı)',/minLq:0\.015\*\(c\.bwb>0\?c\.bwb:c\.bw\)/.test(html));
