@@ -55,7 +55,7 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Besi KMA %2,2–2,6 CA',approx(bf.pct,2.2,2.6),JSON.stringify(bf));
  ok('Besi kalibrasyon 1,0 (tartım yoksa)',bf.cal===1,String(bf.cal));
  /* KUZU: 30 kg, 300 g/gün → ME 3,5–4,5 Mcal, KMA 1,1–1,5 (NRC 2007) */
- const k=await E(()=>{S.type="koyun";S.k=Object.assign(S.k||{},{mode:"kuzu",bw:30,adg:300,sex:"m",temp:15});save();var R=KREQ();return {me:R.me,dmi:R.dmi,cp:R.cp}});
+ const k=await E(()=>{S.type="koyun";S.k=Object.assign(S.k||{},{mode:"kuzu",bw:30,adg:300,sex:"e",temp:15});save();var R=KREQ();return {me:R.me,dmi:R.dmi,cp:R.cp}});
  ok('Kuzu ME 3,5–4,5 Mcal',approx(k.me,3.5,4.5),JSON.stringify(k));
  ok('Kuzu KMA 1,1–1,5 kg',approx(k.dmi,1.1,1.5),JSON.stringify(k));
  ok('Kuzu faz ME tavanı ≥ 3,0 (NRC bitiş yemi)',await E(()=>KPH[0].me[1]>=3.0));
@@ -140,7 +140,7 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   S.b.bcs=8;bDef();o.bcsS=S.b.bcs;S.b.bcs=3;
   o.sx=simplex([1e6,2e6],[{a:[1,1],op:"=",b:1},{a:[-1,0],op:">=",b:-0.3}]);o.urea=FAM["Üre"][0][3];
   S.type="koyun";S.k=Object.assign(S.k||{},{mode:"gebe",bw:15,nl:3,dg:147,temp:15});o.gebe=KREQ().me;
-  S.k=Object.assign(S.k,{mode:"kuzu",bw:10,adg:250,sex:"m"});var R=KREQ();o.lamb=R.me/R.dmi;
+  S.k=Object.assign(S.k,{mode:"kuzu",bw:10,adg:250,sex:"e"});var R=KREQ();o.lamb=R.me/R.dmi;
   return o});
  ok('Etiket: yeni çözümleme önceki etiketin değerlerini taşımıyor',JSON.stringify(g.lb2)==='{"vitA":500000,"zn":6000}',JSON.stringify(g.lb2));
  ok('Etiket: "Vitamin AD3E premiksi" başlığı A vitamini sanılmıyor',g.ad3e===1e6,String(g.ad3e));
@@ -343,6 +343,25 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Karbonhidrat tablosu ≥ 40 yem, şeker/lignin kaynaklı (soya küspesi şeker %10,6; silaj lignin %2,7 Feedipedia)',cb.cfr>=40&&cb.cbS.sug===10.6&&cb.cbSil.lig===2.7&&/feedtables\.com/.test(html),JSON.stringify([cb.cfr,cb.cbS,cb.cbSil]));
  ok('Rumen kartında karbonhidrat tablosu: şeker, nişasta, by-pass nişasta, çözünür lif, sindirilebilir/sindirilemeyen NDF',/By-pass nişasta/.test(cb.txt)&&/Çözünür lif/.test(cb.txt)&&/Sindirilemeyen NDF/.test(cb.txt)&&/Hızlı yıkılan karbonhidrat/.test(cb.txt)&&/INRA 2018 yem tabloları/.test(cb.txt),'');
  ok('Açıklama metni güncel: metabolik protein NASEM 2021 yöntemiyle (eski NRC 2001 metni yok)',/Metabolik protein NASEM 2021 yöntemiyle/.test(html)&&!/Metabolik protein NRC 2001 yöntemiyle/.test(html));
+ /* V114: bölüm bazlı bağımsız denetim (6 ajan) düzeltmeleri — altın örnekler */
+ const au=await E(()=>{var o={},F=n=>S.feeds.filter(y=>(y.fam||y.n)===n||y.n.indexOf(n)===0)[0],off=()=>S.feeds.forEach(y=>{y.on=false;y.kg=0}),set=(n,kg)=>{var y=F(n);if(y){y.on=true;y.kg=kg}};
+  /* buzağı: sıcak ≠ soğuk */
+  S.type="buzagi";S.c=Object.assign(S.c||{},{bw:60,age:30,bwb:40,adg:700,temp:32,meals:2});off();set("Tam yağlı süt",6);set("Buzağı Plus",0.8);save();var Rc=CREQ(metrics(cItems()));o.heat=Rc.heat;o.cold=Rc.cold;renderCmp();o.ctxt=document.getElementById('cmp').textContent;
+  /* buzağı: 10 günlük, süt girilmemiş → sütten kesilmiş sayılmaz */
+  S.c=Object.assign(S.c,{bw:45,age:10,temp:18});off();set("Buzağı Plus",0.2);save();o.wean=cWeaned();o.W=CREQ(metrics(cItems())).W;renderCmp();o.ctxt2=document.getElementById('cmp').textContent;
+  /* besi: üreli düşük enerjili rasyonda MP NASEM 2016 (RDP ve TDN sınırlı) */
+  S.type="besi";S.bb=Object.assign(S.bb||{},{breed:"hol",sex:"b",bw:400,fin:600,adg:1300,dof:""});off();set("Buğday samanı",3);set("Arpa",4);set("Üre",0.2);save();var m=metrics(curItems());o.g0=bGain(m.dm_,m.meT,m.cp*m.dm_*10).adgp;o.g1=bGain(m.dm_,m.meT,m.cp*m.dm_*10,m).adgp;
+  /* süt: doğum haftası 0 ketozis kontrollerini kapatmaz */
+  S.type="sut";Object.assign(S.b,{bw:650,milk:35,fat:3.7,pr:3.2,mode:"lak",dp:0,bcs:4,bcsc:4,par:3});off();set("Mısır silajı",25);set("Kuru yonca",3);set("Arpa",4);set("Soya küspesi",2);save();S.b.wk=0;var r0=sutRisk();S.b.wk=1;var r1=sutRisk();o.k0=r0&&r0.kraw;o.k1=r1&&r1.kraw;
+  /* premiks etiketi: 0 ile başlayan ondalık ve gram başına birimler */
+  lbParse("Selenyum 0.150 mg\nKobalt 0,500 mg\nVitamin A 1.000 IU/g\nBakır 10 mg/g");o.lb=JSON.parse(JSON.stringify(LB_def().v));
+  return o});
+ ok('Buzağı 32 °C: ısı stresi soğuk stresi sayılmıyor, "sütü artırın" denmiyor',au.heat>0&&au.cold===0&&/Sıcak stresi/.test(au.ctxt)&&!/Soğuk stresi/.test(au.ctxt),JSON.stringify({heat:au.heat,cold:au.cold}));
+ ok('10 günlük buzağıda süt girilmemişse sütten kesilmiş sayılmıyor ve uyarı çıkıyor',!au.wean&&!au.W&&/Süt veya süt ikame yemi girilmedi/.test(au.ctxt2),JSON.stringify({wean:au.wean,W:au.W}));
+ ok('Besi: üreli düşük enerjili rasyonda protein artışı NASEM 2016 MP ile (eski %66 HP varsayımından düşük)',au.g1<au.g0*0.8,JSON.stringify({yeni:Math.round(au.g1),eski:Math.round(au.g0)}));
+ ok('Süt: doğum haftası 0 ketozis kontrollerini kapatmıyor (hafta 0 ≈ hafta 1)',au.k0!==undefined&&au.k0>=au.k1-1&&au.k0>0,JSON.stringify({k0:au.k0,k1:au.k1}));
+ ok('Etiket: "Selenyum 0.150 mg" 0,15; "Kobalt 0,500 mg" 0,5; "1.000 IU/g" 1.000.000 IU/kg; "10 mg/g" 10.000 mg/kg',au.lb.se===0.15&&au.lb.co===0.5&&au.lb.vitA===1000000&&au.lb.cu===10000,JSON.stringify(au.lb));
+ ok('Kaynak kodda: güvenlik sınırları gevşetilmez, besi üre sınırı %1, premiks element toplamı, mineral 1 g hassasiyet',/güvenlik sınırları \(üre, gossipol, tuz, yağ\) asla gevşetilmez/.test(html)&&/\[\/\^Üre\/,0,1,"kesif yemde en çok %1/.test(html)&&/Element toplamı ve yasal sınır/.test(html)&&/isMin\(x\)\?Math\.round\(res\.x\[q\]\*100\/x\.dm\*1000\)\/1000/.test(html));
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
