@@ -381,6 +381,16 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Besi (6), küçükbaş (8), buzağı (5) hastalık rehberi; tüm kartlar eksiksiz; reçeteli ilaçta doz yok',hz2.n.join()==="6,8,5"&&hz2.full&&hz2.dose.length===0,JSON.stringify(hz2.n)+' '+hz2.dose.join(';'));
  ok('Belirti listesi: idrar→idrar taşı, körlük→PEM, son gebelik+ayrılma→gebelik toksemisi, sarılık→bakır, ishal+susuzluk→ishal, sağ karın→abomazum şişmesi',JSON.stringify(hz2.r)==='["uro","pem","gtox","cutox","ishal","abobloat"]',JSON.stringify(hz2.r));
  ok('Rehber besi, küçükbaş ve buzağı analizinde görünüyor, 390 px',hz2.t.every(Boolean)&&hz2.w<=390,JSON.stringify(hz2.t)+' w='+hz2.w);
+ /* V117: aşı programı ve takvimi */
+ const vx=await E(()=>{var o={},day=864e5,iso=d=>new Date(Date.now()+d*day).toISOString().slice(0,10);o.n=[VX.sigir.length,VX.koyun.length];o.off=VX.sigir.filter(v=>v.o).map(v=>v.k).concat(VX.koyun.filter(v=>v.o).map(v=>v.k));
+  var g={id:9,sp:"sut",kind:"genc",dob:iso(-100),done:{}};var P=vxPlan(g),bru=P.filter(p=>p.v.k==="bru")[0];o.bru=bru.st;o.bruW=[Math.round((bru.from-new Date(g.dob))/day),Math.round((bru.to-new Date(g.dob))/day)];
+  g.done={clos_0:{d:iso(-30),lot:"X"}};var P2=vxPlan(g),rap=P2.filter(p=>p.key==="clos_1")[0];o.rap=Math.round((rap.from-new Date(iso(-30)))/day);
+  var a={id:10,sp:"sut",kind:"anne",calv:iso(40),done:{}};o.ishal=vxPlan(a).filter(p=>p.v.k==="ishal")[0].st;
+  var k={id:11,sp:"koyun",kind:"kuzu",dob:iso(-50),done:{}};o.ent=vxPlan(k).filter(p=>p.v.k==="entero"&&p.key==="entero_1")[0].st;
+  S.type="sut";Object.assign(S.b,{mode:"lak",wk:10});S.vx=[g];S.feeds.forEach(x=>{x.on=false;x.kg=0});var x=S.feeds.filter(y=>/^Mısır silajı/.test(y.n))[0];x.on=true;x.kg=25;save();renderCmp();var b=document.getElementById('vxBox');b.open=true;o.txt=b.textContent;o.w=document.documentElement.scrollWidth;S.vx=[];save();return o});
+ ok('Aşı programı: sığır 9, küçükbaş 7 aşı; resmî aşılar (şap, brusella, LSD, şarbon, PPR, çiçek) işaretli',vx.n.join()==="9,7"&&["sap","bru","lsd","sarbon","ksap","rev1","ppr","cicek"].every(k=>vx.off.includes(k)),JSON.stringify(vx.off));
+ ok('Takvim: brusella S19 dişi buzağıda 90–180. gün (100 günlükte "zamanı geldi"); Clostridium rapeli 1. dozdan 28 gün sonra; ishal aşısı doğuma 40 gün kala zamanı geldi; kuzuda enterotoksemi 50. günde',vx.bru==="now"&&vx.bruW.join()==="90,180"&&vx.rap===28&&vx.ishal==="now"&&vx.ent==="now",JSON.stringify(vx));
+ ok('Aşı bölümü analizde görünüyor: resmî aşı uyarısı, soğuk zincir, 390 px',/Tarım ve Orman Bakanlığı/.test(vx.txt)&&/soğuk zincir/.test(vx.txt)&&vx.w<=390,'w='+vx.w);
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
