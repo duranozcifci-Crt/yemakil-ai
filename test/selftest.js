@@ -436,6 +436,9 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Sütten kesilmiş buzağı 100 kg, 900 g/gün: ME 6,2–7,0 Mcal (NRC 2001 ≈ 6,7); 2,65 kg KM ile artış 0,85–1,15 kg/gün (saha 0,8–1,0)',gm.c.W&&approx(gm.c.me,6.2,7.0)&&approx(gm.c.adg,850,1150),JSON.stringify(gm.c));
  ok('Süt emen buzağı modeli değişmedi (NASEM 2021; 70 kg, 800 g: ME 5,5–6,5)',approx(gm.pre,5.5,6.5),String(gm.pre));
  ok('Kuzu 30 kg: ME 3,0–3,4 Mcal (AFRC 1993 = 3,17); 0,8 kg arpa + 0,4 kg yonca + 0,15 kg soya ile artış 260–380 g/gün',approx(gm.l.me,3.0,3.4)&&approx(gm.l.adg,260,380),JSON.stringify(gm.l));
+ /* Deneme sürümü: yol /deneme/ ise ayrı veri anahtarı ve görünür şerit */
+ {const dn=await E(()=>({d:DENEME,k:KEY,ban:!!document.getElementById('denemeBan')}));const isD=/[\\/]deneme[\\/]/.test(path.resolve(FILE));
+  ok('Deneme sürümü ayrımı: '+(isD?'deneme yolu → ayrı anahtar (rasyon-v1-deneme) ve şerit':'asıl sürüm → rasyon-v1, şerit yok'),isD?(dn.d&&dn.k==="rasyon-v1-deneme"&&dn.ban):(!dn.d&&dn.k==="rasyon-v1"&&!dn.ban),JSON.stringify(dn))}
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
