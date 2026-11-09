@@ -388,7 +388,7 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   var a={id:10,sp:"sut",kind:"anne",calv:iso(40),done:{}};o.ishal=vxPlan(a).filter(p=>p.v.k==="ishal")[0].st;
   var k={id:11,sp:"koyun",kind:"kuzu",dob:iso(-50),done:{}};o.ent=vxPlan(k).filter(p=>p.v.k==="entero"&&p.key==="entero_1")[0].st;
   S.type="sut";Object.assign(S.b,{mode:"lak",wk:10});S.vx=[g];S.feeds.forEach(x=>{x.on=false;x.kg=0});var x=S.feeds.filter(y=>/^Mısır silajı/.test(y.n))[0];x.on=true;x.kg=25;save();renderCmp();var b=document.getElementById('vxBox');b.open=true;o.txt=b.textContent;o.w=document.documentElement.scrollWidth;S.vx=[];save();return o});
- ok('Aşı programı: sığır 9, küçükbaş 7 aşı; resmî aşılar (şap, brusella, LSD, şarbon, PPR, çiçek) işaretli',vx.n.join()==="9,7"&&["sap","bru","lsd","sarbon","ksap","rev1","ppr","cicek"].every(k=>vx.off.includes(k)),JSON.stringify(vx.off));
+ ok('Aşı programı: sığır 11, küçükbaş 9 aşı; resmî aşılar (şap, brusella, LSD, şarbon, PPR, çiçek) işaretli',vx.n.join()==="11,9"&&["sap","bru","lsd","sarbon","ksap","rev1","ppr","cicek"].every(k=>vx.off.includes(k)),JSON.stringify(vx.off));
  ok('Takvim: brusella S19 dişi buzağıda 90–180. gün (100 günlükte "zamanı geldi"); Clostridium rapeli 1. dozdan 28 gün sonra; ishal aşısı doğuma 40 gün kala zamanı geldi; kuzuda enterotoksemi 50. günde',vx.bru==="now"&&vx.bruW.join()==="90,180"&&vx.rap===28&&vx.ishal==="now"&&vx.ent==="now",JSON.stringify(vx));
  ok('Aşı bölümü analizde görünüyor: resmî aşı uyarısı, soğuk zincir, 390 px',/Tarım ve Orman Bakanlığı/.test(vx.txt)&&/soğuk zincir/.test(vx.txt)&&vx.w<=390,'w='+vx.w);
  /* V118: veri güvenliği ve dönem uyumlu ürün seçimi */
@@ -410,6 +410,24 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   for(const t of ["sut","koyun","buzagi","mikro"]){await q.evaluate(t=>{S.type=t;renderSeg();showPanels();renderCmp()},t)}
   ok('Yanlış türde kayıt alanları (vx, mk, k, c) ve eski kayıt (refd yok) açılışta hata vermiyor',qe.length===0,qe.join('; '));await q.close()}
  ok('Servis çalışanı: sayfa açılışında 3 sn zaman aşımı, sorgu parametresi yok sayılıyor, yalnız kendi dosyaları ve yazı tipleri önbelleğe',/setTimeout\(\(\)=>cached\(\)\.then\(fin\),3000\)/.test(sw)&&/ignoreSearch:nav/.test(sw)&&/if\(!same&&!font\)return/.test(sw));
+ /* V119: eşik tutarlılığı, sağlık/aşı düzeltmeleri, yem kütüphanesi */
+ const v9=await E(()=>{var o={},day=864e5,iso=d=>new Date(Date.now()+d*day).toISOString().slice(0,10),F=re=>S.feeds.filter(y=>re.test(y.fam||y.n))[0],set=(L)=>{S.feeds.forEach(x=>{x.on=false;x.kg=0});L.forEach(([re,kg])=>{var x=F(re);if(x){x.on=true;x.kg=kg}});save()};
+  S.type="sut";Object.assign(S.b,{bw:620,milk:25,fat:3.8,pr:3.3,wk:20,mode:"lak",dp:120,bcs:3});set([[/^Mısır silajı/,28],[/^Kuru yonca/,4],[/^Buğday samanı/,1.5],[/^Arpa/,3],[/^Soya küspesi/,1.5],[/^Ayçiçeği küspesi/,1]]);var r=sutRisk();o.aNorm=r.a;o.kaba=Math.round(r.m.kaba);
+  set([[/^Mısır silajı/,12],[/^Arpa/,9],[/^Buğday$/,3],[/^Soya küspesi/,3]]);var r2=sutRisk();o.aLow=r2.a;
+  var VXo=VX;o.preb=VXo.sigir.filter(v=>v.k==="solunum")[0].sch.filter(x=>x.g==="calv")[0];
+  var g={id:1,sp:"sut",kind:"genc",dob:iso(-500),done:{clos_0:{d:iso(-440)},clos_1:{d:iso(-410)},clos_5:{d:iso(-400)}}};o.yr=vxPlan(g).filter(p=>p.key==="clos_5")[0].st;
+  var ge={id:2,sp:"sut",kind:"genc",dob:iso(-100),sex:"e",done:{}};o.maleBru=vxPlan(ge).some(p=>p.v.k==="bru");
+  o.orf=vxPlan({id:3,sp:"koyun",kind:"kuzu",dob:iso(-10),done:{}}).filter(p=>p.v.k==="orf")[0].st;
+  o.cowClos=vxPlan({id:4,sp:"sut",kind:"anne",calv:iso(45),done:{}}).filter(p=>p.v.k==="clos").map(p=>p.st);
+  o.past=vxPlan({id:5,sp:"sut",kind:"anne",calv:iso(100),done:{}}).filter(p=>p.key==="solunum_4")[0].st;
+  var R=(sp,sel)=>{HZSEL={};sel.forEach(k=>HZSEL[k]=true);var x=hzRank(sp).map(y=>y.d.k);HZSEL={};return x[0]};o.r=[R("sut",["dogum","yat","ist"]),R("koyun",["olum","ayrilir"]),R("sut",["dogum","ates","ist","sut"])];
+  var H=JSON.stringify(HZ);o.txt=[/sefalosporin grubu\)/.test(H),/Yalnız sola kaymada/.test(H),/Mide sondasıyla bol soğuk su/.test(H),/Keçide bakır yasal sınırı 35/.test(H),/sığır yeminde katkı olarak izinli değildir/.test(H)];
+  o.pancar=FAM["Kuru pancar posası"][0][6];o.ddgs=STA.DDGS;o.se=XR.lak.se[0];o.pe=XR.lak.pendf[0];return o});
+ ok('Asidoz puanı: kaba yemi %'+v9.kaba+' olan normal sağmal rasyonu "yüksek" değil; düşük kaba yemli rasyon yüksek',v9.aNorm<4&&v9.aLow>=4,JSON.stringify({normal:v9.aNorm,dusuk:v9.aLow}));
+ ok('Aşı: tohumlama öncesi doz doğumdan 325–311 gün önce; yıllık doz ertesi yıl yeniden çıkıyor; erkek grupta brusella yok; ektima isteğe bağlı; inekte doğum öncesi Clostridium rapeli; gebe inekte geçen pencere "geçti"',v9.preb.a===-325&&v9.preb.b===-311&&v9.yr!=="ok"&&!v9.maleBru&&v9.orf==="opt"&&v9.cowClos.includes("now")&&v9.past==="past",JSON.stringify(v9));
+ ok('Belirti sıralaması: taze dönemde yatan iştahsız inek → süt humması; kuzuda ani ölüm → enterotoksemi; ateşli taze inek → rahim iltihabı',JSON.stringify(v9.r)==='["hipoca","entero","son"]',JSON.stringify(v9.r));
+ ok('Rehber düzeltmeleri: antibiyotik örneği penisilin/oksitetrasiklin, yuvarlama yalnız sola kaymada, üre zehirlenmesinde sonda, keçide bakır 35, monensin sığır yeminde izinli değil',!v9.txt[0]&&v9.txt.slice(1).every(Boolean),JSON.stringify(v9.txt));
+ ok('Eşik ve kütüphane: sağmal selenyum alt sınırı 0,3, peNDF alt sınırı 22; kuru pancar posası Ca %1,45; DDGS nişastası %9',v9.se===0.3&&v9.pe===22&&v9.pancar===1.45&&v9.ddgs===9,JSON.stringify({se:v9.se,pe:v9.pe,p:v9.pancar,d:v9.ddgs}));
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
