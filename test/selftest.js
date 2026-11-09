@@ -56,7 +56,7 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Besi kalibrasyon 1,0 (tartım yoksa)',bf.cal===1,String(bf.cal));
  /* KUZU: 30 kg, 300 g/gün → ME 3,5–4,5 Mcal, KMA 1,1–1,5 (NRC 2007) */
  const k=await E(()=>{S.type="koyun";S.k=Object.assign(S.k||{},{mode:"kuzu",bw:30,adg:300,sex:"e",temp:15});save();var R=KREQ();return {me:R.me,dmi:R.dmi,cp:R.cp}});
- ok('Kuzu ME 3,5–4,5 Mcal',approx(k.me,3.5,4.5),JSON.stringify(k));
+ ok('Kuzu ME 3,0–3,6 Mcal (30 kg erkek, 300 g/gün; AFRC 1993 ≈ 3,2, NRC 1985 ≈ 3,4)',approx(k.me,3.0,3.6),JSON.stringify(k));
  ok('Kuzu KMA 1,1–1,5 kg',approx(k.dmi,1.1,1.5),JSON.stringify(k));
  ok('Kuzu faz ME tavanı ≥ 3,0 (NRC bitiş yemi)',await E(()=>KPH[0].me[1]>=3.0));
  /* BUZAĞI: 45 kg, 21 gün, 6 L süt + 0,3 kg starter → 0,5–0,9 kg/gün artış */
@@ -428,6 +428,14 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Belirti sıralaması: taze dönemde yatan iştahsız inek → süt humması; kuzuda ani ölüm → enterotoksemi; ateşli taze inek → rahim iltihabı',JSON.stringify(v9.r)==='["hipoca","entero","son"]',JSON.stringify(v9.r));
  ok('Rehber düzeltmeleri: antibiyotik örneği penisilin/oksitetrasiklin, yuvarlama yalnız sola kaymada, üre zehirlenmesinde sonda, keçide bakır 35, monensin sığır yeminde izinli değil',!v9.txt[0]&&v9.txt.slice(1).every(Boolean),JSON.stringify(v9.txt));
  ok('Eşik ve kütüphane: sağmal selenyum alt sınırı 0,3, peNDF alt sınırı 22; kuru pancar posası Ca %1,45; DDGS nişastası %9',v9.se===0.3&&v9.pe===22&&v9.pancar===1.45&&v9.ddgs===9,JSON.stringify({se:v9.se,pe:v9.pe,p:v9.pancar,d:v9.ddgs}));
+ /* V120: sütten kesilmiş buzağı (NRC 2001 düve) ve kuzu (AFRC 1993) büyüme modelleri */
+ const gm=await E(()=>{var o={},F=re=>S.feeds.filter(y=>re.test(y.fam||y.n))[0],set=L=>{S.feeds.forEach(x=>{x.on=false;x.kg=0});L.forEach(([re,kg])=>{var x=F(re);if(x){x.on=true;x.kg=kg}});save()};
+  S.type="buzagi";S.c=Object.assign(S.c||{},{breed:"hol",bw:100,age:90,bwb:40,adg:900,temp:18});set([[/^Buzağı Büyütme/,2.6],[/^Kuru yonca/,0.4]]);var m=metrics(cItems()),R=CREQ(m),g=cGain(m);o.c={W:R.W,me:R.me,adg:Math.min(g.adg,g.adgp)};
+  S.c=Object.assign(S.c,{bw:70,age:42,adg:800});set([[/^Tam yağlı süt/,6],[/^Buzağı Plus/,1.1]]);m=metrics(cItems());o.pre=CREQ(m).me;
+  S.type="koyun";S.k=Object.assign(S.k||{},{mode:"kuzu",breed:"akk",bw:30,adg:300,sex:"e",temp:18});set([[/^Arpa/,0.8],[/^Kuru yonca/,0.4],[/^Soya küspesi/,0.15]]);m=metrics(curItems());var kg=kGain(m.dmi,m.meT,m.cp*m.dmi*10);o.l={me:KREQ().me,adg:Math.min(kg.adg,kg.adgp)};return o});
+ ok('Sütten kesilmiş buzağı 100 kg, 900 g/gün: ME 6,2–7,0 Mcal (NRC 2001 ≈ 6,7); 2,65 kg KM ile artış 0,85–1,15 kg/gün (saha 0,8–1,0)',gm.c.W&&approx(gm.c.me,6.2,7.0)&&approx(gm.c.adg,850,1150),JSON.stringify(gm.c));
+ ok('Süt emen buzağı modeli değişmedi (NASEM 2021; 70 kg, 800 g: ME 5,5–6,5)',approx(gm.pre,5.5,6.5),String(gm.pre));
+ ok('Kuzu 30 kg: ME 3,0–3,4 Mcal (AFRC 1993 = 3,17); 0,8 kg arpa + 0,4 kg yonca + 0,15 kg soya ile artış 260–380 g/gün',approx(gm.l.me,3.0,3.4)&&approx(gm.l.adg,260,380),JSON.stringify(gm.l));
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
