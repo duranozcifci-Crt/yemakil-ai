@@ -362,6 +362,15 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Süt: doğum haftası 0 ketozis kontrollerini kapatmıyor (hafta 0 ≈ hafta 1)',au.k0!==undefined&&au.k0>=au.k1-1&&au.k0>0,JSON.stringify({k0:au.k0,k1:au.k1}));
  ok('Etiket: "Selenyum 0.150 mg" 0,15; "Kobalt 0,500 mg" 0,5; "1.000 IU/g" 1.000.000 IU/kg; "10 mg/g" 10.000 mg/kg',au.lb.se===0.15&&au.lb.co===0.5&&au.lb.vitA===1000000&&au.lb.cu===10000,JSON.stringify(au.lb));
  ok('Kaynak kodda: güvenlik sınırları gevşetilmez, besi üre sınırı %1, premiks element toplamı, mineral 1 g hassasiyet',/güvenlik sınırları \(üre, gossipol, tuz, yağ\) asla gevşetilmez/.test(html)&&/\[\/\^Üre\/,0,1,"kesif yemde en çok %1/.test(html)&&/Element toplamı ve yasal sınır/.test(html)&&/isMin\(x\)\?Math\.round\(res\.x\[q\]\*100\/x\.dm\*1000\)\/1000/.test(html));
+ /* V115: süt ineği hastalık rehberi */
+ const hz=await E(()=>{var o={},L=HZ.sut;o.n=L.length;o.full=L.every(d=>d.b.length&&d.i.length&&d.t.length&&d.h.length&&d.q.length&&d.o.length&&d.a&&d.s);
+  o.dose=[];L.forEach(d=>d.t.forEach(t=>{if(/V/.test(t[1])&&/\d+\s*(mg|ml|mL|IU|g\/|g\s|cc)/.test(t[0]+' '+t[2]))o.dose.push(d.k+': '+t[0])}));
+  HZSEL={dogum:true,kesif:true,aseton:true};o.r1=hzRank("sut").map(r=>r.d.k);HZSEL={dogum0:true,yat:true,soguk:true};o.r2=hzRank("sut").map(r=>r.d.k);HZSEL={meme:true};o.r3=hzRank("sut").map(r=>r.d.k);HZSEL={};
+  S.type="sut";Object.assign(S.b,{mode:"lak",wk:3});S.feeds.forEach(x=>{x.on=false;x.kg=0});var x=S.feeds.filter(y=>/^Mısır silajı/.test(y.n))[0];x.on=true;x.kg=25;var y2=S.feeds.filter(y=>/^Arpa/.test(y.n))[0];y2.on=true;y2.kg=6;save();renderCmp();o.txt=document.getElementById('cmp').textContent;o.w=document.documentElement.scrollWidth;return o});
+ ok('Süt ineği hastalık rehberi: 9 hastalık; her kartta belirti, ilk müdahale, tedavi, sık hata, veterinere soru, önleme, acil durum ve kaynak',hz.n===9&&hz.full,String(hz.n));
+ ok('Rehberde reçeteli (veteriner) ilaçlar için doz yazılmıyor; arınma süresi ve "teşhis koymaz" uyarısı var',hz.dose.length===0&&/arınma süresi/.test(hz.txt)&&/teşhis koymaz/.test(hz.txt),hz.dose.join('; '));
+ ok('Belirti listesi: doğum sonrası + kesifi bırakma + aseton → ketozis; doğum + yatma + soğuk kulak → süt humması; meme → mastitis',hz.r1[0]==="keto"&&hz.r2[0]==="hipoca"&&hz.r3[0]==="mast",JSON.stringify([hz.r1,hz.r2,hz.r3]));
+ ok('Rehber süt analizinde görünüyor, 390 px',/Hastalık rehberi/.test(hz.txt)&&hz.w<=390,'w='+hz.w);
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
