@@ -371,6 +371,16 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Rehberde reçeteli (veteriner) ilaçlar için doz yazılmıyor; arınma süresi ve "teşhis koymaz" uyarısı var',hz.dose.length===0&&/arınma süresi/.test(hz.txt)&&/teşhis koymaz/.test(hz.txt),hz.dose.join('; '));
  ok('Belirti listesi: doğum sonrası + kesifi bırakma + aseton → ketozis; doğum + yatma + soğuk kulak → süt humması; meme → mastitis',hz.r1[0]==="keto"&&hz.r2[0]==="hipoca"&&hz.r3[0]==="mast",JSON.stringify([hz.r1,hz.r2,hz.r3]));
  ok('Rehber süt analizinde görünüyor, 390 px',/Hastalık rehberi/.test(hz.txt)&&hz.w<=390,'w='+hz.w);
+ /* V116: besi, küçükbaş, buzağı hastalık rehberleri */
+ const hz2=await E(()=>{var o={},chk=sp=>HZ[sp].every(d=>d.b.length&&d.i.length&&d.t.length&&d.h.length&&d.q.length&&d.o.length&&d.a&&d.s&&Object.keys(d.sg).every(k=>HZS[k]));o.n=[HZ.besi.length,HZ.koyun.length,HZ.buzagi.length];o.full=chk("besi")&&chk("koyun")&&chk("buzagi");
+  o.dose=[];["besi","koyun","buzagi"].forEach(sp=>HZ[sp].forEach(d=>d.t.forEach(t=>{if(/V/.test(t[1])&&/\d+\s*(mg|ml|mL|IU|g\/|cc)/.test(t[0]+' '+t[2]))o.dose.push(d.k+': '+t[0])})));
+  var R=(sp,sel)=>{HZSEL={};sel.forEach(k=>HZSEL[k]=true);var r=hzRank(sp).map(x=>x.d.k);HZSEL={};return r[0]};
+  o.r=[R("besi",["idrar","kum"]),R("besi",["korluk","tit"]),R("koyun",["gebe","ayrilir","korluk"]),R("koyun",["sari"]),R("buzagi",["ishal","susuz","emme"]),R("buzagi",["sagsis"])];
+  var txt=sp=>{S.type=sp;S.feeds.forEach(x=>{x.on=false;x.kg=0});var set=(re,kg)=>{var x=S.feeds.filter(y=>re.test(y.fam||y.n))[0];if(x){x.on=true;x.kg=kg}};if(sp==="buzagi"){set(/^Tam yağlı süt/,6);set(/^Buzağı Plus/,0.5)}else if(sp==="koyun"){set(/^Arpa/,0.5);set(/^Kuru yonca/,1)}else{set(/^Mısır silajı/,10);set(/^Arpa/,4)}save();renderSeg();showPanels();renderCmp();return document.getElementById('cmp').textContent};
+  o.t=["besi","koyun","buzagi"].map(sp=>/Hastalık rehberi/.test(txt(sp)));o.w=document.documentElement.scrollWidth;return o});
+ ok('Besi (6), küçükbaş (8), buzağı (5) hastalık rehberi; tüm kartlar eksiksiz; reçeteli ilaçta doz yok',hz2.n.join()==="6,8,5"&&hz2.full&&hz2.dose.length===0,JSON.stringify(hz2.n)+' '+hz2.dose.join(';'));
+ ok('Belirti listesi: idrar→idrar taşı, körlük→PEM, son gebelik+ayrılma→gebelik toksemisi, sarılık→bakır, ishal+susuzluk→ishal, sağ karın→abomazum şişmesi',JSON.stringify(hz2.r)==='["uro","pem","gtox","cutox","ishal","abobloat"]',JSON.stringify(hz2.r));
+ ok('Rehber besi, küçükbaş ve buzağı analizinde görünüyor, 390 px',hz2.t.every(Boolean)&&hz2.w<=390,JSON.stringify(hz2.t)+' w='+hz2.w);
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
