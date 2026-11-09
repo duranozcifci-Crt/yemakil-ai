@@ -4,13 +4,17 @@
    Kural: düzeltilen her hata buraya bir "altın örnek" olarak eklenir. */
 const fs=require('fs'),path=require('path');
 const FILE=process.argv[2]||path.join(__dirname,'..','index.html');
-const html=fs.readFileSync(FILE,'utf8');
+const html0=fs.readFileSync(FILE,'utf8');
+/* bölünmüş dosyalar (veri.js, saglik.js …): yerel <script src> içerikleri de denetime katılır */
+const SRCS=[...html0.matchAll(/<script src="([^":]+\.js)"><\/script>/g)].map(m=>m[1]);const srcTxt=SRCS.map(f=>{try{return fs.readFileSync(path.join(path.dirname(FILE),f),'utf8')}catch(e){return null}});
+const html=html0+'\n'+srcTxt.filter(Boolean).join('\n');
 const R=[];function ok(name,cond,info){R.push({name,ok:!!cond,info:info||''});}
 function approx(v,lo,hi){return typeof v==='number'&&isFinite(v)&&v>=lo&&v<=hi}
 
 /* ---------- 1. Sözdizimi ---------- */
 let synErr=null;[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach((m,i)=>{try{new Function(m[1])}catch(e){synErr=i+': '+e.message}});
 ok('JS sözdizimi',!synErr,synErr);
+SRCS.forEach((f,i)=>{let er=null;if(srcTxt[i]===null)er='dosya yok';else try{new Function(srcTxt[i])}catch(e){er=e.message}ok('Ayrı dosya yüklenebilir ve sözdizimi doğru: '+f,!er,er)});
 
 /* ---------- 2. Statik tutarlılık ---------- */
 ok('Eski sekme adı "Yem yap" kalmamış',!/Yem yap\b/.test(html));
@@ -439,6 +443,21 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  /* Deneme sürümü: yol /deneme/ ise ayrı veri anahtarı ve görünür şerit */
  {const dn=await E(()=>({d:DENEME,k:KEY,ban:!!document.getElementById('denemeBan')}));const isD=/[\\/]deneme[\\/]/.test(path.resolve(FILE));
   ok('Deneme sürümü ayrımı: '+(isD?'deneme yolu → ayrı anahtar (rasyon-v1-deneme) ve şerit':'asıl sürüm → rasyon-v1, şerit yok'),isD?(dn.d&&dn.k==="rasyon-v1-deneme"&&dn.ban):(!dn.d&&dn.k==="rasyon-v1"&&!dn.ban),JSON.stringify(dn))}
+ /* V122: tek referans tablosu (deneme sürümünde; yayına alınınca asıl sürümde de) */
+ if(/var REF=\{/.test(html)){const rf=await E(()=>{var o={};o.cons=XR.lak.se[0]===REF.seLak.lo&&XR.lak.pendf[0]===REF.pendf.min&&XR.lak.dcad[0]===REF.dcadLak.lo&&XR.koyun.cu[1]===REF.sheepCu.ust&&STR()[1]===(isDry()?STR()[1]:REF.staLak.ust);
+  S.type="sut";Object.assign(S.b,{mode:"lak",wk:10,milk:35});S.feeds.forEach(x=>{x.on=false;x.kg=0});[[/^Mısır silajı/,25],[/^Kuru yonca/,4],[/^Arpa/,5],[/^Soya küspesi/,3]].forEach(([re,kg])=>{var x=S.feeds.filter(y=>re.test(y.fam||y.n))[0];x.on=true;x.kg=kg});save();
+  var r=sutRisk(),has=r=>r.A.some(a=>/Rumende yıkılan nişasta/.test(a.t));o.rfs=r.rfs;o.before=has(r);var keep=REF.rfs.ust,keep2=REF.rfs.hedef;REF.rfs.ust=Math.max(1,r.rfs-2);REF.rfs.hedef=Math.max(1,r.rfs-3);o.after=has(sutRisk());REF.rfs.ust=keep;REF.rfs.hedef=keep2;return o});
+ ok('Tek referans tablosu: analiz tablosu ve çözücü sınırları REF ile aynı; REF değişince risk kartı da değişiyor',rf.cons&&rf.after===true,JSON.stringify(rf));
+ ok('Eşikler kodda tek yerde: risk kartlarında sabit sayı kalmadı (rumende yıkılan nişasta, nişasta, peNDF, DCAD, Se, lizin/metiyonin, besi fosforu, koyun bakırı)',!/if\(rfs>22\)|if\(m\.sta>30\)add\(A|if\(m\.pendf<20\)|if\(m\.dcad<250\)|if\(m\.se<0\.3\)tm|Math\.min\(6\.65,|if\(m\.ph>0\.5\)add\(U|if\(m\.cu>15\)\{cu\+=3/.test(html)&&/var REF=\{/.test(html));}
+ /* V122: saha kaydı ve hata bildir (deneme sürümünde; yayına alınınca asıl sürümde) */
+ if(/window\.fdGuide=/.test(html)){const fd=await E(()=>{var o={},F=re=>S.feeds.filter(y=>re.test(y.fam||y.n))[0];S.type="sut";Object.assign(S.b,{mode:"lak",wk:12,milk:30,bw:650});S.cal={};S.feeds.forEach(x=>{x.on=false;x.kg=0});[[/^Mısır silajı/,28],[/^Kuru yonca/,4],[/^Arpa/,5],[/^Soya küspesi/,3]].forEach(([re,kg])=>{var x=F(re);x.on=true;x.kg=kg});save();
+   var P=fdPred(),d0=REQ().dmi;o.pred=!!(P&&P.dmi>0&&P.milkE>0);S.fd=[{id:1,t:"sut",date:"2026-10-01",dmi:d0*0.9,milk:29,pred:P},{id:2,t:"sut",date:"2026-10-08",dmi:d0*0.9,milk:29,pred:P}];o.st=fdStats("sut");
+   renderCmp();var bt=document.querySelector('[data-fdcal]');o.btn=bt?bt.dataset.fdcal:null;if(bt)bt.click();o.r=REQ().dmi/d0;S.cal={};S.fd=[];save();
+   S.type="besi";S.bb=Object.assign(S.bb||{},{bw:400,fin:600});S.fd=[{id:3,t:"besi",date:"2026-09-01",bw:400,pred:{adg:1300}},{id:4,t:"besi",date:"2026-10-01",bw:430,pred:{adg:1300}}];o.bst=fdStats("besi");S.fd=[];S.type="sut";save();
+   window.prompt=()=>"deneme notu";o.bug=window.bugReport?bugReport():null;return {pred:o.pred,st:o.st,btn:o.btn,r:o.r,bst:o.bst,bug:o.bug&&o.bug.note==="deneme notu"&&!JSON.stringify(o.bug).includes('"key"')}});
+  ok('Saha kaydı: tahmin kaydediliyor; gerçek KM tüketimi %10 düşükse ×0,90 ayar öneriliyor ve uygulanınca tahmin değişiyor',fd.pred&&Math.abs(fd.st.dmi-0.9)<0.001&&fd.btn==="sut|0.900"&&Math.abs(fd.r-0.9)<0.001,JSON.stringify(fd));
+  ok('Saha kaydı: besi tartısından gerçek artış (30 günde 30 kg = 1000 g) tahminle (1300 g) karşılaştırılıyor',fd.bst.an===1&&Math.abs(fd.bst.adg-1000/1300)<0.01,JSON.stringify(fd.bst));
+  ok('Hata bildir: not, ekran ve veriler dosyaya; API anahtarı yok',fd.bug===true,String(fd.bug));}
  ok('Kendi analiziniz öncelikli: yem düzenleyicide A/B/kd girilince RUP ona göre (A 15, B 80, kd 4 → soya RUP ≈ %50,5)',pf.user.r>49.5&&pf.user.r<51.5&&/pA/.test(pf.ed)&&/kd/.test(pf.ed)&&/dcR/.test(pf.ed),JSON.stringify(pf.user));
  ok('Referans: koyun rasyonu Cu üst sınırı 12 mg/kg (NRC 2005 tolerans 15; etiket kontrolüyle aynı)',await E(()=>XR.koyun.cu[1]===12&&XR.koyunE.cu[1]===12)&&/12-mx\(x\)\.cu/.test(html));
  ok('Referans: AB 2018/1039 bakır sığır 30 mg/kg',/bakır sığır 30 \(buzağı 15\)/.test(html)&&!/bakır sığır 35/.test(html));
