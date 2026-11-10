@@ -143,6 +143,31 @@ export function usdaOku(txt) {
   for (const [ad, L] of Object.entries(sonuc)) out[ad] = Math.round((L.reduce((a, b) => a + b, 0) / L.length) * 1.10231131 * 100) / 100;
   return { tarih, fiyat: out };
 }
+export function cepeaTablo(html) {
+  const t = (html.match(/<table[\s\S]*?<\/table>/) || [""])[0], out = [];
+  for (const tr of t.match(/<tr[\s\S]*?<\/tr>/g) || []) {
+    const td = (tr.match(/<td[\s\S]*?<\/td>/g) || []).map(metin);
+    const m = td[0] && td[0].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m || td.length < 5) continue;
+    const usd = sayi(td[4]);
+    if (usd > 0) out.push([`${m[3]}-${m[2]}-${m[1]}`, Math.round((usd * 1000) / 60 * 100) / 100]);
+  }
+  return out.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+}
+export function matbaOku(txt) {
+  const dm = String(txt).match(/Cierre de precios del mercado de granos al\s+(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!dm) return null;
+  const out = { tarih: `${dm[3]}-${dm[2]}-${dm[1]}` };
+  let urun = null;
+  for (const l of String(txt).split(/\r?\n/)) {
+    const t = l.trim();
+    if (/^(Soja|Maíz|Trigo)$/.test(t)) { urun = t; continue; }
+    if (/Subproductos/.test(t)) urun = null;
+    const m = urun && !out[urun] && t.match(/^[A-Z]{3}\d{4}\s+USD\s+[\d.,-]+\s+USD\s+([\d.]*\d,\d{2})/);
+    if (m) out[urun] = sayi(m[1]);
+  }
+  return out;
+}
 const eski = (() => { try { return JSON.parse(fs.readFileSync(OUT, "utf8")); } catch { return null; } })();
 let kur;
 try { kur = await seri("TRY=X"); } catch (e) { console.error("USD/TRY çekilemedi:", e.message); kur = (eski && eski.usdtry) || null; }
@@ -215,6 +240,50 @@ export function faoSeri(j) {
       if (o) sonuc.urunler.push({ ...o, eski: true });
     }
   }
+}
+// Güney Amerika: Brezilya CEPEA göstergeleri (sayfadaki son ~15 gün, US$/60 kg çuval) ve Arjantin MAGyP günlük
+// raporundaki Rosario vadeli (MATba, en yakın vade) kapanışları (US$/ton). Geçmiş günden güne birikir.
+const GA = [
+  { ad: "Soya fasulyesi", merkez: "Brezilya Paranaguá limanı (CEPEA)", url: "https://www.cepea.org.br/br/indicador/soja.aspx" },
+  { ad: "Mısır", merkez: "Brezilya Campinas (CEPEA)", url: "https://www.cepea.org.br/br/indicador/milho.aspx" },
+];
+const birikir = (sembol, ad, merkez, yeni) => {
+  const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === sembol && x.ad === ad && x.merkez === merkez);
+  const M = new Map(((o && o.seri) || []).map(([d, v]) => [d, v]));
+  for (const [d, v] of yeni) M.set(d, v);
+  const sinir = new Date(Date.now() - 200 * 864e5).toISOString().slice(0, 10);
+  return [...M.entries()].filter(([d]) => d >= sinir).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+};
+for (const u of GA) {
+  try {
+    const L = cepeaTablo(await getir(u.url, false));
+    if (!L.length) throw new Error("tablo okunamadı");
+    sonuc.urunler.push({ ad: u.ad, sembol: "CEPEA", merkez: u.merkez, birim: "US$/60 kg → USD/ton → TL/ton", seri: birikir("CEPEA", u.ad, u.merkez, L.map(([d, v]) => [d, Math.round(v * kurAt(d))])) });
+    basarili++;
+  } catch (e) {
+    console.error("CEPEA", u.ad, "çekilemedi:", e.message);
+    const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "CEPEA" && x.ad === u.ad);
+    if (o) sonuc.urunler.push({ ...o, eski: true });
+  }
+}
+try {
+  const r = await fetch("https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/areas/granos/_archivos/000061_Informes/000003_Informe%20Diario%20del%20Mercado%20de%20Granos/000001_Informe%20Diario%20del%20Mercado%20de%20Granos-%20Actual.pdf", { headers: UA });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const f = path.join(os.tmpdir(), "magyp.pdf");
+  fs.writeFileSync(f, Buffer.from(await r.arrayBuffer()));
+  const p = spawnSync("pdftotext", ["-layout", f, "-"], { encoding: "utf8" });
+  const o = p.status === 0 ? matbaOku(p.stdout) : null;
+  if (!o) throw new Error("rapor okunamadı");
+  for (const [k, ad] of [["Soja", "Soya fasulyesi"], ["Maíz", "Mısır"]]) {
+    const merkez = "Arjantin Rosario vadeli (MATba)", yeni = o[k] > 0 ? [[o.tarih, Math.round(o[k] * kurAt(o.tarih))]] : [];
+    const seri = birikir("MATBA", ad, merkez, yeni);
+    if (seri.length) sonuc.urunler.push({ ad, sembol: "MATBA", merkez, birim: "USD/ton → TL/ton", seri });
+  }
+  basarili++;
+  console.log("MATba", JSON.stringify(o));
+} catch (e) {
+  console.error("MAGyP çekilemedi:", e.message);
+  for (const x of (eski && eski.urunler) || []) if (x.sembol === "MATBA") sonuc.urunler.push({ ...x, eski: true });
 }
 // Yurt içi: eksik günleri tamamla. Her borsa için ayrı son kontrol günü; yeni eklenen borsa geriye 120 gün doldurulur.
 const yEski = (eski && eski.yurtici) || null, anahtar = (u) => u.ad + "|" + u.borsa;
