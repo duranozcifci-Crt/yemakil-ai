@@ -1,11 +1,11 @@
 /* YemAkıl sipariş (V132): fabrika fiyat listelerinden (Başaran, Yemci Bey + kullanıcının eklediği firmalar) sipariş girişi.
-   Fiyatlar TL / çuval (40 kg), fabrika teslim, yem fiyatlarında KDV yok; nakliye tutarına KDV eklenir (varsayılan %20).
+   Fiyatlar TL / çuval (50 kg; Protein/Tahıl Kardeşliği 40 kg), fabrika teslim, yem fiyatlarında KDV yok; nakliye tutarına KDV eklenir (varsayılan %20).
    Peşin / kredi kartı tek çekim seçimi tüm fiyatları değiştirir. Bir siparişte birden çok firma olabilir; her firmaya ayrı WhatsApp mesajı.
    Gönderilmiş sipariş açılıp değiştirilirse "REVİZE" olarak yeniden gönderilir. index.html'den sonra yüklenir (S, save, f, esc gerekir). */
 (function(){
 /* Fiyat listeleri (fabrika fiyat listesi fotoğraflarından). Yeni liste gelince tarih ve fiyatlar burada güncellenir. [ürün, peşin, kredi kartı tek çekim] */
 var SP_LISTE={
- basaran:{ad:"Başaran",tarih:"2026-11-04",kg:40,g:[
+ basaran:{ad:"Başaran",tarih:"2026-11-04",kg:50,g:[
   ["Buzağı yemleri",[["Başaran Buzağı Başlangıç",808,841],["Başaran Buzağı Büyütme",846,880]]],
   ["Süt yemleri",[["Başaran Süt 19 Granül / Pelet",836,870],["Başaran Süt 19 Toz",831,865],["Başaran Süt 20 Granül / Pelet",853,888],["Başaran Süt 20 Toz",848,882],["Başaran Süt 21 Granül / Pelet",867,902],["Başaran Süt 21 Toz",862,897],["Başaran Düve",795,827],["Başaran Kuru Dönem",795,827]]],
   ["Besi yemleri",[["Başaran Besi Başlangıç Granül / Pelet",789,821],["Başaran Besi Başlangıç Toz",784,816],["Başaran Besi Granül / Pelet",797,829],["Başaran Besi Toz",792,824],["Başaran Besi Bitiş Granül / Pelet",794,826],["Başaran Besi Bitiş Toz",789,821]]],
@@ -14,7 +14,7 @@ var SP_LISTE={
   ["Etlik yemleri",[["Etlik Civciv Yemi",1184,1232],["Etlik Piliç Yemi",1129,1175]]],
   ["Hindi yemleri",[["Hindi Civciv Yemi",1271,1322],["Hindi Piliç Büyütme Yemi",1195,1243],["Hindi Yumurta Yemi",1126,1172]]],
   ["Yem 7",[["Çiftlikte Yem 7 Besi",770,801],["Çiftlikte Yem 7 Besi Toz",809,842],["Çiftlikte Yem 7 Süt",804,837],["Çiftlikte Yem 7 Süt Toz",861,896]]]]},
- yemcibey:{ad:"Yemci Bey",tarih:"2026-11-04",kg:40,g:[
+ yemcibey:{ad:"Yemci Bey",tarih:"2026-11-04",kg:50,g:[
   ["Buzağı yemleri",[["Buzağı Başlangıç",812,845],["Buzağı Büyütme",855,890]]],
   ["Süt yemleri",[["Prenses Süt 19 Yemi",864,899],["Süt 19",836,870],["Süt 20",854,889],["Süt 21",868,903],["Süt Pik Yemi",904,941],["Düve Yemi",795,827],["Kuru Dönem Yemi",795,827]]],
   ["Besi yemleri",[["Prens Besi Yemi",833,867],["Besi Başlangıç",790,822],["Besi Geliştirme",798,830],["Besi Bitiş",795,827],["Ekstra Besi Bitiş",822,855]]],
@@ -23,7 +23,7 @@ var SP_LISTE={
   ["Etlik yemleri",[["Etlik Civciv Başlangıç Yemi",1183,1231],["Etlik Civciv Yemi",1184,1232],["Etlik Piliç Yemi",1129,1175]]],
   ["Hindi yemleri",[["Hindi Civciv Başlangıç Yemi",1210,1259],["Hindi Civciv Yemi",1271,1322],["Hindi Piliç Büyütme Yemi",1195,1243],["Hindi Yumurta Yemi",1126,1172]]],
   ["Yem 7",[["Çiftlikte Yem 7 Besi",770,801],["Çiftlikte Yem 7 Besi Toz",809,842],["Çiftlikte Yem 7 Süt",804,837],["Çiftlikte Yem 7 Süt Toz",861,896],["Çiftlikte Yem Peletli Taneli",891,927]]],
-  ["Özel üretim",[["Protein Kardeşliği",1157,1204],["Tahıl Kardeşliği",842,876]]]]}
+  ["Özel üretim",[["Protein Kardeşliği",1157,1204,40],["Tahıl Kardeşliği",842,876,40]]]]}
 };
 window.SP_LISTE=SP_LISTE;
 /* siparişin gideceği cariler (kullanıcının cari listesi; adları ekranda düzeltilebilir, yenisi eklenebilir) */
@@ -39,12 +39,12 @@ function SP(){var s=S.sip;if(!s||typeof s!=="object"||Array.isArray(s))s=S.sip={
  if(!Array.isArray(s.ls))s.ls=[];s.ls=s.ls.filter(function(o){return o&&typeof o==="object"&&Array.isArray(o.k)});
  if(!Array.isArray(s.adr))s.adr=[];if(!Array.isArray(s.cari)){s.cari=SP_CARI.map(function(a){return {ad:a}})}s.cari=s.cari.filter(function(c){return c&&typeof c==="object"&&c.ad});if(!s.fr||typeof s.fr!=="object"||Array.isArray(s.fr))s.fr={};
  if(!(s.kdv>=0&&s.kdv<100))s.kdv=20;if(!(s.no>=0))s.no=0;return s}
-function cp(x){return {g:String(x&&x.g||"Ürünler"),ad:String(x&&x.ad||"").trim(),n:+(x&&x.n)||0,k:+(x&&x.k)||0}}
+function cp(x){var r={g:String(x&&x.g||"Ürünler"),ad:String(x&&x.ad||"").trim(),n:+(x&&x.n)||0,k:+(x&&x.k)||0};if(x&&x.kg>0)r.kg=+x.kg;return r}
 /* firmalar: hazır listeler (kullanıcı aynı ya da daha yeni tarihli düzeltme yaptıysa onunki) + kullanıcının eklediği firmalar */
 function firmalar(){var s=SP(),out=[];
- Object.keys(SP_LISTE).forEach(function(id){var b=SP_LISTE[id],o=s.fr[id]||{},u=[];b.g.forEach(function(gr){gr[1].forEach(function(r){u.push({g:gr[0],ad:r[0],n:r[1],k:r[2]})})});
+ Object.keys(SP_LISTE).forEach(function(id){var b=SP_LISTE[id],o=s.fr[id]||{},u=[];b.g.forEach(function(gr){gr[1].forEach(function(r){var x={g:gr[0],ad:r[0],n:r[1],k:r[2]};if(r[3])x.kg=r[3];u.push(x)})});
   var own=Array.isArray(o.u)&&o.u.length&&o.tarih&&o.tarih>=b.tarih;out.push({id:id,ad:b.ad,tarih:own?o.tarih:b.tarih,kg:o.kg>0?+o.kg:b.kg,tel:o.tel||"",u:own?o.u.map(cp):u,duz:!!own,hazir:true})});
- Object.keys(s.fr).forEach(function(id){var o=s.fr[id];if(!o||!o.ozel)return;out.push({id:id,ad:o.ad||"Firma",tarih:o.tarih||"",kg:o.kg>0?+o.kg:40,tel:o.tel||"",u:(Array.isArray(o.u)?o.u:[]).map(cp),hazir:false})});
+ Object.keys(s.fr).forEach(function(id){var o=s.fr[id];if(!o||!o.ozel)return;out.push({id:id,ad:o.ad||"Firma",tarih:o.tarih||"",kg:o.kg>0?+o.kg:50,tel:o.tel||"",u:(Array.isArray(o.u)?o.u:[]).map(cp),hazir:false})});
  return out}
 window.spFirmalar=firmalar;
 function fBul(id){var F=firmalar();for(var i=0;i<F.length;i++)if(F[i].id===id)return F[i];return null}
@@ -55,8 +55,8 @@ function cur(){var s=SP();for(var i=0;i<s.ls.length;i++)if(s.ls[i].id===s.cur)re
 function nor(o){if(!o.ty||typeof o.ty!=="object")o.ty={};if(!o.nk||typeof o.nk!=="object")o.nk={};if(!o.gon||typeof o.gon!=="object")o.gon={};if(o.od!=="k")o.od="n";return o}
 /* hesap: firma firma kalemler, çuval, ton, yem tutarı, nakliye (KDV hariç), nakliye KDV, toplam */
 function hesap(o){nor(o);var kdv=SP().kdv,G=[],gi={};
- o.k.forEach(function(x){if(!(x.a>0))return;var g=gi[x.f];if(!g){var F=fBul(x.f);g=gi[x.f]={F:F||{id:x.f,ad:x.fad||x.f,kg:40,u:[],tarih:""},yok:!F,sat:[],cuv:0,kg:0,yem:0};G.push(g)}
-  var u=uBul(g.F,x.ad),p=u?(o.od==="k"?u.k:u.n):(+x.bf||0);g.sat.push({ad:x.ad,a:x.a,p:p,tut:p*x.a,yok:!u,eski:(x.bf>0&&u&&x.bf!==p)?x.bf:null});g.cuv+=x.a;g.kg+=x.a*(g.F.kg||40);g.yem+=p*x.a});
+ o.k.forEach(function(x){if(!(x.a>0))return;var g=gi[x.f];if(!g){var F=fBul(x.f);g=gi[x.f]={F:F||{id:x.f,ad:x.fad||x.f,kg:50,u:[],tarih:""},yok:!F,sat:[],cuv:0,kg:0,yem:0};G.push(g)}
+  var u=uBul(g.F,x.ad),p=u?(o.od==="k"?u.k:u.n):(+x.bf||0);g.sat.push({ad:x.ad,a:x.a,p:p,tut:p*x.a,yok:!u,eski:(x.bf>0&&u&&x.bf!==p)?x.bf:null});g.cuv+=x.a;g.kg+=x.a*(u&&u.kg>0?u.kg:(g.F.kg||50));g.yem+=p*x.a});
  var T={cuv:0,ton:0,yem:0,nak:0,kdv:0,top:0,fnak:0};
  G.forEach(function(g){var n=o.nk[g.F.id]||{tip:"yok"},v=+n.v||0;g.ton=g.kg/1000;g.nkTip=n.tip||"yok";g.nkV=v;g.nak=g.nkTip==="top"?v:g.nkTip==="ton"?v*g.ton:0;g.nak=Math.round(g.nak*100)/100;g.kdv=Math.round(g.nak*kdv)/100;g.nkOd=n.od==="firma"?"firma":"bayi";g.top=g.yem+(g.nkOd==="bayi"?g.nak+g.kdv:0);
   g.gon=o.gon[g.F.id]||null;g.rev=!!(g.gon&&o.mod>g.gon);T.cuv+=g.cuv;T.ton+=g.ton;T.yem+=g.yem;if(g.nkOd==="bayi"){T.nak+=g.nak;T.kdv+=g.kdv}else T.fnak+=g.nak+g.kdv;T.top+=g.top});
@@ -88,7 +88,7 @@ function pdfHTML(o){var h=hesap(o),t=o.ty||{},e=esc;
  var css='body{font:14px/1.4 system-ui,sans-serif;color:#111;margin:0;padding:16px;max-width:760px;margin:0 auto}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:16px 0 6px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #bbb;padding:5px 6px;text-align:left}td.r,th.r{text-align:right;white-space:nowrap}.s{color:#555;font-size:12px}.pg{page-break-after:always;margin-bottom:24px}.pg:last-child{page-break-after:auto}.tb{display:flex;gap:8px;margin-bottom:12px}.tb button{padding:10px 16px;font:inherit;border-radius:8px;border:1px solid #1d5c4a;background:#1d5c4a;color:#fff}@media print{.tb{display:none}}';
  var tes='<table>'+(t.cari?'<tr><th>Cari</th><td><b>'+e(t.cari)+'</b></td></tr>':'')+'<tr><th>Teslim yeri</th><td>'+e(t.yer||"—")+'</td></tr><tr><th>İletişim</th><td>'+e(t.alici||"—")+(t.tel?' · '+e(t.tel):'')+'</td></tr>'+(t.arac?'<tr><th>Araç / şoför</th><td>'+e(t.arac)+'</td></tr>':'')+(t.tarih?'<tr><th>Yükleme / teslim tarihi</th><td>'+trT(t.tarih)+'</td></tr>':'')+(t.not?'<tr><th>Not</th><td>'+e(t.not)+'</td></tr>':'')+'</table>';
  var b='<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sipariş '+e(o.no)+'</title><style>'+css+'</style></head><body><div class="tb"><button onclick="window.print()">PDF / Yazdır</button></div>';
- h.G.forEach(function(g){b+='<div class="pg"><h1>'+(g.gon?'REVİZE SİPARİŞ':'SİPARİŞ FORMU')+' – '+e(g.F.ad)+'</h1><p class="s">Sipariş no '+e(o.no)+' · '+trT(bugun())+' · Ödeme: <b>'+OD[o.od]+'</b>'+(g.F.tarih?' · Fiyat listesi '+trT(g.F.tarih):'')+' · Fiyatlar fabrika teslim, TL / '+(g.F.kg||40)+' kg çuval</p>'
+ h.G.forEach(function(g){b+='<div class="pg"><h1>'+(g.gon?'REVİZE SİPARİŞ':'SİPARİŞ FORMU')+' – '+e(g.F.ad)+'</h1><p class="s">Sipariş no '+e(o.no)+' · '+trT(bugun())+' · Ödeme: <b>'+OD[o.od]+'</b>'+(g.F.tarih?' · Fiyat listesi '+trT(g.F.tarih):'')+' · Fiyatlar fabrika teslim, TL / '+(g.F.kg||50)+' kg çuval</p>'
   +'<table><tr><th>Ürün</th><th class="r">Çuval</th><th class="r">Birim fiyat</th><th class="r">Tutar</th></tr>'+g.sat.map(function(x){return '<tr><td>'+e(x.ad)+'</td><td class="r">'+f(x.a,0)+'</td><td class="r">'+tl(x.p)+'</td><td class="r">'+tl(x.tut)+'</td></tr>'}).join('')
   +'<tr><th>Yem toplamı ('+f(g.ton,g.ton%1?2:0)+' ton)</th><th class="r">'+f(g.cuv,0)+'</th><th></th><th class="r">'+tl(g.yem)+'</th></tr>'
   +(g.nkTip!=="yok"?'<tr><td colspan="3">Nakliye'+(g.nkTip==="ton"?' ('+tl(g.nkV)+' / ton + KDV)':'')+(g.nkOd==="firma"?' — <b>firma ödeyecek</b>, toplama eklenmedi':' — bayi ödeyecek')+'</td><td class="r">'+tl(g.nak)+'</td></tr><tr><td colspan="3">Nakliye KDV %'+h.T.kdvO+'</td><td class="r">'+tl(g.kdv)+'</td></tr>':'<tr><td colspan="3">Nakliye</td><td class="r">fabrikadan alınacak</td></tr>')
@@ -123,7 +123,7 @@ function vDuz(){var s=SP(),o=cur();if(!o)o=yeni();nor(o);var FS=firmalar();if(!F
  h+='<h3>3. Sipariş özeti, nakliye ve gönderme</h3><div id="spSum">'+ozet(o)+'</div>';
  h+='<div class="bt"><button id="spYeni">Yeni sipariş</button><button id="spSil">Bu siparişi sil</button></div>';return h}
 function urunSec(o){var q=String(window._spQ||"").toLocaleLowerCase("tr").trim().split(/\s+/).filter(Boolean),h='<option value="">— ürün seçin ('+(q.length?'aramaya uyanlar':'tüm firmalar')+') —</option>',n=0;
- firmalar().forEach(function(F){var g0=null,og='';F.u.forEach(function(u,i){var t=(F.ad+" "+u.g+" "+u.ad).toLocaleLowerCase("tr");if(q.length&&!q.every(function(w){return t.indexOf(w)>=0}))return;if(u.g!==g0){if(og)og+='</optgroup>';g0=u.g;og+='<optgroup label="'+esc(F.ad+' · '+u.g)+'">'}og+='<option value="'+esc(F.id)+'|'+i+'">'+esc(u.ad)+' — '+f(o.od==="k"?u.k:u.n,0)+' TL</option>';n++});if(og)h+=og+'</optgroup>'});
+ firmalar().forEach(function(F){var g0=null,og='';F.u.forEach(function(u,i){var t=(F.ad+" "+u.g+" "+u.ad).toLocaleLowerCase("tr");if(q.length&&!q.every(function(w){return t.indexOf(w)>=0}))return;if(u.g!==g0){if(og)og+='</optgroup>';g0=u.g;og+='<optgroup label="'+esc(F.ad+' · '+u.g)+'">'}og+='<option value="'+esc(F.id)+'|'+i+'">'+esc(u.ad)+(u.kg?' ('+u.kg+' kg)':'')+' — '+f(o.od==="k"?u.k:u.n,0)+' TL</option>';n++});if(og)h+=og+'</optgroup>'});
  if(q.length&&!n)h='<option value="">Aramaya uyan ürün yok</option>';return h}
 function secilen(o){var h0=hesap(o);if(!h0.G.length)return '<p class="s" style="margin:8px 0 0">Siparişte henüz ürün yok.</p>';var h='<div class="card" style="margin:8px 0 0;padding:6px 10px">';
  h0.G.forEach(function(g){h+='<div class="gb">'+esc(g.F.ad)+'</div>';g.sat.forEach(function(x){h+='<div class="ur var"><div class="ad">'+esc(x.ad)+'<small><b>'+f(x.p,0)+' TL</b> × '+f(x.a,0)+' = '+tl(x.tut)+'</small></div><input type="number" inputmode="numeric" min="0" step="1" aria-label="'+esc(x.ad)+' çuval" data-sf="'+esc(g.F.id)+'" data-u="'+esc(x.ad)+'" value="'+x.a+'"><button class="ed" data-sx="'+esc(g.F.id)+'" data-u="'+esc(x.ad)+'" aria-label="'+esc(x.ad)+' çıkar" style="min-width:32px">✕</button></div>'})});
@@ -197,7 +197,7 @@ function bagla(el){var o=cur();
  el.querySelectorAll("[data-fud]").forEach(function(b){b.onclick=function(){var p=b.dataset.fud.split("|"),o2=fKayit(p[0]);if(!o2)return;o2.u.splice(+p[1],1);save();spRender()}});
  el.querySelectorAll("[data-fua]").forEach(function(b){b.onclick=function(){var o2=fKayit(b.dataset.fua);if(!o2)return;var ad=prompt("Ürün adı");if(!ad||!ad.trim())return;var n=num(prompt("Peşin fiyat (TL / çuval)")),k=num(prompt("Kredi kartı tek çekim fiyatı (boş bırakırsanız peşinle aynı)"))||n;o2.u.push({g:(o2.u.length?o2.u[o2.u.length-1].g:"Ürünler"),ad:ad.trim(),n:n,k:k});save();spRender()}});
  el.querySelectorAll("[data-fpa]").forEach(function(b){b.onclick=function(){var ta=el.querySelector('[data-fpt="'+b.dataset.fpa+'"]'),u=spListeParse(ta&&ta.value);if(!u.length){alert("Fiyatlı satır bulunamadı. Her satıra ürün adı ve fiyat yazın.");return}if(!confirm(u.length+" ürün okundu. Mevcut liste bununla değiştirilsin mi?"))return;var o2=fKayit(b.dataset.fpa);o2.u=u;o2.tarih=bugun();save();spRender()}});
- var fe=el.querySelector("#spFEkle");if(fe)fe.onclick=function(){var a=el.querySelector("#spFAd"),ad=a&&a.value.trim();if(!ad)return;var id="f"+Date.now();SP().fr[id]={ozel:true,ad:ad,tarih:bugun(),kg:40,u:[]};window._spFE=id;save();spRender()};
+ var fe=el.querySelector("#spFEkle");if(fe)fe.onclick=function(){var a=el.querySelector("#spFAd"),ad=a&&a.value.trim();if(!ad)return;var id="f"+Date.now();SP().fr[id]={ozel:true,ad:ad,tarih:bugun(),kg:50,u:[]};window._spFE=id;save();spRender()};
  el.querySelectorAll("[data-cr]").forEach(function(i){i.onchange=function(){var p=i.dataset.cr.split("|"),c=SP().cari[+p[0]];if(!c)return;var v=i.value.trim();if(p[1]==="ad"){if(!v)return;var old=c.ad;c.ad=v;SP().ls.forEach(function(x){if(x.ty&&x.ty.cari===old&&!Object.keys(x.gon||{}).length)x.ty.cari=v})}else c[p[1]]=v;save()}});
  el.querySelectorAll("[data-crd]").forEach(function(b){b.onclick=function(){var s=SP(),c=s.cari[+b.dataset.crd];if(!c||!confirm(c.ad+" cari listesinden silinsin mi?"))return;s.cari.splice(+b.dataset.crd,1);save();spRender()}});
  var ce=el.querySelector("#spCEkle");if(ce)ce.onclick=function(){var a=el.querySelector("#spCAd"),n=a&&a.value.trim().toLocaleUpperCase("tr");if(!n)return;var s=SP();if(!s.cari.some(function(c){return c.ad===n}))s.cari.push({ad:n});save();spRender()};
