@@ -188,6 +188,29 @@ export function magypFob(html) {
   }
   return out.tarih ? out : null;
 }
+// CEPEA sayfasındaki grafik verisi: son 60 iş gününün R$/60 kg değerleri (yeniden eskiye, tarihsiz).
+// Tarihler Brezilya iş günlerinden üretilir; sayfadaki tablonun 15 günüyle birebir eşleşmezse kullanılmaz.
+const BR_TATIL = new Set(["2026-01-01", "2026-02-16", "2026-02-17", "2026-04-03", "2026-04-21", "2026-05-01", "2026-06-04", "2026-09-07", "2026-10-12", "2026-11-02", "2026-11-20", "2026-12-25",
+  "2027-01-01", "2027-02-08", "2027-02-09", "2027-03-26", "2027-04-21", "2027-05-27", "2027-09-07", "2027-10-12", "2027-11-02", "2027-11-15", "2027-11-20", "2027-12-25"]);
+export function cepeaGecmis(html) {
+  const m = String(html).match(/valor_array\[0\]\s*=\s*\[([^\]]+)\]/);
+  if (!m) return null;
+  const R = m[1].split(",").map((x) => parseFloat(x)).filter((x) => x > 0);
+  const t = (String(html).match(/<table[\s\S]*?<\/table>/) || [""])[0], tab = [];
+  for (const tr of t.match(/<tr[\s\S]*?<\/tr>/g) || []) {
+    const td = (tr.match(/<td[\s\S]*?<\/td>/g) || []).map(metin), dm = td[0] && td[0].match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (dm && td.length >= 2) tab.push([`${dm[3]}-${dm[2]}-${dm[1]}`, sayi(td[1])]);
+  }
+  if (tab.length < 5 || !R.length) return null;
+  const gunler = []; let d = tab[0][0];
+  while (gunler.length < R.length) {
+    const g = new Date(d + "T00:00:00Z").getUTCDay();
+    if (g !== 0 && g !== 6 && !BR_TATIL.has(d)) gunler.push(d);
+    const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() - 1); d = x.toISOString().slice(0, 10);
+  }
+  for (let i = 0; i < tab.length && i < R.length; i++) if (tab[i][0] !== gunler[i] || Math.abs(tab[i][1] - R[i]) > 0.005) return null;
+  return gunler.map((g, i) => [g, R[i]]).reverse();
+}
 const eski = (() => { try { return JSON.parse(fs.readFileSync(OUT, "utf8")); } catch { return null; } })();
 let kur;
 try { kur = await seri("TRY=X"); } catch (e) { console.error("USD/TRY çekilemedi:", e.message); kur = (eski && eski.usdtry) || null; }
@@ -280,8 +303,23 @@ const birikir = (sembol, ad, merkez, yeni) => {
 };
 for (const u of GA) {
   try {
-    const L = cepeaTablo(await getir(u.url, false));
+    const html = await getir(u.url, false), L = cepeaTablo(html);
     if (!L.length) throw new Error("tablo okunamadı");
+    // Geçmiş azsa grafik verisinden son 60 iş gününü (R$ → US$, Kanada Merkez Bankası günlük kurları) ekle.
+    const o0 = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "CEPEA" && x.ad === u.ad);
+    if (!o0 || o0.seri.length < 40) {
+      const G = cepeaGecmis(html);
+      if (G && G.length) {
+        const fx = (await getir(`https://www.bankofcanada.ca/valet/observations/FXBRLCAD,FXUSDCAD/json?start_date=${G[0][0]}`, true)).observations
+          .map((o) => [o.d, parseFloat(o.FXBRLCAD.v) / parseFloat(o.FXUSDCAD.v)]).filter(([, v]) => v > 0);
+        const usdBrl = (d) => { let v = null; for (const [t, x] of fx) { if (t <= d) v = x; else break; } return v; };
+        const ek = G.map(([d, r]) => { const k = usdBrl(d); return k ? [d, Math.round((r * k * 1000) / 60 * 100) / 100] : null; }).filter(Boolean);
+        const tm = new Set(L.map(([d]) => d));
+        for (const p of ek) if (!tm.has(p[0])) L.push(p);
+        L.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+        console.log("CEPEA", u.ad, "geçmiş:", ek.length, "gün");
+      } else console.error("CEPEA", u.ad, "grafik verisi tarihlerle eşleşmedi; geçmiş eklenmedi");
+    }
     sonuc.urunler.push({ ad: u.ad, sembol: "CEPEA", merkez: u.merkez, birim: "US$/60 kg → USD/ton → TL/ton", seri: birikir("CEPEA", u.ad, u.merkez, L.map(([d, v]) => [d, Math.round(v * kurAt(d))])) });
     basarili++;
   } catch (e) {
@@ -289,25 +327,6 @@ for (const u of GA) {
     const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "CEPEA" && x.ad === u.ad);
     if (o) sonuc.urunler.push({ ...o, eski: true });
   }
-}
-try {
-  const r = await fetch("https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/areas/granos/_archivos/000061_Informes/000003_Informe%20Diario%20del%20Mercado%20de%20Granos/000001_Informe%20Diario%20del%20Mercado%20de%20Granos-%20Actual.pdf", { headers: UA });
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const f = path.join(os.tmpdir(), "magyp.pdf");
-  fs.writeFileSync(f, Buffer.from(await r.arrayBuffer()));
-  const p = spawnSync("pdftotext", ["-layout", f, "-"], { encoding: "utf8" });
-  const o = p.status === 0 ? matbaOku(p.stdout) : null;
-  if (!o) throw new Error("rapor okunamadı");
-  for (const [k, ad] of [["Soja", "Soya fasulyesi"], ["Maíz", "Mısır"]]) {
-    const merkez = "Arjantin Rosario vadeli (MATba)", yeni = o[k] > 0 ? [[o.tarih, Math.round(o[k] * kurAt(o.tarih))]] : [];
-    const seri = birikir("MATBA", ad, merkez, yeni);
-    if (seri.length) sonuc.urunler.push({ ad, sembol: "MATBA", merkez, birim: "USD/ton → TL/ton", seri });
-  }
-  basarili++;
-  console.log("MATba", JSON.stringify(o));
-} catch (e) {
-  console.error("MAGyP çekilemedi:", e.message);
-  for (const x of (eski && eski.urunler) || []) if (x.sembol === "MATBA") sonuc.urunler.push({ ...x, eski: true });
 }
 // Arjantin FOB (MAGyP): günlük arşiv sayfaları; eksik günler (en çok 120 gün geriye) tamamlanır.
 {
