@@ -317,9 +317,10 @@ try {
   for (const [, , ad] of AR) { const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "MAGYP" && x.ad === ad); sonGun[ad] = o && o.seri.length ? o.seri[o.seri.length - 1][0] : ""; }
   const enEski = Object.values(sonGun).sort()[0] || "", sinir = new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10);
   const yeni = {}; AR.forEach(([, , ad]) => (yeni[ad] = []));
-  let okunan = 0;
+  let okunan = 0, listeOk = false;
   try {
     const idx = await getir(B, false);
+    listeOk = true;
     const linkler = [...new Set((idx.match(/_archivos\/000056_Precios Locales\/000060_[^'"]*?precart(\d{4}-\d{2}-\d{2})\.php/g) || []))]
       .map((l) => [l.match(/precart(\d{4}-\d{2}-\d{2})/)[1], l]).filter(([d]) => d >= sinir && d > enEski).sort();
     const tek = new Map(); for (const [d, l] of linkler) if (!tek.has(d)) tek.set(d, l);
@@ -336,9 +337,9 @@ try {
   } catch (e) { console.error("MAGyP arşiv listesi alınamadı:", e.message); }
   for (const [, , ad] of AR) {
     const seri = birikir("MAGYP", ad, merkez, yeni[ad]);
-    if (seri.length) sonuc.urunler.push({ ad, sembol: "MAGYP", merkez, birim: "USD/ton → TL/ton", seri, ...(okunan ? {} : { eski: true }) });
+    if (seri.length) sonuc.urunler.push({ ad, sembol: "MAGYP", merkez, birim: "USD/ton → TL/ton", seri, ...(listeOk ? {} : { eski: true }) });
   }
-  if (okunan) basarili++;
+  if (listeOk) basarili++;
   console.log("MAGyP FOB:", okunan, "gün okundu");
 }
 // Kanada: StatCan 32-10-0077 aylık çiftçi fiyatı, yemlik arpa (CAD/ton) × Kanada Merkez Bankası aylık USD/CAD.
