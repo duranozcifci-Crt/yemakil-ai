@@ -180,7 +180,8 @@ export function magypFob(html) {
     if (dm && AYLAR_ES[dm[2].toLowerCase()]) { out.tarih = `20${dm[3]}-${AYLAR_ES[dm[2].toLowerCase()]}-${dm[1]}`; continue; }
     if (td.length === 1 && /^[A-ZÁÉÍÓÚÑ ]{3,}$/.test(td[0])) { urun = td[0].trim(); continue; }
     if (urun && td[0] === "DEL DIA" && td.length >= 7) {
-      const v = (x) => { const n = sayi(x); return n > 0 ? n : null; };
+      // Sayı yazımı günden güne değişiyor: "1.175,00" (virgül ondalık) ya da "403.00" (nokta ondalık).
+      const v = (x) => { const t = String(x || "").trim(); const n = /,/.test(t) ? sayi(t) : /^\d+\.\d{1,2}$/.test(t) ? parseFloat(t) : sayi(t); return n >= 30 && n <= 5000 ? n : null; };
       out[urun] = { tohum: v(td[3]), kuspe: v(td[6]) };
       urun = null;
     }
