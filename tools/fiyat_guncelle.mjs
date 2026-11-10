@@ -3,6 +3,9 @@
 // Yurt içi hammadde fiyatlarını Gaziantep ve Konya ticaret borsalarının günlük bültenlerinden ekler,
 // son ~6 ayın günlük serisini fiyatlar.json'a yazar. Bir ürün çekilemezse önceki verisi korunur.
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 const OUT = process.env.FIYAT_OUT || process.argv[2] || "fiyatlar.json";
 const URUNLER = [
   { ad: "Mısır", sembol: "ZC=F", carpan: 0.39368, birim: "sent/bushel → USD/ton (25,40 kg/bushel)" },
@@ -84,12 +87,40 @@ async function seri(sembol) {
   }
   throw son;
 }
+// Yurt dışı (ABD iç piyasa, haftalık): USDA AMS "National Grain and Oilseed Processor Feedstuff Report" (AMS_3511).
+// Ürün başlığının altındaki bölge satırlarından "Average" sütunu; yalnız FOB satırları; $/kısa ton → $/ton.
+export const USDA = [
+  { ad: "DDGS", baslik: /^Corn Distillers Dried Grain/ },
+  { ad: "Mısır gluten yemi (feed)", baslik: /^Corn Gluten Feed Pellets/ },
+  { ad: "Mısır gluteni (meal)", baslik: /^Corn Gluten Meal/ },
+  { ad: "Ayçiçeği küspesi", baslik: /^Sunflower Meal/ },
+  { ad: "Pamuk tohumu küspesi", baslik: /^Cottonseed Meal/ },
+];
+export function usdaOku(txt) {
+  const tm = txt.match(/Report for \d{1,2}\/\d{1,2}\/\d{4}\s*-\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!tm) return null;
+  const tarih = `${tm[3]}-${tm[1].padStart(2, "0")}-${tm[2].padStart(2, "0")}`, sonuc = {};
+  let urun = null, kol = -1;
+  for (const satir of txt.split(/\r?\n/)) {
+    const t = satir.trim();
+    if (!t || /National Grain and Oilseed|Market News|Dept\. of Ag|Email us|^Source:|General inquiries|https?:\/\/|^Page \d/.test(t)) continue;
+    if (/^\s{25,}\S/.test(satir) && !/\d{2}\.\d{2}/.test(t)) { urun = USDA.find((u) => u.baslik.test(t)) || null; kol = -1; continue; }
+    if (/^\s*Region\s+Sale Type/.test(satir)) { kol = satir.indexOf("Average"); continue; }
+    if (!urun || kol < 0 || !/\bFOB/.test(satir)) continue;
+    const parca = satir.slice(Math.max(0, kol - 4), kol + 9).trim(), v = parseFloat(parca.replace(/,/g, ""));
+    if (!(v > 0)) continue;
+    (sonuc[urun.ad] = sonuc[urun.ad] || []).push(v);
+  }
+  const out = {};
+  for (const [ad, L] of Object.entries(sonuc)) out[ad] = Math.round((L.reduce((a, b) => a + b, 0) / L.length) * 1.10231131 * 100) / 100;
+  return { tarih, fiyat: out };
+}
 const eski = (() => { try { return JSON.parse(fs.readFileSync(OUT, "utf8")); } catch { return null; } })();
 let kur;
 try { kur = await seri("TRY=X"); } catch (e) { console.error("USD/TRY çekilemedi:", e.message); kur = (eski && eski.usdtry) || null; }
 if (!kur) { console.error("Kur yok; dosya değiştirilmedi."); process.exit(1); }
 const kurAt = (d) => { let v = null; for (const [t, x] of kur) { if (t <= d) v = x; else break; } return v ?? kur[0][1]; };
-const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli fiyatları (Yahoo Finance) × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [] };
+const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli fiyatları (Yahoo Finance) ve USDA AMS haftalık yem hammaddeleri raporu × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [] };
 let basarili = 0;
 for (const u of URUNLER) {
   try {
@@ -102,6 +133,29 @@ for (const u of URUNLER) {
     if (o) sonuc.urunler.push({ ...o, eski: true });
     console.error(u.ad, "çekilemedi:", e.message);
   }
+}
+// USDA haftalık raporu: PDF → pdftotext → ürün fiyatları; önceki haftalar korunur, seri haftalık birikir.
+try {
+  const r = await fetch("https://www.ams.usda.gov/mnreports/ams_3511.pdf", { headers: UA });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const pdf = path.join(os.tmpdir(), "ams_3511.pdf");
+  fs.writeFileSync(pdf, Buffer.from(await r.arrayBuffer()));
+  const p = spawnSync("pdftotext", ["-layout", pdf, "-"], { encoding: "utf8" });
+  if (p.status !== 0) throw new Error("pdftotext: " + (p.error ? p.error.message : p.stderr));
+  const o = usdaOku(p.stdout);
+  if (!o || !Object.keys(o.fiyat).length) throw new Error("rapor okunamadı");
+  for (const u of USDA) {
+    const eskiU = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "USDA" && x.ad === u.ad);
+    const seri = ((eskiU && eskiU.seri) || []).filter(([d]) => d !== o.tarih);
+    if (o.fiyat[u.ad] != null) seri.push([o.tarih, Math.round(o.fiyat[u.ad] * kurAt(o.tarih))]);
+    seri.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.slice(-60) });
+  }
+  basarili++;
+  console.log("USDA raporu", o.tarih, JSON.stringify(o.fiyat));
+} catch (e) {
+  console.error("USDA raporu çekilemedi:", e.message);
+  for (const x of (eski && eski.urunler) || []) if (x.sembol === "USDA") sonuc.urunler.push({ ...x, eski: true });
 }
 // Yurt içi: eksik günleri tamamla (ilk çalışmada geriye 120 gün; sonra son kontrolden 5 gün geriden).
 const yEski = (eski && eski.yurtici) || null, anahtar = (u) => u.ad + "|" + u.borsa;
