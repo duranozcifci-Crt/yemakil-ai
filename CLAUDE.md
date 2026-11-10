@@ -2,6 +2,7 @@
 
 - Uygulama: `index.html` + `veri.js` (açıklama/bilgi tabloları) + `saglik.js` (hastalık rehberi, aşı) (PWA, GitHub Pages `main` dalından yayınlanır).
 - Yayın kuralları: `test/YAYIN.md` — her değişiklikten önce okuyun.
+- Fiyat panosu verisi `fiyatlar.json`: `.github/workflows/fiyat.yml` her iş günü (22:17 UTC) `tools/fiyat_guncelle.mjs` ile CBOT vadeli fiyatlarını çekip `main`'e kendisi commit eder (bot commitleri normaldir; dalı çekerken birleştirin).
 - Öz-denetim: `node test/selftest.js index.html` (GitHub Actions'ta da her push/PR'da çalışır) → tamamı geçerse kullanıcı onayıyla otomatik olarak `main`'e birleştirilir (YAYIN.md madde 6–8).
 - Kullanıcıyla Türkçe, teknik olmayan bir dille konuşun.
 - Referans (kararlı) sürümler — geri dönüş noktaları; bu dallara asla yazmayın:

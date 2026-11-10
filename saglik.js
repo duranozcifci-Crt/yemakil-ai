@@ -340,7 +340,7 @@ function hzCard(d){var li=function(a){return a.map(function(t){return '<li>'+t+'
  +'<p class="s" style="margin:6px 0 0"><b>Sık yapılan hatalar</b></p><ul class="nt">'+li(d.h)+'</ul>'
  +'<p class="s" style="margin:6px 0 0"><b>Veteriner hekiminize sorabilecekleriniz</b></p><ul class="nt">'+li(d.q)+'</ul>'
  +'<p class="s" style="margin:6px 0 0"><b>Önleme ve rasyon</b></p><ul class="nt">'+li(d.o)+'</ul>'
- +'<p class="s" style="margin:6px 0 0;color:var(--no)"><b>Ne zaman acil:</b> '+d.a+'</p><small>Kaynak: '+d.s+'</small></details>'}
+ +'<p class="s" style="margin:6px 0 0;color:var(--bad)"><b>Ne zaman acil:</b> '+d.a+'</p><small>Kaynak: '+d.s+'</small></details>'}
 function hzGuide(sp){var L=HZ[sp];if(!L)return '';
  return '<details class="dt" id="hzBox" style="margin-top:10px"'+(S.ui&&S.ui.hz?' open':'')+'><summary>Hastalık rehberi: beslenmeye bağlı hastalıklar, belirtiler, ilk müdahale ve tedavi seçenekleri</summary>'
  +'<div class="card" style="border-color:var(--wa);margin:6px 0"><p class="s" style="margin:0"><b>Önemli:</b> Bu rehber teşhis koymaz ve veteriner hekimin yerini tutmaz. Reçeteli ilaçlarda doz verilmez; dozu ve uygulamayı veteriner hekim belirler. Türkiye\'de antibiyotik ve hormonlar veteriner hekimin e-reçetesiyle alınır; arınma süresi reçetede ve prospektüste yazar. Reçetesiz ürünlerde ürün etiketindeki dozu uygulayın. <b>Kullanılan her ilacın süt ve et arınma süresi prospektüste yazar; bu süre boyunca süt ve et satılamaz.</b> Tedavi listeleri, uygulanan tedaviyi standart seçeneklerle karşılaştırıp veteriner hekiminizle konuşabilmeniz içindir; veteriner muayeneye göre farklı ve haklı bir seçim yapabilir.</p></div>'
