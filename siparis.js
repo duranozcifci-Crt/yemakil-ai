@@ -38,7 +38,7 @@ function gunFark(d){return Math.floor((Date.parse(bugun()+"T00:00:00Z")-Date.par
 function SP(){var s=S.sip;if(!s||typeof s!=="object"||Array.isArray(s))s=S.sip={};
  if(!Array.isArray(s.ls))s.ls=[];s.ls=s.ls.filter(function(o){return o&&typeof o==="object"&&Array.isArray(o.k)});
  if(!Array.isArray(s.adr))s.adr=[];if(!Array.isArray(s.cari)){s.cari=SP_CARI.map(function(a){return {ad:a}})}s.cari=s.cari.filter(function(c){return c&&typeof c==="object"&&c.ad});if(!s.fr||typeof s.fr!=="object"||Array.isArray(s.fr))s.fr={};
- if(!(s.kdv>=0&&s.kdv<100))s.kdv=20;if(!(s.no>=0))s.no=0;return s}
+ if(!(s.kdv>=0&&s.kdv<100))s.kdv=20;if(!(s.dkInd>=0&&s.dkInd<1000))s.dkInd=10;if(!(s.no>=0))s.no=0;return s}
 function cp(x){var r={g:String(x&&x.g||"Ürünler"),ad:String(x&&x.ad||"").trim(),n:+(x&&x.n)||0,k:+(x&&x.k)||0};if(x&&x.kg>0)r.kg=+x.kg;return r}
 /* firmalar: hazır listeler (kullanıcı aynı ya da daha yeni tarihli düzeltme yaptıysa onunki) + kullanıcının eklediği firmalar */
 function firmalar(){var s=SP(),out=[];
@@ -56,7 +56,7 @@ function nor(o){if(!o.ty||typeof o.ty!=="object")o.ty={};if(!o.nk||typeof o.nk!=
 /* hesap: firma firma kalemler, çuval, ton, yem tutarı, nakliye (KDV hariç), nakliye KDV, toplam */
 function hesap(o){nor(o);var kdv=SP().kdv,G=[],gi={};
  o.k.forEach(function(x){if(!(x.a>0))return;var g=gi[x.f];if(!g){var F=fBul(x.f);g=gi[x.f]={F:F||{id:x.f,ad:x.fad||x.f,kg:50,u:[],tarih:""},yok:!F,sat:[],cuv:0,dton:0,kg:0,yem:0};G.push(g)}
-  var u=uBul(g.F,x.ad),p=u?(o.od==="k"?u.k:u.n):(+x.bf||0),ck=u&&u.kg>0?u.kg:(g.F.kg||50),dk=!!x.dk,pb=dk?Math.round(p/ck*1000*100)/100:p,tut=Math.round(pb*x.a*100)/100;
+  var u=uBul(g.F,x.ad),p=u?(o.od==="k"?u.k:u.n):(+x.bf||0),ck=u&&u.kg>0?u.kg:(g.F.kg||50),dk=!!x.dk,pb=dk?Math.round(Math.max(0,p-SP().dkInd)/ck*1000*100)/100:p,tut=Math.round(pb*x.a*100)/100;
   g.sat.push({ad:x.ad,a:x.a,dk:dk,p:pb,tut:tut,yok:!u,eski:(!dk&&x.bf>0&&u&&x.bf!==p)?x.bf:null});if(dk){g.dton+=x.a;g.kg+=x.a*1000}else{g.cuv+=x.a;g.kg+=x.a*ck}g.yem+=tut});
  var T={cuv:0,dton:0,ton:0,yem:0,nak:0,kdv:0,top:0,fnak:0};
  G.forEach(function(g){var n=o.nk[g.F.id]||{tip:"yok"},v=+n.v||0;g.ton=g.kg/1000;g.nkTip=n.tip||"yok";g.nkV=v;g.nak=g.nkTip==="top"?v:g.nkTip==="ton"?v*g.ton:0;g.nak=Math.round(g.nak*100)/100;g.kdv=Math.round(g.nak*kdv)/100;g.nkOd=n.od==="firma"?"firma":"bayi";g.top=g.yem+(g.nkOd==="bayi"?g.nak+g.kdv:0);
@@ -119,7 +119,7 @@ function vDuz(){var s=SP(),o=cur();if(!o)o=yeni();nor(o);var FS=firmalar();if(!F
   +'<input type="search" id="spQ" placeholder="Ürün ara (süt 21, toklu, prenses…)" value="'+esc(window._spQ)+'" autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit;font-size:16px;box-sizing:border-box;margin:0 0 6px">'
   +'<select id="spUrun" aria-label="Ürün" style="margin:0 0 6px;font-size:16px">'+urunSec(o)+'</select>'
   +'<div class="tg" role="group" aria-label="Ambalaj" style="margin:0 0 6px"><button data-dkb="0" class="'+(window._spDk?'':'on')+'">Çuvallı</button><button data-dkb="1" class="'+(window._spDk?'on':'')+'">Dökme</button></div>'
-  +'<div style="display:flex;gap:8px"><input type="text" id="spAd" inputmode="decimal" autocomplete="off" placeholder="'+(window._spDk?'dökme, ton':'çuval adedi')+'" aria-label="Miktar" style="flex:1;margin:0;font-size:16px"><button class="btn" id="spEkle" style="width:auto;margin:0;padding:0 18px;min-height:44px">Siparişe ekle</button></div><p class="s" id="spUInfo" style="margin:4px 0 0">Başaran ve Yemci Bey ürünleri aynı siparişe eklenebilir; her firmaya ayrı mesaj gider. Dökmede miktar ton olarak yazılır, fiyat çuval fiyatının ton karşılığıdır (aynı kg fiyatı).</p>'
+  +'<div style="display:flex;gap:8px"><input type="text" id="spAd" inputmode="decimal" autocomplete="off" placeholder="'+(window._spDk?'dökme, ton':'çuval adedi')+'" aria-label="Miktar" style="flex:1;margin:0;font-size:16px"><button class="btn" id="spEkle" style="width:auto;margin:0;padding:0 18px;min-height:44px">Siparişe ekle</button></div><p class="s" id="spUInfo" style="margin:4px 0 0">Başaran ve Yemci Bey ürünleri aynı siparişe eklenebilir; her firmaya ayrı mesaj gider. Dökmede miktar ton olarak yazılır; fiyat, çuval fiyatından '+f(s.dkInd,0)+' TL çuval farkı düşülerek tona çevrilir.</p>'
   +'<div id="spSec">'+secilen(o)+'</div>';
  var t=o.ty||{};
  h+='<h3>2. Cari ve teslim bilgileri</h3><label class="f">Cari (sipariş kimin adına / nereye gidecek)<select id="spCari" style="margin:2px 0 0"><option value="">— cari seçin —</option>'+s.cari.map(function(c,i){return '<option value="'+i+'"'+(t.cari===c.ad?' selected':'')+'>'+esc(c.ad)+'</option>'}).join('')+(t.cari&&!s.cari.some(function(c){return c.ad===t.cari})?'<option selected value="">'+esc(t.cari)+'</option>':'')+'<option value="+">+ Yeni cari ekle…</option></select></label><p class="s" style="margin:0">Cari seçince son kullanılan teslim yeri, alıcı ve telefon kendiliğinden gelir.</p>'
@@ -156,6 +156,7 @@ function vFir(){var s=SP(),FS=firmalar(),ac=window._spFE;
   if(ac===F.id)h+=fEdit(F);h+='</div>'});
  h+='<div class="card" style="margin:8px 0"><b>Yeni firma ekle</b><div style="display:flex;gap:8px;margin-top:6px"><input type="text" id="spFAd" placeholder="Firma adı" style="flex:1;margin:0"><button class="btn" id="spFEkle" style="width:auto;margin:0;padding:0 16px;min-height:40px">Ekle</button></div><p class="s" style="margin:6px 0 0">Ekledikten sonra "Fiyatları düzenle" ile ürünleri girin ya da listeyi metin olarak yapıştırın.</p></div>'
   +'<h3>Cariler</h3><p class="s" style="margin:0 0 6px">Siparişlerin gideceği cariler. Adı düzeltebilir, teslim yeri ve telefonu kaydedebilirsiniz.</p>'+s.cari.map(function(c,i){return '<div class="card" style="margin:6px 0;padding:8px"><div style="display:flex;gap:6px;align-items:center"><input type="text" data-cr="'+i+'|ad" value="'+esc(c.ad)+'" style="flex:1;margin:0;font-weight:600"><button class="ed" data-crd="'+i+'" aria-label="'+esc(c.ad)+' sil">✕</button></div><div style="display:flex;gap:6px;margin-top:4px"><input type="text" data-cr="'+i+'|yer" value="'+esc(c.yer||"")+'" placeholder="teslim yeri" style="flex:1.4;margin:0"><input type="text" data-cr="'+i+'|tel" value="'+esc(c.tel||"")+'" placeholder="telefon" inputmode="tel" style="flex:1;margin:0"></div></div>'}).join('')+'<div style="display:flex;gap:8px;margin:6px 0"><input type="text" id="spCAd" placeholder="Yeni cari adı" style="flex:1;margin:0"><button class="btn" id="spCEkle" style="width:auto;margin:0;padding:0 16px;min-height:40px">Ekle</button></div>'
+  +'<label class="f">Dökme indirimi, çuval başına TL (dökme fiyatı = çuval fiyatı − bu tutar)<input type="number" inputmode="decimal" id="spDkI" min="0" step="any" value="'+s.dkInd+'"></label>'
   +'<label class="f">Nakliye KDV oranı, %<input type="number" inputmode="decimal" id="spKdv2" min="0" max="99" step="any" value="'+s.kdv+'"></label>';
  return h}
 function fEdit(F){var id=esc(F.id);return '<label class="f">Fiyat listesi tarihi<input type="date" data-ftar="'+id+'" value="'+esc(F.tarih||"")+'" style="padding:8px 7px;border:1px solid var(--bd);border-radius:6px;background:var(--bg)"></label>'
@@ -207,6 +208,7 @@ function bagla(el){var o=cur();
  el.querySelectorAll("[data-cr]").forEach(function(i){i.onchange=function(){var p=i.dataset.cr.split("|"),c=SP().cari[+p[0]];if(!c)return;var v=i.value.trim();if(p[1]==="ad"){if(!v)return;var old=c.ad;c.ad=v;SP().ls.forEach(function(x){if(x.ty&&x.ty.cari===old&&!Object.keys(x.gon||{}).length)x.ty.cari=v})}else c[p[1]]=v;save()}});
  el.querySelectorAll("[data-crd]").forEach(function(b){b.onclick=function(){var s=SP(),c=s.cari[+b.dataset.crd];if(!c||!confirm(c.ad+" cari listesinden silinsin mi?"))return;s.cari.splice(+b.dataset.crd,1);save();spRender()}});
  var ce=el.querySelector("#spCEkle");if(ce)ce.onclick=function(){var a=el.querySelector("#spCAd"),n=a&&a.value.trim().toLocaleUpperCase("tr");if(!n)return;var s=SP();if(!s.cari.some(function(c){return c.ad===n}))s.cari.push({ad:n});save();spRender()};
+ var di=el.querySelector("#spDkI");if(di)di.onchange=function(){var v=num(di.value);if(v>=0&&v<1000)SP().dkInd=v;save()};
  var k2=el.querySelector("#spKdv2");if(k2)k2.onchange=function(){var v=num(k2.value);if(v>=0&&v<100)SP().kdv=v;save()}}
 function adrKaydet(o){var t=o.ty||{};if(!t.cari)return;var c=SP().cari.filter(function(c){return c.ad===t.cari})[0];if(!c)return;if(t.yer)c.yer=t.yer;if(t.alici)c.alici=t.alici;if(t.tel)c.tel=t.tel}
 /* boş taslakları temizle */
