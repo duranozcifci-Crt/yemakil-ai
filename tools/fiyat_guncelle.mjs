@@ -168,12 +168,31 @@ export function matbaOku(txt) {
   }
   return out;
 }
+// Arjantin tarım bakanlığı (MAGyP) "Cotizaciones Diarias": FOB Arjantin limanları, US$/ton.
+// Ürün başlığından sonraki "DEL DIA" satırı: [etiket, liman, kamara $/t, tohum FOB, emb., yağ, yan ürün (küspe), ...]
+const AYLAR_ES = { ene: "01", feb: "02", mar: "03", abr: "04", may: "05", jun: "06", jul: "07", ago: "08", sep: "09", set: "09", oct: "10", nov: "11", dic: "12" };
+export function magypFob(html) {
+  const out = {};
+  let urun = null;
+  for (const tr of String(html).match(/<tr[\s\S]*?<\/tr>/gi) || []) {
+    const td = (tr.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || []).map(metin);
+    const dm = td.length === 1 && td[0].match(/^(\d{2})-([a-z]{3})-(\d{2})$/i);
+    if (dm && AYLAR_ES[dm[2].toLowerCase()]) { out.tarih = `20${dm[3]}-${AYLAR_ES[dm[2].toLowerCase()]}-${dm[1]}`; continue; }
+    if (td.length === 1 && /^[A-ZÁÉÍÓÚÑ ]{3,}$/.test(td[0])) { urun = td[0].trim(); continue; }
+    if (urun && td[0] === "DEL DIA" && td.length >= 7) {
+      const v = (x) => { const n = sayi(x); return n > 0 ? n : null; };
+      out[urun] = { tohum: v(td[3]), kuspe: v(td[6]) };
+      urun = null;
+    }
+  }
+  return out.tarih ? out : null;
+}
 const eski = (() => { try { return JSON.parse(fs.readFileSync(OUT, "utf8")); } catch { return null; } })();
 let kur;
 try { kur = await seri("TRY=X"); } catch (e) { console.error("USD/TRY çekilemedi:", e.message); kur = (eski && eski.usdtry) || null; }
 if (!kur) { console.error("Kur yok; dosya değiştirilmedi."); process.exit(1); }
 const kurAt = (d) => { let v = null; for (const [t, x] of kur) { if (t <= d) v = x; else break; } return v ?? kur[0][1]; };
-const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli fiyatları (Yahoo Finance) ve USDA AMS haftalık yem hammaddeleri raporu × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [] };
+const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli (Yahoo Finance), FAO GIEWS, CEPEA (Brezilya), Arjantin tarım bakanlığı (FOB, MATba), StatCan (Kanada) ve USDA AMS haftalık yem raporları × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [] };
 let basarili = 0;
 for (const u of URUNLER) {
   try {
@@ -288,6 +307,57 @@ try {
 } catch (e) {
   console.error("MAGyP çekilemedi:", e.message);
   for (const x of (eski && eski.urunler) || []) if (x.sembol === "MATBA") sonuc.urunler.push({ ...x, eski: true });
+}
+// Arjantin FOB (MAGyP): günlük arşiv sayfaları; eksik günler (en çok 120 gün geriye) tamamlanır.
+{
+  const B = "https://www.magyp.gob.ar/sitio/areas/ss_mercados_agropecuarios/areas/granos/";
+  const AR = [["SOJA", "kuspe", "Soya küspesi"], ["GIRASOL", "kuspe", "Ayçiçeği küspesi"], ["SOJA", "tohum", "Soya fasulyesi"]];
+  const merkez = "Arjantin FOB limanları (tarım bakanlığı)";
+  const sonGun = {};
+  for (const [, , ad] of AR) { const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "MAGYP" && x.ad === ad); sonGun[ad] = o && o.seri.length ? o.seri[o.seri.length - 1][0] : ""; }
+  const enEski = Object.values(sonGun).sort()[0] || "", sinir = new Date(Date.now() - 120 * 864e5).toISOString().slice(0, 10);
+  const yeni = {}; AR.forEach(([, , ad]) => (yeni[ad] = []));
+  let okunan = 0;
+  try {
+    const idx = await getir(B, false);
+    const linkler = [...new Set((idx.match(/_archivos\/000056_Precios Locales\/000060_[^'"]*?precart(\d{4}-\d{2}-\d{2})\.php/g) || []))]
+      .map((l) => [l.match(/precart(\d{4}-\d{2}-\d{2})/)[1], l]).filter(([d]) => d >= sinir && d > enEski).sort();
+    const tek = new Map(); for (const [d, l] of linkler) if (!tek.has(d)) tek.set(d, l);
+    linkler.length = 0; linkler.push(...tek.entries());
+    for (const [d, l] of linkler) {
+      try {
+        const o = magypFob(await getir(B + encodeURI(decodeURI(l)).replace(/,/g, "%2C"), false));
+        if (!o) continue;
+        okunan++;
+        for (const [k, alan, ad] of AR) if (o[k] && o[k][alan]) yeni[ad].push([o.tarih, Math.round(o[k][alan] * kurAt(o.tarih))]);
+      } catch (e) { console.error("MAGyP", d, e.message); }
+      await bekle(300);
+    }
+  } catch (e) { console.error("MAGyP arşiv listesi alınamadı:", e.message); }
+  for (const [, , ad] of AR) {
+    const seri = birikir("MAGYP", ad, merkez, yeni[ad]);
+    if (seri.length) sonuc.urunler.push({ ad, sembol: "MAGYP", merkez, birim: "USD/ton → TL/ton", seri, ...(okunan ? {} : { eski: true }) });
+  }
+  if (okunan) basarili++;
+  console.log("MAGyP FOB:", okunan, "gün okundu");
+}
+// Kanada: StatCan 32-10-0077 aylık çiftçi fiyatı, yemlik arpa (CAD/ton) × Kanada Merkez Bankası aylık USD/CAD.
+try {
+  const fx = (await getir("https://www.bankofcanada.ca/valet/observations/FXMUSDCAD/json?start_date=" + new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10), true)).observations
+    .map((o) => [o.d, parseFloat(o.FXMUSDCAD.v)]).filter(([, v]) => v > 0);
+  const cadUsd = (d) => { let v = null; for (const [t, x] of fx) { if (t <= d) v = x; } return v || (fx.length ? fx[fx.length - 1][1] : null); };
+  for (const [kod, il] of [["9", "Alberta"], ["8", "Saskatchewan"]]) {
+    const r = await fetch("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromCubePidCoordAndLatestNPeriods", { method: "POST", headers: { ...UA, "Content-Type": "application/json" }, body: JSON.stringify([{ productId: 32100077, coordinate: `${kod}.45.0.0.0.0.0.0.0.0`, latestN: 8 }]) });
+    if (!r.ok) throw new Error("StatCan HTTP " + r.status);
+    const dp = ((await r.json())[0].object.vectorDataPoint || []).filter((p) => p.value > 0);
+    if (!dp.length) throw new Error("StatCan veri yok");
+    const merkez = `Kanada ${il} yemlik (çiftçi fiyatı, aylık)`;
+    sonuc.urunler.push({ ad: "Arpa", sembol: "STATCAN", merkez, birim: "CAD/ton → USD/ton → TL/ton", seri: birikir("STATCAN", "Arpa", merkez, dp.map((p) => [p.refPer, Math.round((p.value / cadUsd(p.refPer)) * kurAt(p.refPer))])) });
+  }
+  basarili++;
+} catch (e) {
+  console.error("Kanada arpa çekilemedi:", e.message);
+  for (const x of (eski && eski.urunler) || []) if (x.sembol === "STATCAN") sonuc.urunler.push({ ...x, eski: true });
 }
 // Yurt içi: eksik günleri tamamla. Her borsa için ayrı son kontrol günü; yeni eklenen borsa geriye 120 gün doldurulur.
 const yEski = (eski && eski.yurtici) || null, anahtar = (u) => u.ad + "|" + u.borsa;
