@@ -1,4 +1,4 @@
-const C="yemakil-v81";
+const C="yemakil-v82";
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png","./veri.js","./saglik.js"]).catch(()=>{})))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 /* Ağ öncelikli; sayfa açılışında ağ 3 sn'de yanıt vermezse önbellek (zayıf kırsal bağlantı). Yalnız kendi dosyalarımız ve yazı tipleri önbelleğe alınır; hatalı yanıt önbelleğe yazılmaz. */

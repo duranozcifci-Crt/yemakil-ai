@@ -20,20 +20,27 @@ const URUNLER = [
 const UA = { "User-Agent": "Mozilla/5.0 (YemAkil fiyat panosu)" };
 const KONYA = "https://www.ktb.org.tr/api/v1/Alpha.WebPanel/OnlineKullaniciBulten/GetGunlukBulten/";
 const GAZIANTEP = "https://www.gtb.org.tr/gunluk-bulten?tarih=";
+const POLATLI = "https://bulten.polatliborsa.org.tr/BultenGunluk.ashx?tarih=";
 export const YURTICI = [
   { ad: "Mısır", borsa: "Gaziantep", re: /^MISIR$/ },
   { ad: "Mısır", borsa: "Konya", gruplar: ["Mısır"] },
+  { ad: "Mısır", borsa: "Adana", satir: /^Mısır \(1\.Sınıf Serbest/, not: "1. sınıf, en düşük–en yüksek ortası" },
+  { ad: "Mısır", borsa: "Polatlı", kod: /^114/ },
   { ad: "Arpa", borsa: "Gaziantep", re: /^ARPA$/ },
   { ad: "Arpa", borsa: "Konya", gruplar: ["Arpa"] },
+  { ad: "Arpa", borsa: "Polatlı", kod: /^111/ },
   { ad: "Yemlik buğday", borsa: "Gaziantep", re: /^BUĞDAY ?\(DÖKERLİ\)$|^BUĞDAY KIRIK$/, not: "dökerli + kırık" },
   { ad: "Yemlik buğday", borsa: "Konya", gruplar: ["Diğer Kırmızı Buğday", "Diğer Beyaz Buğday"], not: "düşük vasıflı" },
+  { ad: "Yemlik buğday", borsa: "Polatlı", isim: /DÜŞÜK VASIFLI|STANDART DIŞI BUĞDAY/, not: "düşük vasıflı + standart dışı" },
   { ad: "Soya fasulyesi", borsa: "Gaziantep", re: /^SOYA FASULYES/ },
+  { ad: "Soya fasulyesi", borsa: "Adana", satir: /^Soya Fasulyesi/, not: "en düşük–en yüksek ortası" },
   { ad: "Soya küspesi", borsa: "Gaziantep", re: /^SOYA KÜSPES/ },
   { ad: "DDGS", borsa: "Gaziantep", re: /DDGS/ },
   { ad: "Mısır gluten yemi (feed)", borsa: "Gaziantep", re: /^MISIR GLUTENİ YEMİ$/ },
   { ad: "Mısır gluteni (meal)", borsa: "Gaziantep", re: /^MISIR GLUTENİ$/ },
   { ad: "Ayçiçeği küspesi", borsa: "Gaziantep", re: /^AYÇİÇE(K|Ğİ) KÜSPES/ },
   { ad: "Pamuk tohumu küspesi", borsa: "Gaziantep", re: /^(PAMUK( TOHUMU)?|ÇİĞİT) KÜSPES/ },
+  { ad: "Pamuk tohumu küspesi", borsa: "Adana", satir: /^Çiğit/, not: "çiğit = pamuk tohumu, küspenin hammaddesi" },
   { ad: "Buğday kepeği", borsa: "Gaziantep", re: /^KEPEK \(BUĞDAY\)$/ },
 ];
 const sayi = (x) => parseFloat(String(x ?? "").replace(/\./g, "").replace(",", "."));
@@ -65,9 +72,29 @@ export function ortalama(satirlar) {
   for (const x of satirlar) { if (!(x.ort > 0) || !(x.miktar > 0)) continue; t += x.ort * x.miktar; m += x.miktar; }
   return m > 0 ? Math.round((t / m) * 1000) / 1000 : null;
 }
-export function urunFiyati(u, gSatir, kSatir) {
-  if (u.borsa === "Gaziantep") return ortalama((gSatir || []).filter((x) => u.re.test(x.ad) && x.sekil !== "İTHAL" && (!x.birim || /KG/i.test(x.birim))));
-  return ortalama((kSatir || []).filter((x) => u.gruplar.includes(x.GrupAdi)).map((x) => ({ ort: sayi(x.OrtFiyat), miktar: sayi(x.Miktar) })));
+// Adana: günlük işlem fiyatları PDF'i (pdftotext -layout) → [{ad, ort}] ; "İşlem gerçekleşmemiştir" satırları atlanır.
+export function adanaSatirlar(txt) {
+  const out = [];
+  for (const l of String(txt || "").split(/\r?\n/)) {
+    const t = l.trim(), m = t.match(/^(\S.*?)\s{2,}(\d.*)$/);
+    if (!m) continue;
+    const v = (m[2].match(/\d{1,3},\d{3}/g) || []).map((x) => parseFloat(x.replace(",", ".")));
+    if (v.length) out.push({ ad: m[1].trim(), ort: Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 1000) / 1000, miktar: 1 });
+  }
+  return out;
+}
+// Polatlı: BultenGunluk.ashx JSON {Bulten:[{UrunAdi, UrunKodu, OrtFiyat, Miktar, ...}]}; yalnız fiyatı olan alt satırlar.
+export function polatliSatirlar(j) {
+  return ((j && j.Bulten) || []).map((x) => ({ ad: String(x.UrunAdi || ""), kod: String(x.UrunKodu || ""), ort: sayi(x.OrtFiyat), miktar: sayi(x.Miktar) })).filter((x) => x.ort > 0 && x.miktar > 0);
+}
+export function urunFiyati(u, K) {
+  const L = K && K[u.borsa];
+  if (!L) return null;
+  if (u.borsa === "Gaziantep") return ortalama(L.filter((x) => u.re.test(x.ad) && x.sekil !== "İTHAL" && (!x.birim || /KG/i.test(x.birim))));
+  if (u.borsa === "Konya") return ortalama(L.filter((x) => u.gruplar.includes(x.GrupAdi)).map((x) => ({ ort: sayi(x.OrtFiyat), miktar: sayi(x.Miktar) })));
+  if (u.borsa === "Polatlı") return ortalama(L.filter((x) => (u.kod ? u.kod.test(x.kod) : u.isim.test(x.ad))));
+  if (u.borsa === "Adana") { const x = L.find((r) => u.satir.test(r.ad)); return x ? x.ort : null; }
+  return null;
 }
 async function seri(sembol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sembol)}?range=6mo&interval=1d`;
@@ -95,6 +122,7 @@ export const USDA = [
   { ad: "Mısır gluteni (meal)", baslik: /^Corn Gluten Meal/ },
   { ad: "Ayçiçeği küspesi", baslik: /^Sunflower Meal/ },
   { ad: "Pamuk tohumu küspesi", baslik: /^Cottonseed Meal/ },
+  { ad: "Buğday kepeği", baslik: /^Wheat Middlings/, rapor: "3512" },
 ];
 export function usdaOku(txt) {
   const tm = txt.match(/Report for \d{1,2}\/\d{1,2}\/\d{4}\s*-\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/);
@@ -134,56 +162,111 @@ for (const u of URUNLER) {
     console.error(u.ad, "çekilemedi:", e.message);
   }
 }
-// USDA haftalık raporu: PDF → pdftotext → ürün fiyatları; önceki haftalar korunur, seri haftalık birikir.
-try {
-  const r = await fetch("https://www.ams.usda.gov/mnreports/ams_3511.pdf", { headers: UA });
-  if (!r.ok) throw new Error("HTTP " + r.status);
-  const pdf = path.join(os.tmpdir(), "ams_3511.pdf");
-  fs.writeFileSync(pdf, Buffer.from(await r.arrayBuffer()));
-  const p = spawnSync("pdftotext", ["-layout", pdf, "-"], { encoding: "utf8" });
-  if (p.status !== 0) throw new Error("pdftotext: " + (p.error ? p.error.message : p.stderr));
-  const o = usdaOku(p.stdout);
-  if (!o || !Object.keys(o.fiyat).length) throw new Error("rapor okunamadı");
-  for (const u of USDA) {
-    const eskiU = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "USDA" && x.ad === u.ad);
-    const seri = ((eskiU && eskiU.seri) || []).filter(([d]) => d !== o.tarih);
-    if (o.fiyat[u.ad] != null) seri.push([o.tarih, Math.round(o.fiyat[u.ad] * kurAt(o.tarih))]);
-    seri.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-    if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.slice(-60) });
-  }
-  basarili++;
-  console.log("USDA raporu", o.tarih, JSON.stringify(o.fiyat));
-} catch (e) {
-  console.error("USDA raporu çekilemedi:", e.message);
-  for (const x of (eski && eski.urunler) || []) if (x.sembol === "USDA") sonuc.urunler.push({ ...x, eski: true });
+// USDA haftalık raporları (3511: yağlı tohum/tahıl yan ürünleri, 3512: değirmen yan ürünleri — kepek):
+// PDF → pdftotext → ürün fiyatları; önceki haftalar korunur, seri haftalık birikir.
+const usdaSon = {};
+for (const rapor of ["3511", "3512"]) {
+  try {
+    const r = await fetch(`https://www.ams.usda.gov/mnreports/ams_${rapor}.pdf`, { headers: UA });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const pdf = path.join(os.tmpdir(), `ams_${rapor}.pdf`);
+    fs.writeFileSync(pdf, Buffer.from(await r.arrayBuffer()));
+    const p = spawnSync("pdftotext", ["-layout", pdf, "-"], { encoding: "utf8" });
+    if (p.status !== 0) throw new Error("pdftotext: " + (p.error ? p.error.message : p.stderr));
+    const o = usdaOku(p.stdout);
+    if (!o || !Object.keys(o.fiyat).length) throw new Error("rapor okunamadı");
+    for (const [ad, v] of Object.entries(o.fiyat)) usdaSon[ad] = [o.tarih, v];
+    console.log("USDA", rapor, o.tarih, JSON.stringify(o.fiyat));
+  } catch (e) { console.error("USDA", rapor, "çekilemedi:", e.message); }
 }
-// Yurt içi: eksik günleri tamamla (ilk çalışmada geriye 120 gün; sonra son kontrolden 5 gün geriden).
+for (const u of USDA) {
+  const eskiU = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "USDA" && x.ad === u.ad), yeni = usdaSon[u.ad];
+  const seri = ((eskiU && eskiU.seri) || []).filter(([d]) => !yeni || d !== yeni[0]);
+  if (yeni) seri.push([yeni[0], Math.round(yeni[1] * kurAt(yeni[0]))]);
+  seri.sort((a, b) => (a[0] < b[0] ? -1 : 1));
+  if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.slice(-60), ...(yeni ? {} : { eski: true }) });
+}
+if (Object.keys(usdaSon).length) basarili++;
+// FAO GIEWS FPMA uluslararası ihracat fiyatları (USD/ton; haftalık varsa haftalık, yoksa aylık; geçmiş dahil).
+export const FAO = [
+  { ad: "Arpa", merkez: "Karadeniz FOB (FAO/IGC, aylık)", uuid: "1d723a09-4225-49ee-b629-2f23a7ce7fc4" },
+  { ad: "Arpa", merkez: "Fransa yemlik (FAO, aylık)", uuid: "aa0ee75e-441a-4a04-b762-24b2c2dccaaf" },
+  { ad: "Mısır", merkez: "Ukrayna FOB (FAO)", uuid: "e49cb11d-3366-4d90-863b-f1a65fe78f09" },
+  { ad: "Mısır", merkez: "Arjantin FOB (FAO)", uuid: "3fefffb8-a60a-43f6-9f70-b71479f44a04" },
+  { ad: "Buğday", merkez: "Ukrayna FOB (FAO)", uuid: "a842f91c-53f9-4952-8afe-a0a684d743d0" },
+  { ad: "Buğday", merkez: "Rusya FOB (FAO)", uuid: "9af3d755-75c1-4c9f-9593-3667f1b5bf8c" },
+];
+export function faoSeri(j) {
+  const dp = ((j && j.datapoints) || []).filter((x) => x && x.date && x.price_value_dollar > 0);
+  const h = dp.filter((x) => x.periodicity === "weekly"), L = h.length >= 4 ? h : dp.filter((x) => x.periodicity === "monthly");
+  return L.map((x) => [x.date, x.price_value_dollar]).sort((a, b) => (a[0] < b[0] ? -1 : 1));
+}
+{
+  const sinir = new Date(Date.now() - 190 * 864e5).toISOString().slice(0, 10);
+  for (const u of FAO) {
+    try {
+      const L = faoSeri(await getir(`https://fpma.fao.org/giews/v4/global/price_module/api/v1/FpmaSeriePrice/${u.uuid}/`, true)).filter(([d]) => d >= sinir);
+      if (!L.length) throw new Error("veri yok");
+      sonuc.urunler.push({ ad: u.ad, sembol: "FAO", merkez: u.merkez, birim: "USD/ton → TL/ton (o tarihteki kur)", seri: L.map(([d, v]) => [d, Math.round(v * kurAt(d))]) });
+      basarili++;
+    } catch (e) {
+      console.error("FAO", u.merkez, "çekilemedi:", e.message);
+      const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "FAO" && x.ad === u.ad && x.merkez === u.merkez);
+      if (o) sonuc.urunler.push({ ...o, eski: true });
+    }
+  }
+}
+// Yurt içi: eksik günleri tamamla. Her borsa için ayrı son kontrol günü; yeni eklenen borsa geriye 120 gün doldurulur.
 const yEski = (eski && eski.yurtici) || null, anahtar = (u) => u.ad + "|" + u.borsa;
-const yi = { kaynak: "Gaziantep ve Konya ticaret borsaları günlük bültenleri (miktar ağırlıklı ortalama)", not: "Borsada tescil edilen gerçek satışların ortalamasıdır; kalite, nem ve nakliye farkı içerir. Az işlem gören ürünlerde fiyat günden güne sıçrayabilir.", birim: "TL/kg", kontrol: yEski && yEski.kontrol,
+const BORSALAR = ["Gaziantep", "Konya", "Polatlı", "Adana"];
+const yi = { kaynak: "Gaziantep, Konya, Polatlı ve Adana ticaret borsaları günlük bültenleri (miktar ağırlıklı ortalama; Adana en düşük–en yüksek ortası)", not: "Borsada tescil edilen gerçek satışların ortalamasıdır; kalite, nem ve nakliye farkı içerir. Az işlem gören ürünlerde fiyat günden güne sıçrayabilir.", birim: "TL/kg",
+  kontrol: yEski && yEski.kontrol, kontrolB: Object.assign({}, (yEski && yEski.kontrolB) || (yEski && yEski.kontrol ? { Gaziantep: yEski.kontrol, Konya: yEski.kontrol } : {})),
   urunler: YURTICI.map((u) => { const o = yEski && Array.isArray(yEski.urunler) && yEski.urunler.find((x) => anahtar(x) === anahtar(u)); return { ad: u.ad, borsa: u.borsa, not: u.not, seri: ((o && o.seri) || []).slice() }; }) };
 const bugun = new Date().toISOString().slice(0, 10);
 const gunEkle = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
-let gun = yi.kontrol ? gunEkle(yi.kontrol, -5) : gunEkle(bugun, -120);
-const say = { Gaziantep: 0, Konya: 0, hata: 0 };
-for (; gun <= bugun; gun = gunEkle(gun, 1)) {
+const basla = {}; BORSALAR.forEach((b) => { basla[b] = yi.kontrolB[b] ? gunEkle(yi.kontrolB[b], -5) : gunEkle(bugun, -120); });
+const say = { Gaziantep: 0, Konya: 0, Polatlı: 0, Adana: 0, hata: 0 };
+const hataYaz = (b, gun, e) => { say.hata++; if (say.hata <= 6) console.error(b, gun, e.message); };
+async function adanaGetir(gun) {
+  const [y, m, d] = gun.split("-"), ad = `${d}${m}${y}.pdf`, sonraki = gunEkle(gun, 5).slice(0, 7).split("-");
+  const yollar = [`${y}/${m}/${ad}`]; if (sonraki[1] !== m) yollar.push(`${sonraki[0]}/${sonraki[1]}/${ad}`);
+  for (const yol of yollar) {
+    const r = await fetch("https://adanatb.org.tr/wp-content/uploads/" + yol, { headers: UA });
+    if (r.status === 404) continue;
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const f = path.join(os.tmpdir(), "adana_" + ad);
+    fs.writeFileSync(f, Buffer.from(await r.arrayBuffer()));
+    const p = spawnSync("pdftotext", ["-layout", f, "-"], { encoding: "utf8" });
+    if (p.status !== 0) throw new Error("pdftotext");
+    const t = p.stdout, tm = t.match(/(\d{1,2})\s+([A-ZÇĞİÖŞÜa-zçğıöşü]+)\s+(\d{4})\s*[–-]\s*GÜNLÜK İŞLEM/);
+    if (tm && +tm[1] !== +d) return [];
+    return adanaSatirlar(t);
+  }
+  return [];
+}
+const enErken = BORSALAR.map((b) => basla[b]).sort()[0];
+for (let gun = enErken; gun <= bugun; gun = gunEkle(gun, 1)) {
   const hg = new Date(gun + "T00:00:00Z").getUTCDay();
   if (hg === 0 || hg === 6) continue;
-  let g = null, k = null;
-  try { g = gaziantepSatirlar(await getir(GAZIANTEP + gun, false), gun); if (g.length) say.Gaziantep++; } catch (e) { say.hata++; if (say.hata <= 4) console.error("Gaziantep", gun, e.message); }
-  try { k = await getir(KONYA + gun, true); if (!Array.isArray(k)) k = null; else if (k.length) say.Konya++; } catch (e) { say.hata++; if (say.hata <= 4) console.error("Konya", gun, e.message); }
-  if (g || k) yi.kontrol = gun;
+  const K = {}, [y, m, d] = gun.split("-");
+  if (gun >= basla.Gaziantep) try { K.Gaziantep = gaziantepSatirlar(await getir(GAZIANTEP + gun, false), gun); if (K.Gaziantep.length) say.Gaziantep++; } catch (e) { hataYaz("Gaziantep", gun, e); }
+  if (gun >= basla.Konya) try { const k = await getir(KONYA + gun, true); if (Array.isArray(k)) { K.Konya = k; if (k.length) say.Konya++; } } catch (e) { hataYaz("Konya", gun, e); }
+  if (gun >= basla["Polatlı"]) try { K["Polatlı"] = polatliSatirlar(await getir(POLATLI + `${d}.${m}.${y}`, true)); if (K["Polatlı"].length) say["Polatlı"]++; } catch (e) { hataYaz("Polatlı", gun, e); }
+  if (gun >= basla.Adana) try { K.Adana = await adanaGetir(gun); if (K.Adana.length) say.Adana++; } catch (e) { hataYaz("Adana", gun, e); }
+  BORSALAR.forEach((b) => { if (K[b]) yi.kontrolB[b] = gun; });
+  if (Object.keys(K).length) yi.kontrol = gun;
   YURTICI.forEach((u, i) => {
-    if ((u.borsa === "Gaziantep" ? g : k) === null) return;
-    const v = urunFiyati(u, g, k), s = yi.urunler[i].seri.filter(([d]) => d !== gun);
+    if (!K[u.borsa]) return;
+    const v = urunFiyati(u, K), s = yi.urunler[i].seri.filter(([dd]) => dd !== gun);
     if (v != null) s.push([gun, v]);
     s.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-    yi.urunler[i].seri = s.filter(([d]) => d >= gunEkle(bugun, -200));
+    yi.urunler[i].seri = s.filter(([dd]) => dd >= gunEkle(bugun, -200));
   });
   await bekle(400);
 }
 sonuc.yurtici = yi;
-if (say.Gaziantep || say.Konya) basarili++;
-console.log(`Yurt içi: Gaziantep ${say.Gaziantep} gün, Konya ${say.Konya} gün okundu; ${say.hata} hata.`);
+if (BORSALAR.some((b) => say[b])) basarili++;
+console.log(`Yurt içi: ${BORSALAR.map((b) => b + " " + say[b] + " gün").join(", ")} okundu; ${say.hata} hata.`);
 if (!basarili) { console.error("Hiç ürün çekilemedi; dosya değiştirilmedi."); process.exit(1); }
 fs.writeFileSync(OUT, JSON.stringify(sonuc));
 console.log(`fiyatlar.json yazıldı: ${basarili}/${URUNLER.length} ürün, USD/TRY ${kur.at(-1)[1].toFixed(2)} (${kur.at(-1)[0]})`);
