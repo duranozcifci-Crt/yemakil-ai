@@ -220,6 +220,10 @@ export const FAO = [
   { ad: "Mısır", merkez: "Arjantin FOB (FAO)", uuid: "3fefffb8-a60a-43f6-9f70-b71479f44a04" },
   { ad: "Buğday", merkez: "Ukrayna FOB (FAO)", uuid: "a842f91c-53f9-4952-8afe-a0a684d743d0" },
   { ad: "Buğday", merkez: "Rusya FOB (FAO)", uuid: "9af3d755-75c1-4c9f-9593-3667f1b5bf8c" },
+  { ad: "Buğday", merkez: "Fransa Rouen (FAO, aylık)", uuid: "97e58206-6e97-409b-b79d-6b57e642a615" },
+  { ad: "Buğday", merkez: "Çin iç piyasa ort. (FAO)", uuid: "bb328835-7f56-4f3b-b8d5-50a062611965" },
+  { ad: "Mısır", merkez: "Çin yem mısırı iç piyasa ort. (FAO)", uuid: "e3413759-5074-4063-822e-0f23b4ddd79e" },
+  { ad: "Arpa", merkez: "Avustralya yemlik (FAO, aylık)", uuid: "992f1c4d-24ee-461c-aa57-bae353a2b1d5" },
 ];
 export function faoSeri(j) {
   const dp = ((j && j.datapoints) || []).filter((x) => x && x.date && x.price_value_dollar > 0);
