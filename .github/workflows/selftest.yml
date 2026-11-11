@@ -17,5 +17,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Asıl sürüm (index.html)
         run: node test/selftest.js index.html
+      - name: Fiyatlar sayfası (fiyat.html)
+        run: node test/sayfalar.js fiyat.html
+      - name: Sipariş sayfası (siparis.html)
+        run: node test/sayfalar.js siparis.html
       - name: Deneme sürümü (deneme/index.html)
         run: if [ -f deneme/index.html ]; then node test/selftest.js deneme/index.html; else echo "deneme sürümü yok"; fi

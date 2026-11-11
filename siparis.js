@@ -1,7 +1,7 @@
 /* YemAkıl sipariş (V132): fabrika fiyat listelerinden (Başaran, Yemci Bey + kullanıcının eklediği firmalar) sipariş girişi.
    Fiyatlar TL / çuval (50 kg; Protein/Tahıl Kardeşliği 40 kg), fabrika teslim, yem fiyatlarında KDV yok; nakliye tutarına KDV eklenir (varsayılan %20).
    Peşin / kredi kartı tek çekim seçimi tüm fiyatları değiştirir. Bir siparişte birden çok firma olabilir; her firmaya ayrı WhatsApp mesajı.
-   Gönderilmiş sipariş açılıp değiştirilirse "REVİZE" olarak yeniden gönderilir. index.html'den sonra yüklenir (S, save, f, esc gerekir). */
+   Gönderilmiş sipariş açılıp değiştirilirse "REVİZE" olarak yeniden gönderilir. siparis.html içinde yüklenir (S, save, f, esc orada tanımlı; kayıt anahtarı siparis-v1). */
 (function(){
 /* Fiyat listeleri (fabrika fiyat listesi fotoğraflarından). Yeni liste gelince tarih ve fiyatlar burada güncellenir. [ürün, peşin, kredi kartı tek çekim] */
 var SP_LISTE={

@@ -1,5 +1,5 @@
-const C="yemakil-v94";
-self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png","./veri.js","./saglik.js","./siparis.js"].map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})))});
+const C="yemakil-v95";
+self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png","./veri.js","./saglik.js","./siparis.js","./siparis.html","./fiyat.html","./fiyat.js","./manifest-fiyat.json","./manifest-siparis.json"].map(u=>new Request(u,{cache:"reload"}))).catch(()=>{})))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 /* Ağ öncelikli; kendi dosyalarımız tarayıcının HTTP önbelleğini atlayıp sunucuya sorularak alınır (yeni sürüm hemen gelsin, V137); sayfa açılışında ağ 3 sn'de yanıt vermezse önbellek (zayıf kırsal bağlantı). Yalnız kendi dosyalarımız ve yazı tipleri önbelleğe alınır; hatalı yanıt önbelleğe yazılmaz. */
 self.addEventListener("fetch",e=>{const q=e.request;if(q.method!=="GET")return;const u=new URL(q.url),same=u.origin===self.location.origin,font=/(^|\.)fonts\.(googleapis|gstatic)\.com$/.test(u.hostname);if(!same&&!font)return;const nav=q.mode==="navigate";
