@@ -12,7 +12,8 @@ SRCS.forEach((f,i)=>{let er=null;if(srcTxt[i]===null)er='dosya yok';else try{new
 const idx=fs.readFileSync(path.join(path.dirname(FILE),'index.html'),'utf8');const v=s=>(s.match(/opacity:\.75">v(\d+)</)||[])[1];
 ok('Sürüm etiketi rasyon programıyla aynı',v(html0)&&v(html0)===v(idx),v(html0)+' / '+v(idx));
 const man=(html0.match(/<link rel="manifest" href="([^"]+)"/)||[])[1];let mj=null;try{mj=JSON.parse(fs.readFileSync(path.join(path.dirname(FILE),man),'utf8'))}catch(e){}
-ok('Kendi uygulama simgesi (manifest: ayrı ad ve başlangıç sayfası)',mj&&mj.id&&mj.id!=="/yemakil-ai/"&&mj.start_url.endsWith(path.basename(FILE)),man);
+const ad=path.basename(FILE,'.html'),dir=path.dirname(FILE);
+ok('Kendi uygulama ve logosu (manifest: ayrı ad, başlangıç sayfası ve kendi simge dosyaları; sayfa başlığında ve ana ekranda aynı logo)',mj&&mj.id&&mj.id!=="/yemakil-ai/"&&mj.start_url.endsWith(path.basename(FILE))&&mj.icons.every(i=>i.src.indexOf('icon-'+ad+'-')===0&&fs.existsSync(path.join(dir,i.src)))&&html0.indexOf('apple-touch-icon-'+ad+'.png')>0&&fs.existsSync(path.join(dir,'apple-touch-icon-'+ad+'.png'))&&html0.indexOf('<img src="icon-'+ad+'-192.png"')>0&&!/data:image\/png;base64/.test(html0),man);
 (async()=>{
  let chromium;try{chromium=require('playwright').chromium}catch(e){ok('playwright yüklü',false,'npm i playwright');return done()}
  const b=await chromium.launch();const p=await b.newPage({viewport:{width:390,height:844}});const errs=[];p.on('pageerror',e=>errs.push(e.message));
