@@ -69,12 +69,18 @@ const fpx=await E(()=>{var o={},mk=(n,f0)=>{var a=[],d=new Date(Date.UTC(2026,0,
    var F=spFirmalar().filter(x=>x.id==='basaran')[0],g=a=>F.u.filter(u=>u.ad===a)[0];o.s=[F.tarih,g('Başaran Süt 19 Granül / Pelet').n,g('Başaran Süt 19 Granül / Pelet').k,g('Başaran Süt 20 Granül / Pelet').n,g('Başaran Buzağı Başlangıç').n,!!g('Başaran Süper Süt 24'),F.u.length];
    /* yapay zekâ yolu: sahte yanıt */
    S.sip.ai={key:'sk-test',model:'claude-test'};var wf=window.fetch,body=null;window.fetch=(u,opt)=>{body=opt&&opt.body;return Promise.resolve({ok:true,status:200,json:()=>Promise.resolve({content:[{type:'text',text:'{"tarih":"2026-11-18","urunler":[{"grup":"SÜT YEMLERİ","ad":"Süt 21","pesin":"880","kart":"915"},{"grup":"YUMURTA","ad":"Yumurta Yemi","pesin":"1.090","kart":"1.134"}]}'}]})})};
-   var cv=document.createElement('canvas');cv.width=cv.height=8;var bl=await new Promise(r=>cv.toBlob(r,'image/png'));window._spFT=null;window._spV='fir';spRender();
+   var cv=document.createElement('canvas');cv.width=cv.height=8;var bl=await new Promise(r=>cv.toBlob(r,'image/png'));window._spFT=null;window._spV='fl';window._spFlT='bayi';window._spFlF='yemcibey';spRender();
    var inp2=document.querySelector('[data-ffile="yemcibey"]');var dt=new DataTransfer();dt.items.add(new File([bl],'liste.png',{type:'image/png'}));inp2.files=dt.files;inp2.onchange();
    for(var i=0;i<40&&!(window._spFT&&window._spFT.fid==='yemcibey');i++)await new Promise(r=>setTimeout(r,50));window.fetch=wf;
    var T2=window._spFT;o.ai=T2?[T2.tarih,T2.e.esl.map(r=>r.ad+':'+r.n+'/'+r.k).join(),T2.e.yeni.length,/claude-test/.test(body||''),/image/.test(body||'')]:null;
+   /* perakende: ayrı liste, bayi fiyatları değişmez */
+   window._spFlT='per';window._spFlF='basaran';window._spFT=null;spRender();o.p0=document.getElementById('spBody').innerText;
+   spFiyatInceleme('basaran',[{ad:"Başaran Süt 19 GRANÜL / PELET",n:900,k:940},{ad:"Başaran Süt 21 TOZ",n:930,k:970}],'2026-11-12','test','per');document.querySelector('[data-ftk]').click();
+   var P=S.sip.pr&&S.sip.pr.basaran,Fb=spFirmalar().filter(x=>x.id==='basaran')[0];o.p=[P&&P.tarih,P&&P.u.length,P&&P.u.map(u=>u.ad+':'+u.n+'/'+u.k).join(),Fb.u.filter(u=>u.ad==='Başaran Süt 19 Granül / Pelet')[0].n];o.p1=document.getElementById('spBody').innerText;
+   o.tabs=[...document.querySelectorAll('#spBody [data-v]')].map(b=>b.textContent);
    window._spFT=null;window._spV='duz';S.sip=JSON.parse(keep)||undefined;save();return o});
   ok('Fiyat listesi fotoğraftan güncelleme (V144): firmada 📷 düğmesi; okunanlar mevcut ürünlerle eşleşiyor (GRANÜL / PELET ↔ Granül / Pelet), eski → yeni gösteriliyor, %15\'ten fazla değişen (9530) "kontrol" işaretli ve kutuda düzeltilebiliyor, yeni ürün eklenebiliyor, okunmayanlar eski fiyatla kalıyor; onaylayınca liste tarihi ve fiyatlar kaydediliyor',fl.btn&&JSON.stringify(fl.e)===JSON.stringify([3,1,31,["Başaran Süt 20 Granül / Pelet"]])&&/kontrol/.test(fl.txt)&&JSON.stringify(fl.s)===JSON.stringify(["2026-11-11",850,885,853,808,true,35]),JSON.stringify(fl));
+  ok('Fiyat listesi sekmesi (V145): Sipariş · Geçmiş · Fiyat listesi · Firmalar; içinde Bayi / Perakende ve firma seçimi; perakende ayrı kaydediliyor (yalnız fotoğraftaki ürünler, bayi fiyatları değişmiyor), boşken yükleme çağrısı',fl.tabs&&fl.tabs.some(t=>t==='Fiyat listesi')&&/henüz perakende fiyat listesi yok/.test(fl.p0)&&JSON.stringify(fl.p)===JSON.stringify(["2026-11-12",2,"Başaran Süt 19 Granül / Pelet:900/940,Başaran Süt 21 Toz:930/970",850])&&/Perakende/.test(fl.p1)&&/Perakende listesini sil/.test(fl.p1),JSON.stringify({p:fl.p,tabs:fl.tabs}));
   ok('Fiyat listesi yapay zekâ ile okuma: fotoğraf gönderiliyor, yanıttaki tarih ve satırlar (binlik nokta 1.090) eşleştirilip onaya sunuluyor',fl.ai&&fl.ai[0]==="2026-11-18"&&fl.ai[1]==="Süt 21:880/915,Yumurta Yemi:1090/1134"&&fl.ai[2]===0&&fl.ai[3]&&fl.ai[4],JSON.stringify(fl.ai));}
 
  ok('390 px taşma yok',await E(()=>document.documentElement.scrollWidth)<=390);
