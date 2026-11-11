@@ -1,9 +1,9 @@
 # YemAkıl — çalışma notları
 
-- Uygulama: `index.html` + `veri.js` (açıklama/bilgi tabloları) + `saglik.js` (hastalık rehberi, aşı) (PWA, GitHub Pages `main` dalından yayınlanır).
+- Üç ayrı uygulama (V140; birbirine bağlantı yok, rasyon kendi başına): Rasyon `index.html` + `veri.js` (açıklama/bilgi tabloları) + `saglik.js` (hastalık rehberi, aşı); Fiyatlar `fiyat.html` + `fiyat.js`; Sipariş `siparis.html` + `siparis.js` (PWA, her birinin kendi simgesi; GitHub Pages `main` dalından yayınlanır). Ayrıntı: `test/YAYIN.md` madde 10.
 - Yayın kuralları: `test/YAYIN.md` — her değişiklikten önce okuyun.
 - Fiyat panosu verisi `fiyatlar.json`: `.github/workflows/fiyat.yml` her iş günü (22:17 UTC) `tools/fiyat_guncelle.mjs` ile CBOT vadeli fiyatlarını çekip `main`'e kendisi commit eder (bot commitleri normaldir; dalı çekerken birleştirin).
-- Öz-denetim: `node test/selftest.js index.html` (GitHub Actions'ta da her push/PR'da çalışır) → tamamı geçerse kullanıcı onayıyla otomatik olarak `main`'e birleştirilir (YAYIN.md madde 6–8).
+- Öz-denetim: `node test/selftest.js index.html`, `node test/sayfalar.js fiyat.html`, `node test/sayfalar.js siparis.html` (GitHub Actions'ta da her push/PR'da çalışır) → tamamı geçerse kullanıcı onayıyla otomatik olarak `main`'e birleştirilir (YAYIN.md madde 6–8).
 - Kullanıcıyla Türkçe, teknik olmayan bir dille konuşun.
 - Referans (kararlı) sürümler — geri dönüş noktaları; bu dallara asla yazmayın:
   - `kararli-v131` (V131, 207/207 test) — **güncel referans**: V122 + yem fiyat panosu (sağ üst "Fiyatlar"): 10 temel hammadde (mısır, arpa, yemlik buğday, soya, soya küspesi, DDGS, mısır gluteni, ayçiçeği küspesi, pamuk tohumu küspesi, buğday kepeği) için yurt içi borsalar (Gaziantep, Konya, Polatlı, Adana; TL/kg) ve dünya merkezleri (Chicago, FAO: Karadeniz/Ukrayna/Rusya/Fransa/Avustralya/Arjantin/Çin, USDA haftalık, Brezilya CEPEA, Arjantin FOB ve MATba, Kanada StatCan; $/ton FOB + tahmini Mersin teslim, navlun değiştirilebilir); geçmiş fiyat + % değişim, tarihler, 1/2/3 aylık grafik; `tools/fiyat_guncelle.mjs` + `.github/workflows/fiyat.yml` her iş günü günceller. Yemci Bey/Başaran yaş analizleri (V125).
