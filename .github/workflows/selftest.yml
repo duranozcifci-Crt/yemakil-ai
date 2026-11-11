@@ -14,7 +14,8 @@ jobs:
       - name: Playwright kurulumu
         run: |
           npm install --no-save playwright@1.63.0
-          npx playwright install --with-deps chromium
+          # Ubuntu paket sunucusuna ulaşılamazsa (geçici DNS hatası) yeniden dene; olmazsa yalnız tarayıcıyı kur
+          npx playwright install --with-deps chromium || { sleep 30; npx playwright install --with-deps chromium; } || { echo "::warning::Sistem paketleri kurulamadı; yalnız tarayıcı kuruluyor"; npx playwright install chromium; }
       - name: Asıl sürüm (index.html)
         run: node test/selftest.js index.html
       - name: Fiyatlar sayfası (fiyat.html)
