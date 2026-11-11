@@ -461,6 +461,9 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   /* V123: kendi hammadde fiyat geçmişi (rasyonda kalır; Fiyatlar sayfası okur) */
   {const ph=await E(()=>{var x=S.feeds.filter(y=>/^Arpa/.test(y.fam||y.n))[0],keep=x.p;S.ph={};x.p=11;phSnap();x.p=11;phSnap();var n1=(S.ph[x.n]||[]).length;x.p=12;phSnap();var r=[n1,(S.ph[x.n]||[]).length,S.ph[x.n].slice(-1)[0][1]];x.p=keep;S.ph={};return r});
    ok('Kendi fiyat geçmişi: yalnız fiyat değişince tarihli kayıt; aynı gün tekrar kayıt şişirmiyor',ph[0]===1&&ph[1]===1&&ph[2]===12,JSON.stringify(ph));}
+  /* V146: Rasyon logosu (kullanıcının yemakıl logosu: altıgen işaret) */
+  {const fs4=require('fs'),d4=path.dirname(FILE),mj=JSON.parse(fs4.readFileSync(path.join(d4,'manifest.json'),'utf8'));
+   ok('Rasyon logosu (V146): telefon simgesi, maskable simge, başlık logosu ve sekme simgesi dosyadan; manifest simgeleri var; sw ön-önbellekte',mj.icons.length===3&&mj.icons.every(i=>fs4.existsSync(path.join(d4,i.src)))&&mj.icons.some(i=>i.purpose==="maskable"&&i.src==="icon-512-maskable.png")&&/<img src="logo-rasyon-120\.png"/.test(html0)&&/href="apple-touch-icon\.png"/.test(html0)&&!/data:image\/png;base64/.test(html0.slice(0,html0.indexOf('</h1>')))&&/logo-rasyon-120\.png/.test(sw)&&/icon-512-maskable\.png/.test(sw),JSON.stringify(mj.icons));}
   /* V140: Fiyatlar ve Sipariş ayrı sayfalar; rasyonda yalnız bağlantı; yedek ayrı sayfaların kayıtlarını da içerir */
   {const fs3=require('fs'),dir=path.dirname(FILE),has=f=>fs3.existsSync(path.join(dir,f));
    const ay=await E(()=>{var o={};o.l=[!document.querySelector('a[href="fiyat.html"]'),!document.querySelector('a[href="siparis.html"]')];o.fn=[typeof window.fpRender,typeof window.spOpen];
