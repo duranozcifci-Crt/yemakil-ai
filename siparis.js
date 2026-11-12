@@ -113,9 +113,9 @@ function sevkMesaj(o){var h=hesap(o),t=o.ty||{},L=["*SEVK BİLGİSİ*"];L.push("
  if(h.G.length)L.push("Yük: "+[h.T.cuv?"çuvallı "+f(h.T.cuv,0)+" çuval":"",h.T.dton?"dökme "+f(h.T.dton,h.T.dton%1?2:0)+" ton":""].filter(Boolean).join(" + ")+(h.T.cuv?" ("+(h.T.dton?"toplam ":"")+f(h.T.ton,h.T.ton%1?2:0)+" ton)":""));
  var G=h.G.filter(function(g){return g.nkTip!=="yok"&&g.nak>0}),top=0;L.push("");
  if(!G.length)L.push("Nakliye: "+(h.G.length&&h.G.every(function(g){return g.nkTip==="yok"})?"fabrikadan alınacak":"tutar girilmedi"));
- G.forEach(function(g){top+=g.nak+g.kdv;L.push("Nakliye"+(h.G.length>1?" ("+g.F.ad+")":"")+": "+(g.nkTip==="ton"?f(g.ton,g.ton%1?2:0)+" ton × "+tl(g.nkV)+" = ":"")+tl(g.nak)+" + KDV %"+h.T.kdvO+" = "+tl(g.nak+g.kdv));if(g.dag)L.push("*"+dagYaz(g)+"*")});
+ G.forEach(function(g){top+=g.nak+g.kdv;/* V179: yalnız nakliye fiyatı (ton başına ya da toplam), hesap yok */L.push("Nakliye"+(h.G.length>1?" ("+g.F.ad+")":"")+": "+(g.nkTip==="ton"?tl(g.nkV)+" / ton":tl(g.nak)));if(g.dag)L.push("*"+dagYaz(g)+"*")});
  h.G.forEach(function(g){if(g.dag&&!(g.nak>0))L.push("*"+dagYaz(g)+"*")});
- if(G.length>1)L.push("Toplam nakliye: "+tl(top)+" (KDV dahil)");return L.join("\n")}
+ return L.join("\n")}
 window.spSevkMesaj=sevkMesaj;
 function waAc(tx){var an=/Android/i.test(navigator.userAgent),u=an?"whatsapp://send?text="+encodeURIComponent(tx):"https://wa.me/?text="+encodeURIComponent(tx);try{if(an)location.href=u;else window.open(u,"_blank")||(location.href=u)}catch(e){location.href=u}}
 function mesaj(o,fid,nkGoster,fyGoster){if(fyGoster===undefined)fyGoster=!SP().fyGizle;var h=hesap(o),g=h.G.filter(function(g){return g.F.id===fid})[0];if(!g)return "";var t=o.ty||{},L=[];
