@@ -118,7 +118,7 @@ function sevkMesaj(o){var h=hesap(o),t=o.ty||{},L=["*SEVK BİLGİSİ*"];L.push("
  return L.join("\n")}
 window.spSevkMesaj=sevkMesaj;
 function sevkHtml(tx){return tx.split("\n").map(function(l){var e=esc(l);if(/^Yük: /.test(l))return '<span style="display:inline-block;font-size:19px;font-weight:800;color:#e0803f;margin:2px 0">'+e.replace(/\*/g,"")+'</span>';return e.replace(/\*([^*]+)\*/g,"<b>$1</b>")}).join("\n")}
-function waAc(tx){var an=/Android/i.test(navigator.userAgent),u=an?"whatsapp://send?text="+encodeURIComponent(tx):"https://wa.me/?text="+encodeURIComponent(tx);try{if(an)location.href=u;else window.open(u,"_blank")||(location.href=u)}catch(e){location.href=u}}
+function waAc(tx){if(/Android/i.test(navigator.userAgent)&&navigator.share){navigator.share({text:tx}).catch(function(){});return}var an=/Android/i.test(navigator.userAgent),u=an?"whatsapp://send?text="+encodeURIComponent(tx):"https://wa.me/?text="+encodeURIComponent(tx);try{if(an)location.href=u;else window.open(u,"_blank")||(location.href=u)}catch(e){location.href=u}}
 function mesaj(o,fid,nkGoster,fyGoster){if(fyGoster===undefined)fyGoster=!SP().fyGizle;var h=hesap(o),g=h.G.filter(function(g){return g.F.id===fid})[0];if(!g)return "";var t=o.ty||{},L=[];
  L.push((g.rev?"*REVİZE SİPARİŞ* – "+g.F.ad+" (önceki siparişimizin yerine geçer)":"*SİPARİŞ* – "+g.F.ad));
  L.push("Sipariş no: "+o.no+(g.rev?" (revize)":"")+" · "+trT(o.t||bugun()));L.push("Ödeme: "+odAd(o,fid));if(g.F.tarih&&fyGoster)L.push("Fiyat listesi: "+trT(g.F.tarih));L.push("");
@@ -135,7 +135,10 @@ function imza(o,fid){var n=o.nk&&o.nk[fid]||{},t=o.ty||{};return JSON.stringify(
 function gonIsaret(o,fid){o.gon[fid]=new Date(Date.now()+1).toISOString();o.gonI=o.gonI||{};o.gonI[fid]=imza(o,fid)}
 window.spImza=imza;
 function tySync(o){document.querySelectorAll("#spBody [data-ty]").forEach(function(i){o.ty[i.dataset.ty]=i.value.trim()});adrKaydet(o)}
-window.spWa=function(fid,pkg){var o=cur();if(!o)return;tySync(o);var tx=mesaj(o,fid,!!SP().nkMsg);if(!tx)return;gonIsaret(o,fid);try{save()}catch(e){}
+window.spWa=function(fid,pkg){var o=cur();if(!o)return;tySync(o);var tx=mesaj(o,fid,!!SP().nkMsg);if(!tx)return;
+ /* V184: Android'de paylaş menüsü — telefonda iki WhatsApp (normal + yedek) varsa ikisi de listede çıkar */
+ if(/Android/i.test(navigator.userAgent)&&navigator.share){navigator.share({text:tx}).then(function(){gonIsaret(o,fid);save();spRender()}).catch(function(){});return}
+ gonIsaret(o,fid);try{save()}catch(e){}
  var F=fBul(fid),t9=tel90(F&&F.tel),u;
  /* V174: telefonda iki WhatsApp (normal + Business) varsa hangisiyle açılacağı seçilir (Android intent) */
  /* V178: Android'de whatsapp:// doğrudan açılır; telefonda iki WhatsApp (normal + yedek) varsa telefon hangisi diye sorar */
