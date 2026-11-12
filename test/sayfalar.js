@@ -3,7 +3,7 @@
 const fs=require('fs'),path=require('path');
 const FILE=process.argv[2]?path.resolve(process.argv[2]):path.join(__dirname,'..','fiyat.html');
 const html0=fs.readFileSync(FILE,'utf8');
-const SRCS=[...html0.matchAll(/<script src="([^":]+\.js)"><\/script>/g)].map(m=>m[1]);const srcTxt=SRCS.map(f=>{try{return fs.readFileSync(path.join(path.dirname(FILE),f),'utf8')}catch(e){return null}});
+const SRCS=[...html0.matchAll(/<script src="([^":?]+\.js)(?:\?[^"]*)?"><\/script>/g)].map(m=>m[1]);const srcTxt=SRCS.map(f=>{try{return fs.readFileSync(path.join(path.dirname(FILE),f),'utf8')}catch(e){return null}});
 const html=html0+'\n'+srcTxt.filter(Boolean).join('\n');
 const R=[];function ok(name,cond,info){R.push({name,ok:!!cond,info:info||''});}
 let synErr=null;[...html0.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach((m,i)=>{try{new Function(m[1])}catch(e){synErr=i+': '+e.message}});
