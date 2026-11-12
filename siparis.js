@@ -106,7 +106,7 @@ window.spAdet=function(fid,ad,a,dk){var o=cur()||yeni();adet(o,fid,ad,a,dk)};
 var NKOD={bayi:"bayi ödeyecek",firma:"fabrika ödeyecek"};
 function dagYaz(g){return g.dag?"DAĞITIMLI"+(g.dagNot?" ("+g.dagNot+")":" (köy içi dağıtım)"):""}
 function nkSatir(g,goster){if(g.nkTip==="yok")return "Nakliye: fabrikadan alınacak";if(g.dag)return nkSatir0(g,goster)+"\n*"+dagYaz(g)+"*";return nkSatir0(g,goster)}
-function nkSatir0(g,goster){var od=NKOD[g.nkOd]||NKOD.bayi;if(!goster)return "Nakliye: "+od;return "Nakliye: "+(g.nkTip==="ton"?tl(g.nkV)+"/ton + KDV ("+tl(g.nak)+" + KDV = "+tl(g.nak+g.kdv)+")":tl(g.nak)+" + KDV ("+tl(g.nak+g.kdv)+")")+" — "+od}
+function nkSatir0(g,goster){var od=NKOD[g.nkOd]||NKOD.bayi;if(!goster)return "Nakliye: "+od;return "Nakliye: "+(g.nkTip==="ton"?tl(g.nkV)+"/ton + KDV":tl(g.nak)+" + KDV")+" — "+od}
 /* V175: sevk / nakliye bilgisi — siparişten ayrı, yalnız tarih, cari, teslim yeri, sorumlu kişi ve nakliye tutarı (nakliyeci / şoför / cari için) */
 function sevkMesaj(o){var h=hesap(o),t=o.ty||{},L=["*SEVK BİLGİSİ*"];L.push("Tarih: "+trT(t.tarih||o.t||bugun()));if(t.cari)L.push("Cari: "+t.cari+(t.nokta?" / "+t.nokta:""));L.push("Teslim yeri: "+(t.yer||"—"));if(t.alici||t.tel)L.push("Sorumlu kişi: "+[t.alici,t.tel].filter(Boolean).join(" · "));if(t.arac)L.push("Araç / şoför: "+t.arac);
  /* V177: yalnız yükün şekli (çuvallı / dökme) ve miktarı; ürün adı, fiyat yok */
@@ -121,9 +121,9 @@ function sevkHtml(tx){return tx.split("\n").map(function(l){var e=esc(l);if(/^Y�
 function waAc(tx){if(/Android/i.test(navigator.userAgent)&&navigator.share){navigator.share({text:tx}).catch(function(){});return}var an=/Android/i.test(navigator.userAgent),u=an?"whatsapp://send?text="+encodeURIComponent(tx):"https://wa.me/?text="+encodeURIComponent(tx);try{if(an)location.href=u;else window.open(u,"_blank")||(location.href=u)}catch(e){location.href=u}}
 function mesaj(o,fid,nkGoster,fyGoster){if(fyGoster===undefined)fyGoster=!SP().fyGizle;var h=hesap(o),g=h.G.filter(function(g){return g.F.id===fid})[0];if(!g)return "";var t=o.ty||{},L=[];
  L.push((g.rev?"*REVİZE SİPARİŞ* – "+g.F.ad+" (önceki siparişimizin yerine geçer)":"*SİPARİŞ* – "+g.F.ad));
- L.push("Sipariş no: "+o.no+(g.rev?" (revize)":"")+" · "+trT(o.t||bugun()));L.push("Ödeme: "+odAd(o,fid));if(g.F.tarih&&fyGoster)L.push("Fiyat listesi: "+trT(g.F.tarih));L.push("");
+ L.push("Tarih: "+trT(o.t||bugun()));L.push("Ödeme: "+odAd(o,fid));if(g.F.tarih&&fyGoster)L.push("Fiyat listesi: "+trT(g.F.tarih));L.push("");
  g.sat.forEach(function(x){L.push("• "+x.ad+" — "+(x.dk?"*DÖKME* ":"")+mik(x)+(fyGoster?" × "+bfy(x)+" = "+tl(x.tut):""))});
- L.push("");L.push("Toplam: "+topMik(g)+(fyGoster?" — "+tl(g.yem):""));
+ L.push("");
  if(t.cari)L.push("Cari: "+t.cari+(t.nokta?" / "+t.nokta:""));if(t.yer)L.push("Teslim yeri: "+t.yer);if(t.alici||t.tel)L.push("İletişim: "+[t.alici,t.tel].filter(Boolean).join(" · "));
  if(t.arac)L.push("Araç / şoför: "+t.arac);if(t.tarih)L.push("Yükleme / teslim tarihi: "+trT(t.tarih));
  L.push(nkSatir(g,nkGoster));
