@@ -2,7 +2,7 @@
 
 - Üç ayrı uygulama (V140; birbirine bağlantı yok, rasyon kendi başına): Rasyon `index.html` + `veri.js` (açıklama/bilgi tabloları) + `saglik.js` (hastalık rehberi, aşı); Fiyatlar `fiyat.html` + `fiyat.js`; Sipariş `siparis.html` + `siparis.js` (PWA, her birinin kendi simgesi; GitHub Pages `main` dalından yayınlanır). Ayrıntı: `test/YAYIN.md` madde 10. Giriş sayfası `yemakil.html` (V151): tek logo altında üç programa giriş; programların başlığında "YemAkıl" dönüş düğmesi (madde 11).
 - Yayın kuralları: `test/YAYIN.md` — her değişiklikten önce okuyun.
-- Fiyat panosu verisi `fiyatlar.json`: `.github/workflows/fiyat.yml` her iş günü (22:17 UTC) `tools/fiyat_guncelle.mjs` ile CBOT vadeli fiyatlarını çekip `main`'e kendisi commit eder (bot commitleri normaldir; dalı çekerken birleştirin).
+- Fiyat panosu verisi `fiyatlar.json`: `.github/workflows/fiyat.yml` her iş günü (22:17 UTC) `tools/fiyat_guncelle.mjs` ile CBOT vadeli fiyatlarını ve (her sabah 04:17 UTC da) Mersin motorin fiyatını (Opet; sipariş nakliye hesabı için) çekip `main`'e kendisi commit eder (bot commitleri normaldir; dalı çekerken birleştirin).
 - Öz-denetim: `node test/selftest.js index.html`, `node test/sayfalar.js fiyat.html`, `node test/sayfalar.js siparis.html`, `node test/sayfalar.js yemakil.html` (GitHub Actions'ta da her push/PR'da çalışır) → tamamı geçerse kullanıcı onayıyla otomatik olarak `main`'e birleştirilir (YAYIN.md madde 6–8).
 - Kullanıcıyla Türkçe, teknik olmayan bir dille konuşun.
 - Referans (kararlı) sürümler — geri dönüş noktaları; bu dallara asla yazmayın:

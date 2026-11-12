@@ -431,6 +431,36 @@ for (let gun = enErken; gun <= bugun; gun = gunEkle(gun, 1)) {
 sonuc.yurtici = yi;
 if (BORSALAR.some((b) => say[b])) basarili++;
 console.log(`Yurt içi: ${BORSALAR.map((b) => b + " " + say[b] + " gün").join(", ")} okundu; ${say.hata} hata.`);
+// Motorin (nakliye hesabı için): Opet il fiyatları (Mersin, il kodu 33), yedek Petrol Ofisi. TL/L, KDV dahil pompa fiyatı.
+export function motorinBul(veri) {
+  // Opet: [{districtName, prices:[{productName, amount}]}] — Akdeniz ilçesi önce, "Motorin" adlı ürünlerin en düşüğü (EcoForce/UltraForce)
+  const L = Array.isArray(veri) ? veri : (veri && (veri.data || veri.result || veri.items)) || [];
+  const ilce = (x) => String(x.districtName || x.ilceAdi || x.name || "").toLocaleUpperCase("tr");
+  const sirali = [...L].sort((a, b) => (/AKDENİZ|AKDENIZ/.test(ilce(b)) ? 1 : 0) - (/AKDENİZ|AKDENIZ/.test(ilce(a)) ? 1 : 0));
+  for (const d of sirali) {
+    const P = (d.prices || d.fiyatlar || []).filter((p) => /motorin/i.test(String(p.productName || p.urunAdi || p.name || "")) && !/kırsal|kirsal|gaz/i.test(String(p.productName || "")));
+    const v = P.map((p) => +(p.amount ?? p.price ?? p.fiyat)).filter((x) => x > 10 && x < 500);
+    if (v.length) return { tl: Math.min(...v), ilce: ilce(d) || "MERSİN" };
+  }
+  return null;
+}
+export function motorinHtml(html) {
+  // Petrol Ofisi il sayfası: tablo satırında "MERSİN" ve ardından benzin, motorin… fiyatları; "Motorin" sütununu başlıktan bul
+  const t = metin(html), m = t.match(/MERS[İI]N[^0-9]{0,40}((?:\d{2,3}[.,]\d{2}\s*){2,6})/i);
+  if (!m) return null; const nums = m[1].trim().split(/\s+/).map((x) => +x.replace(",", ".")).filter((x) => x > 10 && x < 500);
+  return nums.length >= 2 ? { tl: nums[1], ilce: "MERSİN" } : null; // PO sırası: Benzin, Motorin, …
+}
+{
+  const eM = (eski && eski.motorin) || null;
+  let mo = null, kaynak = "";
+  try { mo = motorinBul(await getir("https://api.opet.com.tr/api/fuelprices/prices?ProvinceCode=33&IncludeAllProducts=true", true)); kaynak = "Opet"; } catch (e) { console.error("Opet motorin:", e.message); }
+  if (!mo) try { mo = motorinHtml(await getir("https://www.petrolofisi.com.tr/akaryakit-fiyatlari/mersin-akaryakit-fiyatlari", false)); kaynak = "Petrol Ofisi"; } catch (e) { console.error("PO motorin:", e.message); }
+  if (mo) {
+    const s = ((eM && eM.seri) || []).filter(([d]) => d !== bugun); s.push([bugun, Math.round(mo.tl * 100) / 100]);
+    sonuc.motorin = { tl: Math.round(mo.tl * 100) / 100, tarih: bugun, yer: "Mersin " + mo.ilce, kaynak, seri: s.slice(-120) };
+    console.log(`Motorin: ${sonuc.motorin.tl} TL/L (${kaynak}, ${sonuc.motorin.yer})`);
+  } else if (eM) { sonuc.motorin = { ...eM, eski: true }; console.log("Motorin çekilemedi; önceki değer korundu."); }
+}
 if (!basarili) { console.error("Hiç ürün çekilemedi; dosya değiştirilmedi."); process.exit(1); }
 fs.writeFileSync(OUT, JSON.stringify(sonuc));
 console.log(`fiyatlar.json yazıldı: ${basarili}/${URUNLER.length} ürün, USD/TRY ${kur.at(-1)[1].toFixed(2)} (${kur.at(-1)[0]})`);

@@ -2,6 +2,8 @@ name: Fiyat panosu
 on:
   schedule:
     - cron: "17 22 * * 1-5"
+    # motorin (nakliye hesabı) hafta sonu da değişebilir: her sabah 07:17 (TR) bir kez daha
+    - cron: "17 4 * * *"
   workflow_dispatch:
 permissions:
   contents: write
