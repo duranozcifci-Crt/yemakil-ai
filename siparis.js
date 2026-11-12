@@ -92,7 +92,7 @@ function hesap(o){nor(o);var kdv=SP().kdv,G=[],gi={};
   g.sat.push({ad:x.ad,a:x.a,dk:dk,p:pb,tut:tut,yok:!u,pyok:pyok,eski:(!dk&&x.bf>0&&u&&x.bf!==p)?x.bf:null});if(dk){g.dton+=x.a;g.kg+=x.a*1000}else{g.cuv+=x.a;g.kg+=x.a*ck}g.yem+=tut});
  var T={cuv:0,dton:0,ton:0,yem:0,nak:0,kdv:0,top:0,fnak:0};
  G.forEach(function(g){var n=o.nk[g.F.id]||{tip:"yok"},v=+n.v||0;g.ton=g.kg/1000;g.nkTip=n.tip||"yok";g.nkV=v;g.nak=g.nkTip==="top"?v:g.nkTip==="ton"?v*g.ton:0;g.nak=Math.round(g.nak*100)/100;g.kdv=Math.round(g.nak*kdv)/100;g.nkOd=n.od==="firma"?"firma":"bayi";g.top=g.yem+g.nak+g.kdv;/* V170: kim öderse ödesin nakliye toplama dahil */
-  g.gon=o.gon[g.F.id]||null;g.rev=!!(g.gon&&o.mod>g.gon);T.cuv+=g.cuv;T.dton+=g.dton;T.ton+=g.ton;T.yem+=g.yem;T.nak+=g.nak;T.kdv+=g.kdv;if(g.nkOd!=="bayi")T.fnak+=g.nak+g.kdv;T.top+=g.top});
+  g.gon=o.gon[g.F.id]||null;g.rev=!!(g.gon&&(o.gonI&&o.gonI[g.F.id]!=null?o.gonI[g.F.id]!==imza(o,g.F.id):o.mod>g.gon));T.cuv+=g.cuv;T.dton+=g.dton;T.ton+=g.ton;T.yem+=g.yem;T.nak+=g.nak;T.kdv+=g.kdv;if(g.nkOd!=="bayi")T.fnak+=g.nak+g.kdv;T.top+=g.top});
  T.kdvO=kdv;return {G:G,T:T}}
 window.spHesap=hesap;
 function mik(x){return x.dk?f(x.a,x.a%1?2:0)+" ton dökme":f(x.a,0)+" çuval"}
@@ -116,11 +116,18 @@ function mesaj(o,fid,nkGoster,fyGoster){if(fyGoster===undefined)fyGoster=!SP().f
  if(t.not)L.push("Not: "+t.not);return L.join("\n")}
 window.spMesaj=mesaj;
 function tel90(t){var d=String(t||"").replace(/\D/g,"");if(!d)return "";if(/^0/.test(d))d="9"+d;else if(d.length===10)d="90"+d;return d}
+/* V174: revize = gönderilen siparişin içeriği (ürünler, ödeme, nakliye, teslim bilgileri) gönderimden sonra değişti mi */
+function imza(o,fid){var n=o.nk&&o.nk[fid]||{},t=o.ty||{};return JSON.stringify([o.k.filter(function(x){return x.f===fid}).map(function(x){return [x.ad,x.a,!!x.dk]}),o.fo&&o.fo[fid]||null,o.od||"",[n.tip||"yok",+n.v||0,n.od||"bayi"],["cari","nokta","yer","alici","tel","arac","tarih","not"].map(function(k){return t[k]||""})])}
+function gonIsaret(o,fid){o.gon[fid]=new Date(Date.now()+1).toISOString();o.gonI=o.gonI||{};o.gonI[fid]=imza(o,fid)}
+window.spImza=imza;
 function tySync(o){document.querySelectorAll("#spBody [data-ty]").forEach(function(i){o.ty[i.dataset.ty]=i.value.trim()});adrKaydet(o)}
-window.spWa=function(fid){var o=cur();if(!o)return;tySync(o);var tx=mesaj(o,fid,!!SP().nkMsg);if(!tx)return;o.gon[fid]=new Date(Date.now()+1).toISOString();try{save()}catch(e){}
- var F=fBul(fid),u="https://wa.me/"+tel90(F&&F.tel)+"?text="+encodeURIComponent(tx);try{window.open(u,"_blank")||(location.href=u)}catch(e){location.href=u}spRender()};
-window.spPaylas=function(fid){var o=cur();if(!o)return;tySync(o);var tx=mesaj(o,fid,!!SP().nkMsg);if(navigator.share)navigator.share({title:"Sipariş "+o.no,text:tx}).then(function(){o.gon[fid]=new Date(Date.now()+1).toISOString();save();spRender()}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){alert("Sipariş metni kopyalandı; WhatsApp'a yapıştırabilirsiniz.")});else alert(tx)};
-window.spGonderildi=function(fid){var o=cur();if(!o)return;o.gon[fid]=new Date(Date.now()+1).toISOString();save();spRender()};
+window.spWa=function(fid,pkg){var o=cur();if(!o)return;tySync(o);var tx=mesaj(o,fid,!!SP().nkMsg);if(!tx)return;gonIsaret(o,fid);try{save()}catch(e){}
+ var F=fBul(fid),t9=tel90(F&&F.tel),u;
+ /* V174: telefonda iki WhatsApp (normal + Business) varsa hangisiyle açılacağı seçilir (Android intent) */
+ if(pkg&&/Android/i.test(navigator.userAgent))u="intent://send?"+(t9?"phone="+t9+"&":"")+"text="+encodeURIComponent(tx)+"#Intent;scheme=whatsapp;package="+pkg+";end";else u="https://wa.me/"+t9+"?text="+encodeURIComponent(tx);
+ try{if(pkg)location.href=u;else window.open(u,"_blank")||(location.href=u)}catch(e){location.href=u}spRender()};
+window.spPaylas=function(fid){var o=cur();if(!o)return;tySync(o);var tx=mesaj(o,fid,!!SP().nkMsg);if(navigator.share)navigator.share({title:"Sipariş "+o.no,text:tx}).then(function(){gonIsaret(o,fid);save();spRender()}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(tx).then(function(){alert("Sipariş metni kopyalandı; WhatsApp'a yapıştırabilirsiniz.")});else alert(tx)};
+window.spGonderildi=function(fid){var o=cur();if(!o)return;gonIsaret(o,fid);save();spRender()};
 /* PDF / yazdır: her firma ayrı sayfa + genel özet */
 function pdfHTML(o){var h=hesap(o),t=o.ty||{},e=esc;
  var css='body{font:14px/1.4 system-ui,sans-serif;color:#111;margin:0;padding:16px;max-width:760px;margin:0 auto}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:16px 0 6px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #bbb;padding:5px 6px;text-align:left}td.r,th.r{text-align:right;white-space:nowrap}.s{color:#555;font-size:12px}.pg{page-break-after:always;margin-bottom:24px}.pg:last-child{page-break-after:auto}.tb{display:flex;gap:8px;margin-bottom:12px}.tb button{padding:10px 16px;font:inherit;border-radius:8px;border:1px solid #1d5c4a;background:#1d5c4a;color:#fff}@media print{.tb{display:none}}';
@@ -196,7 +203,7 @@ function nkTarBul(yer,fid){var T=nkTar(),k=yerK(yer);if(!k)return null;var r=T[k
  var W=k.split(" "),best=null,bs=0;Object.keys(T).forEach(function(x){var e=T[x].f&&T[x].f[fid];if(!e)return;var X=x.split(" "),o=X.filter(function(w){return W.indexOf(w)>=0}).length,sc=o/Math.max(X.length,W.length);if(o&&sc>bs){bs=sc;best={k:x,v:e.v,t:e.t,ad:T[x].ad,yakin:true}}});if(bs>=0.5)return best;var m=nkKmBul(yer);if(m)return {k:"",v:Math.round(m.km*nkBirim()),t:"",ad:(m.ilce==="Merkez"?m.il+" merkez":m.ilce+", "+m.il),km:m.km,hesap:true};return null}
 function nkTarYaz(o,fid){var n=o.nk&&o.nk[fid],y=o.ty&&o.ty.yer;if(!n||n.tip!=="ton"||!(n.v>0)||!y)return;var T=nkTar(),k=yerK(y);T[k]=T[k]||{ad:y,f:{}};T[k].ad=y;T[k].f=T[k].f||{};T[k].f[fid]={v:+n.v,t:bugun()};n.oto=0}
 function nkOtoUygula(o){var G=hesap(o).G,deg=0;G.forEach(function(g){var fid=g.F.id,n=o.nk[fid],b=nkTarBul(o.ty&&o.ty.yer,fid);if(!b)return;if(n&&n.tip==="top")return;if(n&&n.v>0&&!n.oto&&n.tip==="ton")return;
-  n=o.nk[fid]=n||{};n.tip="ton";n.v=b.v;n.oto=1;deg=1});return deg}
+  if(o.gon&&o.gon[fid])return;/* gönderilmiş siparişin nakliyesi kendiliğinden değişmez */n=o.nk[fid]=n||{};if(n.tip==="ton"&&n.v===b.v&&n.oto)return;n.tip="ton";n.v=b.v;n.oto=1;deg=1});return deg}
 window.spNkTar=function(){return JSON.parse(JSON.stringify(nkTar()))};
 function nkBolum(o){var h0=hesap(o),G=h0.G,kdv=h0.T.kdvO;var h='<h3 style="margin:12px 0 4px">Nakliye</h3>';if(!G.length)return h+'<p class="s" style="margin:0">Ürün ekleyince her firma için nakliye burada girilir.</p>';
  return h+G.map(function(g){var id=esc(g.F.id),rk=fRenk(g.F.id),var1=g.nkTip!=="yok";
@@ -239,7 +246,7 @@ function ozet(o){var h0=hesap(o),G=h0.G,T=h0.T,s=SP();if(!G.length)return '<p cl
   +'<tr><th colspan="2">Yem: '+topMik(g)+'</th><th></th><th class="r">'+tl(g.yem)+'</th></tr></table>'
   +(g.nkTip!=="yok"?'<p class="s" style="margin:4px 0 0">Nakliye '+(g.nkTip==="ton"?f(g.ton,2)+' ton × '+tl(g.nkV)+' = ':'')+tl(g.nak)+' + KDV %'+T.kdvO+' '+tl(g.kdv)+' = '+tl(g.nak+g.kdv)+(g.nkOd!=="bayi"?' — '+NKOD[g.nkOd]:'')+'</p>':'')
   +'<p class="tot" style="margin:6px 0 0">'+esc(g.F.ad)+' toplam: '+tl(g.top)+'</p>'
-  +'<div class="bt"><button class="p" data-wa="'+id+'" style="background:'+rk+';border-color:'+rk+';color:#fff">'+(g.gon?'Revize gönder (WhatsApp)':'WhatsApp ile gönder')+'</button><button data-sh="'+id+'">Paylaş / kopyala</button></div>'+(g.F.tel?'':'<p class="s" style="margin:0">'+esc(g.F.ad)+' için WhatsApp numarası girilmemiş; WhatsApp açılınca kişiyi siz seçersiniz (Firmalar, cariler bölümünden numara ekleyin).</p>')+'</div>'});
+  +'<div class="bt"><button class="p" data-wa="'+id+'" style="background:'+rk+';border-color:'+rk+';color:#fff">'+(g.rev?'Revize gönder (WhatsApp)':g.gon?'Tekrar gönder (WhatsApp)':'WhatsApp ile gönder')+(SP().waPkg&&/Android/i.test(navigator.userAgent)?'<small style="display:block;font-size:11px;font-weight:400">'+(SP().waPkg==="com.whatsapp.w4b"?'Business':'normal WhatsApp')+'</small>':'')+'</button><button data-sh="'+id+'">Paylaş / kopyala</button></div>'+(/Android/i.test(navigator.userAgent)?'<div class="bt" style="margin-top:0"><button data-wap="'+id+'|com.whatsapp" style="font-size:13px;min-height:36px">Normal WhatsApp ile</button><button data-wap="'+id+'|com.whatsapp.w4b" style="font-size:13px;min-height:36px">WhatsApp Business ile</button></div>':'')+(g.F.tel?'':'<p class="s" style="margin:0">'+esc(g.F.ad)+' için WhatsApp numarası girilmemiş; WhatsApp açılınca kişiyi siz seçersiniz (Firmalar, cariler bölümünden numara ekleyin).</p>')+'</div>'});
  h+='<div class="card" style="margin:8px 0"><table class="sp"><tr><td>Toplam miktar</td><td class="r">'+topMik(T)+'</td></tr><tr><td>Yem tutarı (KDV yok)</td><td class="r">'+tl(T.yem)+'</td></tr><tr><td>Nakliye (KDV hariç)</td><td class="r">'+tl(T.nak)+'</td></tr><tr><td>Nakliye KDV %<input type="number" inputmode="decimal" id="spKdv" min="0" max="99" step="any" value="'+T.kdvO+'" style="width:56px;display:inline-block;margin:0 0 0 4px;padding:4px"></td><td class="r">'+tl(T.kdv)+'</td></tr>'+(T.fnak?'<tr><td><small>Bunun fabrikanın ödeyeceği kısmı (KDV dahil)</small></td><td class="r">'+tl(T.fnak)+'</td></tr>':'')+'<tr><th class="tot">Genel toplam</th><th class="r tot">'+tl(T.top)+'</th></tr></table>'
   +'<label class="s" style="display:flex;gap:6px;align-items:center;margin:8px 0 0"><input type="checkbox" id="spNkM"'+(s.nkMsg?' checked':'')+'> Nakliye tutarını firmaya giden mesajda da göster</label><label class="s" style="display:flex;gap:6px;align-items:center;margin:6px 0 0"><input type="checkbox" id="spFyG"'+(s.fyGizle?'':' checked')+'> Ürün fiyatlarını ve yem tutarını mesajda göster</label><div class="bt"><button class="p" id="spPdf">PDF / Yazdır</button></div></div>';
  return h}
@@ -306,7 +313,7 @@ function bagla(el){var o=cur();
   el.querySelectorAll("#spSec [data-sx]").forEach(function(b){b.onclick=function(){adet(o,b.dataset.sx,b.dataset.u,0,b.dataset.dk==="1");yenile()}})}
  function sBagla(){var sm=document.getElementById("spSum");if(!sm)return;
 
-  sm.querySelectorAll("[data-wa]").forEach(function(x){x.onclick=function(){spWa(x.dataset.wa)}});sm.querySelectorAll("[data-sh]").forEach(function(x){x.onclick=function(){spPaylas(x.dataset.sh)}});
+  sm.querySelectorAll("[data-wa]").forEach(function(x){x.onclick=function(){var w=SP().waPkg;spWa(x.dataset.wa,w&&/Android/i.test(navigator.userAgent)?w:"")}});sm.querySelectorAll("[data-wap]").forEach(function(x){x.onclick=function(){var p=x.dataset.wap.split("|");SP().waPkg=p[1];save();spWa(p[0],p[1])}});sm.querySelectorAll("[data-sh]").forEach(function(x){x.onclick=function(){spPaylas(x.dataset.sh)}});
   var k=sm.querySelector("#spKdv");if(k)k.onchange=function(){var v=num(k.value);if(v>=0&&v<100){SP().kdv=v;degisti(o)}sonra(function(){sm.innerHTML=ozet(o);sBagla()})};
   var fy=sm.querySelector("#spFyG");if(fy)fy.onchange=function(){SP().fyGizle=!fy.checked;save()};var nm=sm.querySelector("#spNkM");if(nm)nm.onchange=function(){SP().nkMsg=nm.checked;save()};var pd=sm.querySelector("#spPdf");if(pd)pd.onclick=function(){spPdf(o.id)}}
  uBagla();sBagla();
