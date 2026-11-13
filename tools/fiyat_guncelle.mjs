@@ -17,6 +17,8 @@ const URUNLER = [
 ];
 // Yurt içi: Gaziantep Ticaret Borsası günlük bülteni (HTML) ve Konya Ticaret Borsası (JSON).
 // Her gün için ürün satırlarının miktar ağırlıklı ortalaması (TL/kg); "İTHAL" satış şekli (gümrük beyanı) hariç.
+// Fiyat geçmişi ne kadar saklanır (kullanıcı kararı 2026-11-13: 2 yıl; "geçen yıl bu zaman" karşılaştırması için). Pano yine en çok 3 ay gösterir.
+const SAKLA_GUN = 740;
 const UA = { "User-Agent": "Mozilla/5.0 (YemAkil fiyat panosu)" };
 const KONYA = "https://www.ktb.org.tr/api/v1/Alpha.WebPanel/OnlineKullaniciBulten/GetGunlukBulten/";
 const GAZIANTEP = "https://www.gtb.org.tr/gunluk-bulten?tarih=";
@@ -97,7 +99,7 @@ export function urunFiyati(u, K) {
   return null;
 }
 async function seri(sembol) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sembol)}?range=6mo&interval=1d`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sembol)}?range=2y&interval=1d`;
   let son;
   for (let i = 0; i < 4; i++) {
     try {
@@ -252,7 +254,7 @@ for (const u of USDA) {
   const seri = ((eskiU && eskiU.seri) || []).filter(([d]) => !yeni || d !== yeni[0]);
   if (yeni) seri.push([yeni[0], Math.round(yeni[1] * kurAt(yeni[0]))]);
   seri.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-  if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.slice(-60), ...(yeni ? {} : { eski: true }) });
+  if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.slice(-110), ...(yeni ? {} : { eski: true }) });
 }
 if (Object.keys(usdaSon).length) basarili++;
 // FAO GIEWS FPMA uluslararası ihracat fiyatları (USD/ton; haftalık varsa haftalık, yoksa aylık; geçmiş dahil).
@@ -274,7 +276,7 @@ export function faoSeri(j) {
   return L.map((x) => [x.date, x.price_value_dollar]).sort((a, b) => (a[0] < b[0] ? -1 : 1));
 }
 {
-  const sinir = new Date(Date.now() - 190 * 864e5).toISOString().slice(0, 10);
+  const sinir = new Date(Date.now() - SAKLA_GUN * 864e5).toISOString().slice(0, 10);
   for (const u of FAO) {
     try {
       const L = faoSeri(await getir(`https://fpma.fao.org/giews/v4/global/price_module/api/v1/FpmaSeriePrice/${u.uuid}/`, true)).filter(([d]) => d >= sinir);
@@ -298,7 +300,7 @@ const birikir = (sembol, ad, merkez, yeni) => {
   const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === sembol && x.ad === ad && x.merkez === merkez);
   const M = new Map(((o && o.seri) || []).map(([d, v]) => [d, v]));
   for (const [d, v] of yeni) M.set(d, v);
-  const sinir = new Date(Date.now() - 200 * 864e5).toISOString().slice(0, 10);
+  const sinir = new Date(Date.now() - SAKLA_GUN * 864e5).toISOString().slice(0, 10);
   return [...M.entries()].filter(([d]) => d >= sinir).sort((a, b) => (a[0] < b[0] ? -1 : 1));
 };
 for (const u of GA) {
@@ -364,11 +366,11 @@ for (const u of GA) {
 }
 // Kanada: StatCan 32-10-0077 aylık çiftçi fiyatı, yemlik arpa (CAD/ton) × Kanada Merkez Bankası aylık USD/CAD.
 try {
-  const fx = (await getir("https://www.bankofcanada.ca/valet/observations/FXMUSDCAD/json?start_date=" + new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10), true)).observations
+  const fx = (await getir("https://www.bankofcanada.ca/valet/observations/FXMUSDCAD/json?start_date=" + new Date(Date.now() - (SAKLA_GUN + 60) * 864e5).toISOString().slice(0, 10), true)).observations
     .map((o) => [o.d, parseFloat(o.FXMUSDCAD.v)]).filter(([, v]) => v > 0);
   const cadUsd = (d) => { let v = null; for (const [t, x] of fx) { if (t <= d) v = x; } return v || (fx.length ? fx[fx.length - 1][1] : null); };
   for (const [kod, il] of [["9", "Alberta"], ["8", "Saskatchewan"]]) {
-    const r = await fetch("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromCubePidCoordAndLatestNPeriods", { method: "POST", headers: { ...UA, "Content-Type": "application/json" }, body: JSON.stringify([{ productId: 32100077, coordinate: `${kod}.45.0.0.0.0.0.0.0.0`, latestN: 8 }]) });
+    const r = await fetch("https://www150.statcan.gc.ca/t1/wds/rest/getDataFromCubePidCoordAndLatestNPeriods", { method: "POST", headers: { ...UA, "Content-Type": "application/json" }, body: JSON.stringify([{ productId: 32100077, coordinate: `${kod}.45.0.0.0.0.0.0.0.0`, latestN: 26 }]) });
     if (!r.ok) throw new Error("StatCan HTTP " + r.status);
     const dp = ((await r.json())[0].object.vectorDataPoint || []).filter((p) => p.value > 0);
     if (!dp.length) throw new Error("StatCan veri yok");
@@ -424,7 +426,7 @@ for (let gun = enErken; gun <= bugun; gun = gunEkle(gun, 1)) {
     const v = urunFiyati(u, K), s = yi.urunler[i].seri.filter(([dd]) => dd !== gun);
     if (v != null) s.push([gun, v]);
     s.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-    yi.urunler[i].seri = s.filter(([dd]) => dd >= gunEkle(bugun, -200));
+    yi.urunler[i].seri = s.filter(([dd]) => dd >= gunEkle(bugun, -SAKLA_GUN));
   });
   await bekle(400);
 }
