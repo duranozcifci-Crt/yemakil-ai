@@ -5,6 +5,7 @@
 <link rel="icon" type="image/png" href="icon-siparis-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon-siparis.png">
 <link rel="manifest" href="manifest-siparis.json"><title>YemAkıl Sipariş</title>
+<script src="yedek.js?v=197"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#e9eee9;--card:#fbfcfb;--tx:#16251c;--mu:#5b6b60;--ac:#1d5c4a;--on:#fff;--bd:#cbd5cd;--bad:#a8281f;--ok:#1d6b3a;--wa:#a86a00;box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
@@ -34,7 +35,7 @@ th{font-weight:500;color:var(--mu);font-size:12px}
 </style>
 </head>
 <body><main>
-<h1 aria-label="YemAkıl Sipariş" style="display:flex;align-items:center;gap:10px"><img src="icon-siparis-192.png" width="64" height="64" alt="yemakıl Sipariş" style="border-radius:14px"><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="font-size:11px;font-weight:400;opacity:.75">v196</span></h1>
+<h1 aria-label="YemAkıl Sipariş" style="display:flex;align-items:center;gap:10px"><img src="icon-siparis-192.png" width="64" height="64" alt="yemakıl Sipariş" style="border-radius:14px"><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="font-size:11px;font-weight:400;opacity:.75">v197</span></h1>
 
 </main>
 <script>
@@ -48,7 +49,7 @@ var S={sip:(SP&&SP.sip)||(RS&&RS.sip)||undefined};
 function save(){try{localStorage.setItem("siparis-v1",JSON.stringify({sip:S.sip}))}catch(e){if(!window._qWarn){window._qWarn=1;try{alert("Kayıt yapılamadı: tarayıcı depolama alanı dolu veya kapalı.")}catch(x){}}}}
 if(!SP&&S.sip)save();
 </script>
-<script src="siparis.js?v=196"></script>
+<script src="siparis.js?v=197"></script>
 <script>
 spOpen();(function(){var p=document.getElementById('spPanel'),m=document.querySelector('main');if(p&&m)m.appendChild(p)})();
 </script>
