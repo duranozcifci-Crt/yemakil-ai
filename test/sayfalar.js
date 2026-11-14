@@ -379,6 +379,24 @@ if(path.basename(FILE)==='yemakil.html'){
   ok('Cari adları (3.9): telefonda kayıtlı cariler olduğu gibi kalıyor',G.cari[0]===1&&G.cari[1]==='KAYITLI CARİ',JSON.stringify(G.cari));
   ok('Fazlalıklar (4.1, 4.6): eski ürün seçici, rehber/vCard/yapıştır, eski vade seçici, ikinci başlık ve gizli Kapat düğmesi kodda yok; paylaş → sipariş yolu duruyor; 390 px',!/function urunSec|function aramaSonuc|navigator\.contacts|function vadeSec|_spRhB|id="spClose"|>Yem siparişi</.test(html)&&/spPaylasCoz/.test(html)&&G.w<=390,'w='+G.w);
  }
+  /* Fiyat uyarıları (2026-11-14) — test/sayfalar.js'te fiyat.html bloğuna (if(/window\.fpChange=/.test(html)){ … } içine, "390 px taşma yok" kontrolünden önce) yapıştırın.
+     Kullanır: p (playwright sayfası), E, ok, path. Örnek veri: test/uyari_ornek.js (selftest.js ile aynı). */
+  if(/window\.fpDikkat=/.test(html)){
+   const o=require('./uyari_ornek.js').ornek();let G=null;try{G=await import('file://'+path.join(__dirname,'..','tools','gunluk_ozet.mjs'))}catch(e){}
+   const uy=await E(([D,uy,simdi])=>{var o={},A=fpDikkat(D,uy,{simdi:simdi});o.dk=A.dikkat.map(function(y){return [y.t,y.ad,y.m]});o.baslik=A.baslik;
+    var nv=S.navlun,eskiUy=S.uyari;S.navlun={};S.uyari=[{id:'t1',urun:'Arpa',borsa:'en ucuz',alt:15100,ust:null}];
+    window.FPDATA=Object.assign({},D,{guncel:new Date().toISOString()});window._fpAc={};window._fpUyAc=true;fpRender();var b=document.getElementById('fpBody');
+    o.serit=(document.getElementById('fpDikkat')||{}).innerText||'';o.ilk=b.firstElementChild&&b.firstElementChild.id;o.bolum=(document.getElementById('fpUy')||{}).innerText||'';
+    var set=function(id,v){document.getElementById(id).value=v};set('fpUyU','Mısır');set('fpUyB','Konya');set('fpUyA','');set('fpUyS','');fpUyEkle();o.h1=window._fpUyHata;
+    set('fpUyU','Mısır');set('fpUyB','Konya');set('fpUyA','16.000');set('fpUyS','15.000');fpUyEkle();o.h2=window._fpUyHata;
+    set('fpUyU','Mısır');set('fpUyB','Konya');set('fpUyA','14.000');set('fpUyS','');fpUyEkle();o.h3=window._fpUyHata;
+    save();/* fiyat.html'deki save() uyarıları silmemeli */o.kay=(JSON.parse(localStorage.getItem('fiyat-v1')||'{}').uyari||[]).map(function(e){return [e.urun,e.borsa,e.alt,e.ust]});
+    o.serit2=(document.getElementById('fpDikkat')||{}).innerText||'';o.w=document.documentElement.scrollWidth;
+    S.uyari.slice().forEach(function(e){fpUySil(e.id)});o.sil=(JSON.parse(localStorage.getItem('fiyat-v1')||'{}').uyari||[]).length;S.navlun=nv;S.uyari=eskiUy||[];window._fpUyAc=false;return o},[o.D,o.uy,o.simdi]);
+   const nd=G?G.analiz(o.D,o.uy,{simdi:o.simdi}).dikkat.map(y=>[y.t,y.ad,y.m]):null;
+   ok('Fiyat uyarıları: sayfadaki "Dikkat" kuralları sabah bildirimiyle birebir aynı (aynı veriyle tarayıcıda ve tools/gunluk_ozet.mjs\'te aynı maddeler: Arpa sınırı, ithal mısır yerliden ucuzladı, kepek +%6, Arpa Polatlı 3 ayın en düşüğü)',nd&&JSON.stringify(uy.dk)===JSON.stringify(nd)&&uy.dk.length>=4&&/^⚠ Arpa 15\.000/.test(uy.baslik),JSON.stringify(uy.dk).slice(0,400)+' | '+JSON.stringify(nd).slice(0,200));
+   ok('Fiyat uyarıları: sayfa açılınca üstte "⚠ Dikkat" şeridi (sınır aşıldı, ithal–yerli, olağan dışı hareket); %2 kuralı: soya +%2,1 günlük var, çiğit −%1,9 yok; oynak ayçiçeği ve az işlem gören DDGS gizlenmiyor, "Şüpheli" satırında',uy.ilk==='fpDikkat'&&/⚠ Dikkat/.test(uy.serit)&&/sınırınızın \(15\.100\) altına indi/.test(uy.serit)&&/ithal artık yerli borsadan ucuz/.test(uy.serit)&&/Buğday kepeği: Gaziantep \+6,0%/.test(uy.serit)&&/Şüpheli \(güvenilir değil[^\n]*DDGS Gaziantep \+11,5%[^\n]*Ayçiçeği küsp\. Gaziantep \+33,3%/.test(uy.serit)&&/Soya fasulyesi: Adana \+2,1% \(günlük\)/.test(uy.serit)&&!/Çiğit[^\n]*−1,9%/.test(uy.serit),uy.serit.slice(0,400));
+   ok('"Fiyat uyarılarım": hammadde + hangi fiyat (en ucuz borsa / borsa / ithal) + alt/üst TL/ton; boş sınır ve alt ≥ üst reddedilir; 14.000 eklenince kayıt fiyat-v1\'de (sayfanın save() sonrası da duruyor) ve Mısır Konya 14.000 şeride giriyor; silinince kayıttan çıkıyor; 390 px',/Fiyat uyarılarım/.test(uy.bolum)&&/şu an 15\.000/.test(uy.bolum)&&/sınır aşıldı/.test(uy.bolum)&&/en az birini/.test(uy.h1||'')&&/küçük olmalı/.test(uy.h2||'')&&!uy.h3&&JSON.stringify(uy.kay)===JSON.stringify([["Arpa","en ucuz",15100,null],["Mısır","Konya",14000,null]])&&/Mısır Konya 14\.000 TL\/ton: sınırınızın \(14\.000\) altına indi/.test(uy.serit2)&&uy.sil===0&&uy.w<=390,JSON.stringify({h:[uy.h1,uy.h2,uy.h3],kay:uy.kay,w:uy.w,sil:uy.sil}));}
  ok('390 px taşma yok',await E(()=>document.documentElement.scrollWidth)<=390);
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
  await b.close();done();
