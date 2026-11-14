@@ -26,24 +26,24 @@ function ownRows(){var ph=S.ph||{},t=today();return (S.feeds||[]).filter(functio
 var FABR=/^(Yemcibey|Başaran|Süt \d|Süt yemi|Prenses|Düve|Buzağı|Besi|Toklu|Kuzu|Bypass|Premiks|Kuru dönem|Süt ikame|Etiketten|Çiftlik karması)/;
 function fpTable(L){return '<div class="ox"><table class="c"><tr><th>Hammadde</th><th class="r">TL/ton</th>'+PER.map(function(p){return '<th class="r">'+p[0]+'</th>'}).join('')+'</tr>'+L.map(function(u){var s=u.seri,l=s[s.length-1];return '<tr><td><b>'+esc(u.ad)+'</b><br>'+spark(s)+'</td><td class="pc">'+f(l[1]*1000,0)+'</td>'+PER.map(function(p){return pc(fpChange(s,p[1]))}).join('')+'</tr>'}).join('')+'</table></div>'}
 /* Hammaddeler: k = fiyatlar.json'daki ürün adları (yurt içi ve dünya), yi = yalnız yurt içi fiyatı olan, dnot = dünya fiyatları için not */
-var HAM=[{ad:"Mısır",k:["Mısır"],ure:"ABD, Çin, Brezilya, AB, Arjantin, Ukrayna",ihr:"ABD, Brezilya, Arjantin, Ukrayna"},
- {ad:"Arpa",k:["Arpa"],ure:"AB (Fransa, Almanya), Rusya, Avustralya, Kanada, Türkiye, Ukrayna",ihr:"AB, Avustralya, Rusya, Kanada, Arjantin, Ukrayna"},
- {ad:"Yemlik buğday",k:["Yemlik buğday","Buğday"],dnot:"dünya fiyatları ekmeklik/değirmenlik buğday",ure:"AB, Çin, Hindistan, Rusya, ABD, Kanada, Avustralya, Türkiye",ihr:"Rusya, AB, Kanada, Avustralya, ABD, Arjantin, Ukrayna"},
- {ad:"Soya fasulyesi",k:["Soya fasulyesi"],ure:"Brezilya, ABD, Arjantin, Çin, Hindistan, Paraguay",ihr:"Brezilya, ABD, Paraguay, Arjantin"},
- {ad:"Soya küspesi",k:["Soya küspesi"],ure:"Çin, ABD, Brezilya, Arjantin, AB, Hindistan",ihr:"Arjantin, Brezilya, ABD, Paraguay"},
- {ad:"DDGS",k:["DDGS"],ure:"ABD (açık ara), Çin, AB",ihr:"ABD"},
- {ad:"Mısır gluteni (feed / meal)",k:["Mısır gluten yemi (feed)","Mısır gluteni (meal)"],ure:"ABD, Çin, AB",ihr:"ABD, Çin"},
- {ad:"Ayçiçeği küspesi",k:["Ayçiçeği küspesi"],ure:"Rusya, Ukrayna, Arjantin, AB, Türkiye",ihr:"Ukrayna, Rusya, Arjantin"},
- {ad:"Pamuk tohumu küspesi",k:["Pamuk tohumu küspesi"],ure:"Hindistan, Çin, Pakistan, ABD, Brezilya",ihr:"dış ticareti az; çoğu üretildiği ülkede tüketilir"},
- {ad:"Çiğit (pamuk tohumu)",k:["Çiğit (pamuk tohumu)"],yi:1,dnot:"küspe değil: yağı alınmamış tam pamuk tohumu",ure:"Hindistan, Çin, ABD, Brezilya, Türkiye (Çukurova, GAP)",ihr:"dış ticareti az"},
- {ad:"Buğday kepeği",k:["Buğday kepeği"],ure:"un sanayisi olan her ülke: Çin, Hindistan, AB, Rusya, ABD, Türkiye",ihr:"Rusya, Ukrayna, Kazakistan, Pakistan"}],FPREN=["#2f6fb3","#c2571a","#2e8b57","#8e44ad","#b8860b","#d6336c","#17a2b8","#6c757d"];
+var HAM=[{kisa:"Mısır",ad:"Mısır",k:["Mısır"],ure:"ABD, Çin, Brezilya, AB, Arjantin, Ukrayna",ihr:"ABD, Brezilya, Arjantin, Ukrayna"},
+ {kisa:"Arpa",ad:"Arpa",k:["Arpa"],ure:"AB (Fransa, Almanya), Rusya, Avustralya, Kanada, Türkiye, Ukrayna",ihr:"AB, Avustralya, Rusya, Kanada, Arjantin, Ukrayna"},
+ {kisa:"Yem. buğday",ad:"Yemlik buğday",k:["Yemlik buğday","Buğday"],dnot:"dünya fiyatları ekmeklik/değirmenlik buğday",ure:"AB, Çin, Hindistan, Rusya, ABD, Kanada, Avustralya, Türkiye",ihr:"Rusya, AB, Kanada, Avustralya, ABD, Arjantin, Ukrayna"},
+ {kisa:"Soya fas.",ad:"Soya fasulyesi",k:["Soya fasulyesi"],ure:"Brezilya, ABD, Arjantin, Çin, Hindistan, Paraguay",ihr:"Brezilya, ABD, Paraguay, Arjantin"},
+ {kisa:"Soya küsp.",ad:"Soya küspesi",k:["Soya küspesi"],ure:"Çin, ABD, Brezilya, Arjantin, AB, Hindistan",ihr:"Arjantin, Brezilya, ABD, Paraguay"},
+ {kisa:"DDGS",ad:"DDGS",k:["DDGS"],ure:"ABD (açık ara), Çin, AB",ihr:"ABD"},
+ {ad:"Mısır gluteni (feed / meal)",k:["Mısır gluten yemi (feed)","Mısır gluteni (meal)"],ayir:["Gluten yemi","Gluten (meal)"],ure:"ABD, Çin, AB",ihr:"ABD, Çin"},
+ {kisa:"Ayçiçeği küsp.",ad:"Ayçiçeği küspesi",k:["Ayçiçeği küspesi"],ure:"Rusya, Ukrayna, Arjantin, AB, Türkiye",ihr:"Ukrayna, Rusya, Arjantin"},
+ {kisa:"Pamuk küsp.",ad:"Pamuk tohumu küspesi",k:["Pamuk tohumu küspesi"],ure:"Hindistan, Çin, Pakistan, ABD, Brezilya",ihr:"dış ticareti az; çoğu üretildiği ülkede tüketilir"},
+ {kisa:"Çiğit",ad:"Çiğit (pamuk tohumu)",k:["Çiğit (pamuk tohumu)"],yi:1,dnot:"küspe değil: yağı alınmamış tam pamuk tohumu",ure:"Hindistan, Çin, ABD, Brezilya, Türkiye (Çukurova, GAP)",ihr:"dış ticareti az"},
+ {kisa:"Kepek",ad:"Buğday kepeği",k:["Buğday kepeği"],ure:"un sanayisi olan her ülke: Çin, Hindistan, AB, Rusya, ABD, Türkiye",ihr:"Rusya, Ukrayna, Kazakistan, Pakistan"}],FPREN=["#2f6fb3","#c2571a","#2e8b57","#8e44ad","#b8860b","#d6336c","#17a2b8","#6c757d"];
 window._fpAc=window._fpAc||{};window._fpGun=window._fpGun||91;
 function ekGl(a){return /feed/.test(a)?" feed":/meal/.test(a)?" meal":""}
 function fpRefGun(D){return String((D&&D.guncel)||'').slice(0,10)}
 function fpMerkez(D){var Y=(D&&D.yurtici&&Array.isArray(D.yurtici.urunler))?D.yurtici.urunler:[],U=(D&&Array.isArray(D.urunler))?D.urunler:[];
  var M=HAM.map(function(h){var L=[],cok=h.k.length>1;
-  Y.forEach(function(u){if(u&&Array.isArray(u.seri)&&h.k.indexOf(u.ad)>=0)L.push({yer:"yi",etiket:(u.borsa||"Borsa")+(u.tur?" "+u.tur:"")+(cok?ekGl(u.ad):""),not:u.not||"",seri:u.seri})});
-  U.forEach(function(u){if(u&&Array.isArray(u.seri)&&u.seri.length&&h.k.indexOf(u.ad)>=0)L.push({yer:"yd",etiket:(u.merkez?u.merkez:u.sembol==="USDA"?"ABD iç piyasa (USDA, haftalık)":"Chicago vadeli")+(cok?ekGl(u.ad):""),seri:u.seri,usd:u.seri.map(function(p){return [p[0],p[1]/fpKur(D,p[0])]}),koken:fpKoken(u)})});
+  Y.forEach(function(u){if(u&&Array.isArray(u.seri)&&h.k.indexOf(u.ad)>=0)L.push({yer:"yi",ad:u.ad,borsa:u.borsa||"Borsa",tur:u.tur||"",etiket:(u.borsa||"Borsa")+(u.tur?" "+u.tur:"")+(cok?ekGl(u.ad):""),not:u.not||"",seri:u.seri})});
+  U.forEach(function(u){if(u&&Array.isArray(u.seri)&&u.seri.length&&h.k.indexOf(u.ad)>=0)L.push({yer:"yd",ad:u.ad,etiket:(u.merkez?u.merkez:u.sembol==="USDA"?"ABD iç piyasa (USDA, haftalık)":"Chicago vadeli")+(cok?ekGl(u.ad):""),seri:u.seri,usd:u.seri.map(function(p){return [p[0],p[1]/fpKur(D,p[0])]}),koken:fpKoken(u)})});
   return {ad:h.ad,L:L,h:h}});
  var son="";M.forEach(function(m){m.L.forEach(function(x){if(x.yer==="yi"&&x.seri.length){var d=x.seri[x.seri.length-1][0];if(d>son)son=d}})});
  var ctx={ref:fpRefGun(D),son:son};M.forEach(function(m){m.L.forEach(function(x){x.b=fpBak(x,ctx)})});M.son=son;return M}
@@ -182,19 +182,109 @@ function fpHamBlok(m,i,D){var ac=!!window._fpAc[i],kur=fpKur(D,'9999'),tk=fpTk()
  h+='<tr><td colspan="6" class="alt">Yurt içi borsa — fiyat <b>TL/ton</b></td></tr>'+(yi.length?yi.map(sat).join(''):'<tr><td colspan="6" class="ic mu">borsa kaynağı yok</td></tr>');
  if(!m.h.yi)h+='<tr><td colspan="6" class="alt">Dünya — fiyat <b>$/ton</b></td></tr>'+(yd.length?yd.map(sat).join(''):'<tr><td colspan="6" class="ic mu">otomatik kaynak yok</td></tr>');
  return h+fpTfSatir(m,i,D)+'</table></div></div>'}
+/* ===== Fiyat uyarıları ve "Dikkat" (kullanıcı isteği 2026-11-14) =====
+   Sabah telefona gelen bildirim (tools/gunluk_ozet.mjs bu dosyayı OLDUĞU GİBİ yükleyip fpDikkat'i çağırır) ve sayfa açılınca üstteki
+   "Dikkat" şeridi AYNI kuralları kullanır; iki ayrı kopya yok.
+   Güvenilir seri (fpDuzenli): güncel (fpBak: eski ya da donmuş değil), oynak değil, son işlemde %15 sıçrama yok; borsada son 30 günde en az 6 işlem.
+   Olağan dışı hareket: borsada 1 günde %5 ya da 1 haftada %7; Chicago ve FOB'da 1 günde %3 ya da 1 haftada %5
+   (borsa günlük ortalaması kalite karışımıyla daha çok oynar: Temmuz–Kasım verisinde %3/gün eşiği Konya mısırda her 6 günde bir çalıyordu).
+   3 ayın en yükseği/düşüğü: son fiyat önceki 3 ayın en yükseğini/düşüğünü %1'den çok geçerse (en az 2 ay ve 10 kayıt geçmiş varsa).
+   İthal–yerli: tahmini Mersin teslim (FOB + navlun + liman; gümrük, KDV hariç) en ucuz güvenilir borsa fiyatının altına iner ya da üstüne çıkarsa (bir önceki borsa gününe göre).
+   Kullanıcı sınırı: {urun, borsa:"en ucuz" | borsa adı (Konya, Gaziantep kırık…) | "ithal", alt, ust} TL/ton; alt'a eşit/altında ya da ust'e eşit/üstünde ise uyarı. */
+var UYE={yiGun:5,yiHf:7,ydGun:3,ydHf:5,uc:1,ithal:1,dosya:3,borsa:2};
+function fpTemiz(x){var b=x.b;return !!b&&!b.gecersiz&&!b.oynak&&!b.sicra}
+function fpDuzenli(x){if(!fpTemiz(x))return false;if(x.yer!=="yi")return true;var lim=dAdd(x.b.l[0],-30);return x.b.s.filter(function(p){return p[0]>=lim}).length>=6}
+function fpEt(x){return x.yer==="yi"?x.borsa+(x.tur?' '+x.tur:''):fpKisa(x.etiket)}
+function fpSonD(s,d){for(var i=s.length-1;i>=0;i--)if(s[i][0]<=d)return s[i];return null}
+function fpYz(v,g){return (v>0?'+':'−')+f(Math.abs(v),1)+'%'+(g?' ('+g+')':'')}
+function fpNorm(a){return String(a||'').toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'')}
+/* hammadde satırları: mısır gluteni feed ve meal ayrı ürün (fiyatları 2 kat farklı), diğerleri tek satır */
+function fpUrunler(M){var P=[];M.forEach(function(m){if(m.h.ayir)m.h.k.forEach(function(k,j){P.push({ad:k,kisa:m.h.ayir[j],m:m,L:m.L.filter(function(x){return x.ad===k})})});else P.push({ad:m.ad,kisa:m.h.kisa||m.ad,m:m,L:m.L})});return P}
+/* en ucuz yurt içi fiyat: güncel ve temiz seriler arasından (yoksa güncel ama oynak olanlardan, "şüpheli" işaretli); L verilirse yalnız onlar */
+function fpUcuz(L){var g=L.filter(function(x){return x.yer==="yi"&&x.b&&!x.b.gecersiz}),t=g.filter(fpTemiz),A=t.length?t:g;if(!A.length)return null;
+ var x=A.slice().sort(function(a,b){return a.b.l[1]-b.b.l[1]})[0];return {x:x,tl:x.b.l[1]*1000,et:fpEt(x),hf:fpChange(x.b.s,7),supheli:!t.length,az:!fpDuzenli(x)}}
+function fpIthal(L){var ms=L.filter(function(x){return x.yer==="yd"&&x.b&&x.b.mersin!=null}).map(function(x){return x.b.mersin});return ms.length?{mn:Math.min.apply(null,ms),mx:Math.max.apply(null,ms)}:null}
+function fpUyDeger(e,P,kur){var n=fpNorm(e.urun),p=null;[function(q){return fpNorm(q.ad)===n||fpNorm(q.kisa)===n},function(q){return fpNorm(q.ad).indexOf(n)===0},function(q){return n.length>=3&&fpNorm(q.ad).indexOf(n)>=0}].some(function(t){p=P.filter(t)[0]||null;return p});
+ if(!p)return {yok:1};var b=fpNorm(e.borsa||'en ucuz');
+ if(b==='ithal'||b==='ithalmersin'){var r=fpIthal(p.L);return {p:p,v:r?Math.round(r.mn*kur):null,et:'ithal (Mersin ≈)',it:1}}
+ var u=fpUcuz(b==='enucuz'||!b?p.L:p.L.filter(function(x){return x.yer==="yi"&&fpNorm(fpEt(x)).indexOf(b)===0}));return {p:p,v:u?Math.round(u.tl):null,et:u?(b==='enucuz'||!b?'en ucuz borsa ('+u.et+')':u.et):e.borsa}}
+function fpIsGunu(a,b){var n=0,d=dAdd(a,1);while(d<b){var w=new Date(d+"T00:00:00Z").getUTCDay();if(w>0&&w<6)n++;d=dAdd(d,1)}return n}
+window.fpDikkat=function(D,uy,opt){opt=opt||{};var simdi=opt.simdi!=null?+opt.simdi:Date.now(),M=fpMerkez(D),ref=fpRefGun(D),kur=fpKur(D,'9999'),P=fpUrunler(M),I=[],eksik=[],hf=[];
+ var bugun=new Date(simdi+3*36e5).toISOString().slice(0,10);/* Türkiye saati (UTC+3) */
+ var T=function(v){return f(Math.round(v),0)},TT=function(v){return f(Math.round(v/100)*100,0)};
+ /* 1) veri güncel mi */
+ var yas=Math.floor((simdi-Date.parse(D.guncel))/864e5);
+ if(yas>=UYE.dosya)I.push({t:'eski',alt:'dosya',k:'Fiyatlar '+yas+' gündür güncellenmedi',m:'Fiyatlar '+yas+' gündür güncellenmedi (son güncelleme '+fpTarih(ref).slice(0,5)+'): gösterilen fiyatlar eski, alımdan önce borsadan teyit edin.'});
+ else if(M.son){var ig=fpIsGunu(M.son,bugun);if(ig>=UYE.borsa)I.push({t:'eski',alt:'borsa',k:'Borsa fiyatları '+ig+' iş günüdür gelmiyor',m:'Borsa fiyatları '+ig+' iş günüdür gelmiyor (son borsa günü '+fpTarih(M.son).slice(0,5)+'; resmi tatil olabilir).'})}
+ /* hammadde satırları (bildirimdeki tablo) */
+ var R=P.map(function(p){var u=fpUcuz(p.L),it=fpIthal(p.L),yi=p.L.filter(function(x){return x.yer==="yi"&&x.b}),son=null;
+  if(!u)yi.forEach(function(x){if(!son||x.b.l[0]>son.b.l[0])son=x});
+  return {ad:p.ad,kisa:p.kisa,ucuz:u,ithal:it?{mn:it.mn*kur,mx:it.mx*kur}:null,ithalUcuz:!!(u&&!u.supheli&&it&&it.mn*kur<u.tl),eski:son?{tl:son.b.l[1]*1000,et:fpEt(son),d:son.b.l[0]}:null}});
+ /* 2) kullanıcının sınırları */
+ (Array.isArray(uy)?uy:[]).forEach(function(e){if(!e||!e.urun)return;var alt=e.alt==null||e.alt===''?null:+e.alt,ust=e.ust==null||e.ust===''?null:+e.ust,r=fpUyDeger(e,P,kur);
+  if(r.yok){eksik.push(String(e.urun));return}if(r.v==null)return;var a=alt!=null&&isFinite(alt)&&r.v<=alt,u=ust!=null&&isFinite(ust)&&r.v>=ust;if(!a&&!u)return;
+  var vt=r.it?TT(r.v):T(r.v);I.push({t:'esik',ad:r.p.kisa,k:r.p.kisa+(r.it?' ithal ':' ')+vt+' (sınır '+(a?T(alt)+' altı':T(ust)+' üstü')+')',m:r.p.ad+' '+r.et+' '+vt+' TL/ton: sınırınızın ('+(a?T(alt)+') altına indi':T(ust)+') üstüne çıktı')+(e.not?' — '+e.not:'')+'.'})});
+ /* 3) ithal–yerli geçişi (bir önceki borsa gününe göre) */
+ var onc='';M.forEach(function(m){m.L.forEach(function(x){if(x.yer==="yi"&&x.b)x.b.s.forEach(function(q){if(q[0]<M.son&&q[0]>onc)onc=q[0]})})});
+ if(onc)P.forEach(function(p,i){var r=R[i];if(!r.ucuz||r.ucuz.supheli||!r.ithal)return;
+  var dp=null;p.L.forEach(function(x){if(x.yer!=="yi"||!fpTemiz(x))return;var q=fpSonD(x.b.s,onc);if(q&&q[0]>=dAdd(onc,-7)&&(dp===null||q[1]*1000<dp))dp=q[1]*1000});
+  var ip=null;p.L.forEach(function(x){if(x.yer!=="yd"||!x.b||x.b.mersin==null)return;var q=fpSonD(x.usd,onc);if(!q)return;var v=(q[1]+fpNav(x.koken)+fpNav('MS'))*fpKur(D,onc);if(ip===null||v<ip)ip=v});
+  if(dp===null||ip===null)return;var simd=r.ucuz.tl-r.ithal.mn,once=dp-ip;if(Math.abs(simd)/r.ucuz.tl*100<UYE.ithal||(simd>0)===(once>0)||once===0)return;
+  var ucz=simd>0;I.push({t:'ithal',ad:p.kisa,k:'İthal '+p.kisa.toLocaleLowerCase('tr')+' yerliden '+(ucz?'ucuzladı':'pahalandı'),m:p.ad+': ithal artık yerli borsadan '+(ucz?'ucuz':'pahalı')+' — Mersin ≈ '+TT(r.ithal.mn)+', en ucuz borsa '+T(r.ucuz.tl)+' TL/ton ('+r.ucuz.et+'); gümrük ve KDV hariç.'})});
+ /* 4) olağan dışı hareket ve 3 ayın en yükseği/düşüğü (yalnız güvenilir ve bugün yeni fiyatı olan seriler) */
+ var H=[];P.forEach(function(p){var parca=[],sk=0,uc=0;p.L.forEach(function(x){var b=x.b,yd=x.yer==="yd";if(!fpDuzenli(x)||(yd&&/^ABD iç piyasa/.test(x.etiket)))return;
+   if(yd?gunFark(ref,b.l[0])>4:b.l[0]!==M.son)return;var s=b.s,l=b.l,o=s[s.length-2],gd=o&&o[1]>0&&gunFark(l[0],o[0])<=4?(l[1]/o[1]-1)*100:null,h=fpChange(s,7),G=yd?[UYE.ydGun,UYE.ydHf]:[UYE.yiGun,UYE.yiHf],ps=[];
+   if(!yd&&h!==null)hf.push({k:p.kisa+' '+fpEt(x),v:h});
+   if(gd!==null&&Math.abs(gd)>=G[0]){ps.push(fpYz(gd,'1 günde'));sk=Math.max(sk,Math.abs(gd))}else if(h!==null&&Math.abs(h)>=G[1]){ps.push(fpYz(h,'1 haftada'));sk=Math.max(sk,Math.abs(h))}
+   var lim=dAdd(l[0],-91),w=s.slice(0,-1).filter(function(q){return q[0]>=lim});
+   if(w.length>=10&&w[0][0]<=dAdd(l[0],-60)){var mx=Math.max.apply(null,w.map(function(q){return q[1]})),mn=Math.min.apply(null,w.map(function(q){return q[1]}));
+    if(l[1]>mx*(1+UYE.uc/100)){ps.push('3 ayın en yükseği');uc++}else if(l[1]<mn*(1-UYE.uc/100)){ps.push('3 ayın en düşüğü');uc++}}
+   if(ps.length)parca.push(fpEt(x)+' '+ps.join(', ')+' → '+(yd?f(l[1],0)+' $/t':T(l[1]*1000)+' TL/t'))});
+  if(parca.length)H.push({t:sk?'hareket':'uc',ad:p.kisa,sk:sk+uc,k:p.kisa+' '+parca[0].replace(/ → .*$/,''),m:p.ad+': '+parca.join('; ')+'.'})});
+ H.sort(function(a,b){return b.sk-a.sk});I=I.concat(H);
+ hf.sort(function(a,b){return Math.abs(b.v)-Math.abs(a.v)});
+ var dis=[];M.forEach(function(m){m.L.forEach(function(x){if(x.yer==="yd"&&x.koken&&x.b&&x.b.gecersiz){var e=fpKisa(x.etiket);if(dis.indexOf(e)<0)dis.push(e)}})});
+ var ks=I.map(function(x){return x.k});
+ var baslik=I.length?'⚠ '+ks.slice(0,2).join(' · ')+(I.length>2?' (+'+(I.length-2)+' uyarı)':''):'Bugün önemli bir değişiklik yok'+(hf.length?' · 1 haftada: '+hf.slice(0,2).map(function(x){return x.k+' '+fpYz(x.v)}).join(', '):'');
+ return {M:M,P:P,satir:R,dikkat:I,baslik:baslik,kur:kur,son:M.son,ref:ref,eksik:eksik,disari:dis,hareket:hf}};
+/* Kullanıcının bu telefondaki sınırları (fiyat-v1 kaydında "uyari"): fiyat.html'deki save() yalnız navlun ve teklifi yazdığı için uyarılar ayrıca korunur */
+function fpUyOku(){try{var o=JSON.parse(localStorage.getItem('fiyat-v1')||'null');return o&&Array.isArray(o.uyari)?o.uyari:[]}catch(e){return []}}
+function fpUyYaz(){try{var o=JSON.parse(localStorage.getItem('fiyat-v1')||'null')||{};o.uyari=fpUy();localStorage.setItem('fiyat-v1',JSON.stringify(o))}catch(e){}}
+function fpUy(){if(typeof S!=='object'||!S)return [];if(!Array.isArray(S.uyari))S.uyari=fpUyOku();return S.uyari}
+if(typeof window.save==='function'&&!window.save._uy){var _fpSave0=window.save;window.save=function(){var r=_fpSave0.apply(this,arguments);fpUyYaz();return r};window.save._uy=1}
+function fpUyTl(t){t=String(t==null?'':t).trim();if(!t)return null;var v=parseFloat(t.replace(/\./g,function(m,o,str){return /,/.test(str)?"":(/\.\d{3}$/.test(str)?"":".")}).replace(",","."));if(!isFinite(v))return NaN;return v<200?v*1000:v}/* 15.000 ya da 15000 TL/ton; 15,5 (TL/kg) de kabul edilir */
+var UYB=[["en ucuz","En ucuz borsa"],["Konya","Konya"],["Polatlı","Polatlı"],["Gaziantep","Gaziantep"],["Adana","Adana"],["ithal","İthal (Mersin teslim tahmini)"]];
+window.fpUyEkle=function(){var g=function(id){var e=document.getElementById(id);return e?e.value:""};var u=g('fpUyU'),b=g('fpUyB'),a=fpUyTl(g('fpUyA')),s=fpUyTl(g('fpUyS'));
+ var h=!u?'Hammaddeyi seçin.':a===null&&s===null?'Alt ya da üst sınırdan en az birini yazın (TL/ton).':[a,s].some(function(v){return v!==null&&!(v>=1000&&v<=200000)})?'Sınırı TL/ton olarak yazın (örnek 15.000; 1.000–200.000 arası).':a!==null&&s!==null&&a>=s?'Alt sınır üst sınırdan küçük olmalı.':'';
+ if(h){window._fpUyHata=h;fpRender();return}
+ var L=fpUy();L.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),urun:u,borsa:b||'en ucuz',alt:a,ust:s});S.uyari=L.slice(-40);window._fpUyHata='';fpUyYaz();fpRender()};
+window.fpUySil=function(id){S.uyari=fpUy().filter(function(e){return e.id!==id});fpUyYaz();fpRender()};
+window.fpUyAc=function(el){window._fpUyAc=el.open};
+function fpUyBolum(A){var L=fpUy(),kur=A.kur,h='<details class="dt" id="fpUy" ontoggle="fpUyAc(this)"'+(window._fpUyAc||window._fpUyHata?' open':'')+'><summary><b>🔔 Fiyat uyarılarım</b>'+(L.length?' ('+L.length+')':'')+'</summary>';
+ h+='<p class="s" style="margin:4px 0 6px">Fiyat yazdığınız sınırın altına inerse ya da üstüne çıkarsa bu sayfayı açtığınızda en üstte uyarı çıkar. Fiyatlar <b>TL/ton</b>. Bu sınırlar yalnız bu telefonda kalır; sabah gelen bildirimde de çıksın isterseniz Claude\'a yazın (örnek: "arpa 15.000\'in altına inerse haber ver").</p>';
+ L.forEach(function(e){var r=fpUyDeger(e,A.P,kur),v=r.v,hit=v!=null&&((e.alt!=null&&v<=e.alt)||(e.ust!=null&&v>=e.ust));
+  h+='<div class="tf" style="padding:4px 0;border-top:1px solid var(--bd);font-size:13px"><div style="flex:1;min-width:0"><b>'+esc(e.urun)+'</b> · '+esc((UYB.filter(function(x){return x[0]===e.borsa})[0]||[0,e.borsa])[1])+'<br><small class="mu">'+(e.alt!=null?'alt '+f(e.alt,0):'')+(e.alt!=null&&e.ust!=null?' · ':'')+(e.ust!=null?'üst '+f(e.ust,0):'')+' TL/ton · şu an '+(v!=null?f(v,0):'fiyat yok')+'</small>'+(hit?' <small class="wa">⚠ sınır aşıldı</small>':'')+'</div><button class="btn l kb" onclick="fpUySil(\''+esc(e.id)+'\')" aria-label="Uyarıyı sil">Sil</button></div>'});
+ var o=function(A2){return A2.map(function(x){return '<option value="'+esc(x[0])+'">'+esc(x[1])+'</option>'}).join('')};
+ h+='<div class="tform" style="margin-top:6px"><label>Hammadde <select id="fpUyU">'+o([["","seçin"]].concat(A.P.filter(function(p){return p.L.length}).map(function(p){return [p.ad,p.ad]})))+'</select></label><label>Hangi fiyat <select id="fpUyB">'+o(UYB)+'</select></label>'+
+  '<div style="display:flex;gap:6px"><label style="flex:1">Altına inerse <input id="fpUyA" inputmode="decimal" placeholder="örnek 15.000"></label><label style="flex:1">Üstüne çıkarsa <input id="fpUyS" inputmode="decimal" placeholder="boş bırakılabilir"></label></div>'+
+  (window._fpUyHata?'<div class="wa" role="alert">'+esc(window._fpUyHata)+'</div>':'')+'<button class="btn" style="margin:0" onclick="fpUyEkle()">Uyarı ekle</button></div></details>';
+ return h}
+function fpDikkatSerit(A){var I=A.dikkat.filter(function(x){return x.alt!=='dosya'});/* dosya eskiliği zaten ayrı şeritte */
+ if(!I.length)return '';return '<div class="uy" id="fpDikkat" role="status"><b>⚠ Dikkat</b>'+I.map(function(x){return '<div style="margin-top:3px">• '+esc(x.m)+'</div>'}).join('')+'</div>'}
 window.fpRender=function(){var el=document.getElementById("fpBody");if(!el)return;var D=window.FPDATA,h='';
  if(!D)h+=window._fpErr?'<div class="uy">Fiyat verisi alınamadı ('+esc(window._fpErr)+'). İnternet bağlantısını kontrol edip sayfayı yeniden açın; fiyatlar her gün güncellenir.</div>':'<p class="s">Yükleniyor…</p>';
  else{var M=fpMerkez(D),son=M.son,g=fpYas(D),kur=fpKur(D,'9999');
   if(window._fpYedek)h+='<div class="uy">İnternete bağlanılamadı: telefonda kayıtlı son fiyatlar gösteriliyor (güncelleme '+esc(fpZaman(D,1))+').</div>';
   if(g>=3)h+='<div class="uy">⚠ Fiyatlar <b>'+g+' gündür güncellenmedi</b> (son güncelleme '+esc(fpZaman(D,1))+'). Gösterilen fiyatlar eski; alım kararından önce borsadan teyit edin.</div>';
-  h+=fpOzet(M,D);
+  var A=fpDikkat(D,fpUy());h+=fpDikkatSerit(A);
+  h+=fpOzet(M,D)+fpUyBolum(A);
   h+='<h3 class="oh">Ayrıntılı tablo, geçmiş ve grafikler</h3><p class="s" style="margin:2px 0 6px">Hammaddenin adına dokunun: grafik, her merkezin 1 hafta–3 ay önceki fiyatı ve size gelen teklifler açılır. Yurt içi <b>TL/ton</b>, dünya <b>$/ton</b>.</p><div style="display:flex;gap:6px;margin:0 0 6px">'+[["1 ay",30],["2 ay",61],["3 ay",91]].map(function(p){return '<button class="btn l kb'+(window._fpGun===p[1]?' sec':'')+'" onclick="fpGun('+p[1]+')">Grafik '+p[0]+'</button>'}).join('')+'</div>';
   h+=M.map(function(m,i){return fpHamBlok(m,i,D)}).join('');
   var k=D.usdtry,kl=k&&k[k.length-1];if(kl)h+='<div class="ox"><table class="c" style="margin-top:8px"><tr><th>Kur</th><th class="r">Son</th>'+PER.map(function(p){return '<th class="r">'+p[0]+'</th>'}).join('')+'</tr><tr><td><b>USD/TL</b> '+spark(k)+'</td><td class="pc">'+f(kl[1],2)+'</td>'+PER.map(function(p){return pc(fpChange(k,p[1]))}).join('')+'</tr></table></div>';
   h+='<details class="dt"><summary>Tablo nasıl okunur?</summary><p class="s">Sağdaki sütunlarda üstteki rakam 1 hafta, 1 ay, 2 ay ve 3 ay önceki fiyat; altındaki yüzde bugünkü fiyatın o fiyata göre değişimi (örnek: 1 ay sütununda 15.000 ve −7,7% = bir ay önce 15.000 idi, bugün %7,7 daha ucuz). Dünya satırlarında değişim dolar fiyatı üzerinden hesaplanır. Fiyatın altındaki küçük tarih o fiyatın günüdür (aylık serilerde ayın ilk günü). <b>—</b> altında nedeni yazar: <i>birikiyor</i> = kaynak yeni eklendi; <i>aylık</i> = veri ayda bir geliyor; <i>işlem yok</i> = o tarihlerde borsada satış olmamış; <i>fiyat yok</i> = kaynak o tarihte fiyat vermemiş.</p></details>';
   h+='<details class="dt"><summary><b>Mersin teslim hesabı</b>: FOB + navlun + liman/sigorta (varsayımları değiştirin)</summary><p class="s" style="margin:4px 0">Navlunlar tahminidir ve gemi büyüklüğüne, mevsime göre değişir; size gelen teklifle güncelleyin. Gümrük vergisi ve KDV dahil değildir. Mersin teslim yalnız ihracat limanı (FOB) fiyatı olan ve güncel satırlarda hesaplanır.</p>'+Object.keys(NAVV).map(function(k){return '<label class="s nv"><span style="flex:1">'+esc(NAVV[k][0])+'</span><input type="number" inputmode="decimal" min="0" max="499" step="1" value="'+fpNav(k)+'" onchange="fpNavSet(\''+k+'\',this.value)" aria-label="'+esc(NAVV[k][0])+' $/ton"> $/t</label>'}).join('')+'</details>';
-  /* En çok artan/düşen (denetim Y2): yalnız güncel ve düzenli fiyatı olan seriler; borsada ayda 6'dan az işlem gören, oynak ya da donmuş seriler katılmaz */
-  var deg=[];M.forEach(function(m){m.L.forEach(function(x){var b=x.b;if(!b||b.gecersiz||b.oynak)return;if(x.yer==="yi"){var lim=dAdd(b.l[0],-30);if(b.s.filter(function(p){return p[0]>=lim}).length<6)return}var v=fpChange(b.s,30);if(v!==null)deg.push({ad:m.ad+' ('+fpKisa(x.etiket)+')',v:v})})});deg.sort(function(a,b){return b.v-a.v});
+  /* En çok artan/düşen (denetim Y2): yalnız güvenilir seriler (fpDuzenli, sabah bildirimiyle aynı kural): borsada ayda 6'dan az işlem gören, oynak, son işlemde sıçrayan ya da donmuş seriler katılmaz */
+  var deg=[];M.forEach(function(m){m.L.forEach(function(x){var b=x.b;if(!fpDuzenli(x))return;var v=fpChange(b.s,30);if(v!==null)deg.push({ad:m.ad+' ('+fpKisa(x.etiket)+')',v:v})})});deg.sort(function(a,b){return b.v-a.v});
   if(deg.length)h+='<p class="s">Son 1 ayda en çok '+(deg[0].v>0?'artan':'değişen')+': <b>'+esc(deg[0].ad)+'</b> ('+(deg[0].v>0?'+':'')+f(deg[0].v,1)+'%)'+(deg[deg.length-1].v<0?'; en çok düşen: <b>'+esc(deg[deg.length-1].ad)+'</b> ('+f(deg[deg.length-1].v,1)+'%)':'')+'. <small class="mu">(Düzenli işlem gören ve güncel fiyatlar arasında.)</small></p>';
   var Y=D.yurtici||{};h+='<p class="s mu">Yurt içi: '+esc(Y.not||'')+(son?' Son borsa günü '+fpTarih(son)+'.':'')+' Kaynak: '+esc(Y.kaynak||'—')+'.<br>Dünya: '+esc(D.not||'')+' Kaynak: '+esc(D.kaynak||'')+'. Güncelleme: '+esc(fpZaman(D,1))+'.</p>'}
  var O=ownRows().filter(function(r){return !FABR.test(r.ad)});h+='<h3 class="oh">Sizin alış fiyatlarınız <small class="mu" style="font-weight:400">(hammaddeler, TL/ton)</small></h3><p class="s" style="margin:2px 0">Rasyon programında hammaddelere girdiğiniz fiyatlar (TL/kg) tarihiyle kaydedilir; borsa fiyatıyla karşılaştırmak için burada TL/ton gösterilir. Fabrika yemleri gösterilmez.</p>';

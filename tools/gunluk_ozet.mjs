@@ -1,87 +1,81 @@
-// Günlük fiyat özeti (kullanıcı isteği 2026-11-13): fiyatlar.json'dan iki tablo — Yurt içi borsalar (TL/ton) ve
-// Dünya merkezleri (USD/ton + tahmini Mersin liman) — her merkezde son fiyat ve bir önceki fiyata göre günlük değişim.
-// Her sabah zamanlanmış görev bu çıktıyı kullanıcının telefonuna bildirim olarak gönderir. Kullanıcı kayıtları (alış fiyatı, teklif) girmez.
-// Kullanım: node tools/gunluk_ozet.mjs [fiyatlar.json]  → Markdown metni stdout'a.
+// Sabah fiyat bildirimi (kullanıcı isteği 2026-11-14; telefona her sabah zamanlanmış görevle gider, ilk satır bildirim başlığıdır).
+// Kurallar fiyat.js'ten AYNEN alınır: bu betik fiyat.js'i (Fiyatlar sayfasının kendi kodu) ayrı bir kum havuzunda yükler ve
+// fpDikkat'i çağırır. Donmuş/durmuş kaynak, oynak seri, son işlemde sıçrama, ayda 6'dan az işlem, çiğit adı, dökerli/kırık ayrımı,
+// Mersin teslim hesabı ve "Dikkat" maddeleri sayfadakiyle birebir aynıdır; burada yalnız telefona uygun kısa metin yazılır.
+// Kullanım: node tools/gunluk_ozet.mjs [fiyatlar.json] [uyarilar.json]  → Markdown metni stdout'a.
+// uyarilar.json: kullanıcının fiyat sınırları (biçim dosyanın içinde anlatılıyor); verilmezse depo kökündeki dosya okunur.
 import fs from "node:fs";
+import vm from "node:vm";
+import { fileURLToPath } from "node:url";
 
-const HAM = [
-  ["Mısır", ["Mısır"]], ["Arpa", ["Arpa"]], ["Yemlik buğday", ["Yemlik buğday", "Buğday"]], ["Soya fasulyesi", ["Soya fasulyesi"]],
-  ["Soya küspesi", ["Soya küspesi"]], ["DDGS", ["DDGS"]], ["Mısır gluteni", ["Mısır gluten yemi (feed)", "Mısır gluteni (meal)"]],
-  ["Ayçiçeği küspesi", ["Ayçiçeği küspesi"]], ["Pamuk tohumu küspesi", ["Pamuk tohumu küspesi"]], ["Buğday kepeği", ["Buğday kepeği"]],
-];
-// Navlun varsayımları panodakiyle aynı (telefonda değiştirilen navlun buraya gelmez): Karadeniz 20, AB 35, G. Amerika 50, Avustralya 50, liman/sigorta 8 $/t.
-const NAV = { KD: 20, AB: 35, GA: 50, AU: 50, US: 45, MS: 8 };
-const koken = (m = "") => /Karadeniz|Ukrayna FOB|Rusya FOB/.test(m) ? "KD" : /^Fransa/.test(m) ? "AB" : /Arjantin FOB|Paranaguá/.test(m) ? "GA" : /^Avustralya/.test(m) ? "AU" : /^ABD Körfez FOB/.test(m) ? "US" : null;
-const gunEkle = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
-const gunFark = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
+const KOK = fileURLToPath(new URL("..", import.meta.url));
+
+// fiyat.js'i tarayıcı olmadan yükle: sayfanın sağladığı S, f, esc, save yerine sade karşılıkları (navlun varsayılan değerlerde).
+export function fiyatJs(yol = KOK + "fiyat.js") {
+  const sb = { console, S: { feeds: [], ph: {}, navlun: {}, teklif: [], uyari: [] }, save() {}, confirm: () => true, alert() {} };
+  sb.window = sb;
+  sb.esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  sb.f = (v, d) => { if (d === undefined) d = 2; return Number(v).toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d }); };
+  vm.createContext(sb);
+  vm.runInContext(fs.readFileSync(yol, "utf8"), sb, { filename: "fiyat.js" });
+  if (typeof sb.fpDikkat !== "function") throw new Error("fiyat.js içinde fpDikkat yok");
+  return sb;
+}
+
+// uyarilar.json: ya liste ya da {"uyarilar":[...]} (açıklama alanları "_" ile başlar)
+export function uyarilariOku(yol) {
+  try {
+    const j = JSON.parse(fs.readFileSync(yol, "utf8"));
+    const L = Array.isArray(j) ? j : Array.isArray(j && j.uyarilar) ? j.uyarilar : [];
+    return L.filter((e) => e && typeof e === "object" && e.urun);
+  } catch (e) { return []; }
+}
+
+let FJ = null;
+export function analiz(D, uy = [], opt = {}) { FJ = FJ || fiyatJs(); return FJ.fpDikkat(D, uy, opt); }
+
 const tr = (v, d = 0) => Number(v).toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
-const tarih = (d) => d.slice(8, 10) + "." + d.slice(5, 7);
-const kisa = (e) => String(e)
-  .replace(/^Çin yem mısırı iç piyasa ort\.?|^Çin iç piyasa ort\.?/, "Çin iç p.").replace(/^Kanada (\S+) yemlik.*$/, "Kanada $1")
-  .replace(/^Brezilya Paranaguá limanı.*$/, "Brezilya Paranaguá").replace(/^Brezilya Campinas.*$/, "Brezilya Campinas")
-  .replace(/^Arjantin FOB limanları.*$/, "Arjantin FOB").replace(/^ABD Körfez FOB SRW/, "ABD Körfez FOB").replace(/ 12,5%/, "").replace(/^(Fransa|Avustralya) yemlik.*$/, "$1")
-  .replace(/\s*\((?:FAO[^)]*|CEPEA|tarım bakanlığı)\)/g, "").replace(/\s*\([^)]*\)$/, "");
+const tl = (v) => tr(Math.round(v / 100) * 100);
+const yz = (v) => v === null || v === undefined || !isFinite(v) ? "—" : Math.abs(v) < 0.05 ? "0%" : (v > 0 ? "+" : "−") + tr(Math.abs(v), 1) + "%";
+const gun = (d) => d.slice(8, 10) + "." + d.slice(5, 7);
 
-// Seri olağan aralığının 3 katı (en az 14 gün; aylıkta 100 gün) yeni fiyat vermiyorsa durmuş sayılır (panodaki fpDurdu ile aynı).
-export function durdu(s, ref) {
-  if (!s || s.length < 3 || !ref) return 0;
-  const gs = []; for (let i = 1; i < s.length; i++) gs.push(gunFark(s[i][0], s[i - 1][0]));
-  gs.sort((a, b) => a - b); const g = gs[Math.floor(gs.length / 2)], yas = gunFark(ref, s[s.length - 1][0]), lim = g > 20 ? 100 : Math.max(3 * g, 14);
-  return yas > lim ? yas : 0;
-}
-const degisim = (s) => { if (!s || s.length < 2) return null; const a = s[s.length - 1][1], b = s[s.length - 2][1]; return b > 0 ? (a / b - 1) * 100 : null; };
-const aylik = (s) => { if (!s || s.length < 3) return false; const gs = []; for (let i = 1; i < s.length; i++) gs.push(gunFark(s[i][0], s[i - 1][0])); gs.sort((a, b) => a - b); return gs[Math.floor(gs.length / 2)] > 20; };
-const ok = (v) => v === null ? "—" : Math.abs(v) < 0.05 ? "0%" : (v > 0 ? "🔺 +" : "🔻 −") + tr(Math.abs(v), 1) + "%";
-
-export function ozet(D) {
-  const ref = String(D.guncel || "").slice(0, 10), K = D.usdtry || [];
-  const kur = (d) => { let v = null; for (const [t, x] of K) { if (t <= d) v = x; else break; } return v || (K[0] && K[0][1]) || 1; };
-  const kurSon = K.length ? K[K.length - 1][1] : 1;
-  const Y = (D.yurtici && D.yurtici.urunler) || [], U = D.urunler || [];
-  let son = ""; for (const u of Y) if (u.seri && u.seri.length && u.seri[u.seri.length - 1][0] > son) son = u.seri[u.seri.length - 1][0];
-  const zaman = new Date(D.guncel);
-  const baslik = isNaN(zaman) ? "" : zaman.toLocaleString("tr-TR", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-  const hareket = [];
-  let o = `# Yem hammadde fiyatları · ${baslik}\n\n## Yurt içi borsalar · TL/ton\n\n| Hammadde | Borsa | Fiyat | Günlük | Tarih |\n|---|---|--:|--:|--:|\n`;
-  for (const [ad, adlar] of HAM) {
-    const L = Y.filter((u) => adlar.includes(u.ad) && u.seri && u.seri.length);
-    if (!L.length) { o += `| **${ad}** | — | borsada işlem yok | | |\n`; continue; }
-    L.forEach((u, i) => {
-      const l = u.seri[u.seri.length - 1], eski = son && l[0] < gunEkle(son, -7), v = degisim(u.seri), yeni = l[0] === son;
-      const borsa = u.borsa + (adlar.length > 1 ? (/feed/.test(u.ad) ? " feed" : / meal/.test(u.ad) || /\(meal\)/.test(u.ad) ? " meal" : "") : "");
-      if (yeni && v !== null && Math.abs(v) >= 0.05) hareket.push([`${ad} (${u.borsa})`, v]);
-      o += `| ${i ? "" : "**" + ad + "**"} | ${borsa} | ${tr(l[1] * 1000)}${eski ? "*" : ""} | ${yeni ? ok(v) : "işlem yok"} | ${tarih(l[0])} |\n`;
-    });
+export function ozet(D, uy = [], opt = {}) {
+  const A = analiz(D, uy, opt), K = D.usdtry || [];
+  const satir = [];
+  satir.push(A.baslik);
+  const kurHf = K.length > 5 ? FJ.fpChange(K, 7) : null;
+  satir.push(`Borsa günü ${A.son ? gun(A.son) : "—"} · USD/TL ${tr(A.kur, 2)}${kurHf !== null ? ` (1 hf ${yz(kurHf)})` : ""}`);
+  if (A.dikkat.length) {
+    satir.push("", "**⚠ Dikkat**");
+    A.dikkat.forEach((x) => satir.push("- " + x.m));
   }
-  o += `\n🔺 artış · 🔻 düşüş: bir önceki işlem gününe göre. "işlem yok": son borsa gününde (${son ? tarih(son) : "—"}) bu üründe satış olmadı, son fiyat yazılı. *eski: 1 haftadan eski. Bülten TL/kg × 1000.\n\n`;
-  o += `## Dünya merkezleri · USD/ton\n\n| Hammadde | Merkez | Fiyat | Günlük | Tarih |\n|---|---|--:|--:|--:|\n`;
-  const mersin = [];
-  for (const [ad, adlar] of HAM) {
-    const L = U.filter((u) => adlar.includes(u.ad) && u.seri && u.seri.length);
-    if (!L.length) { o += `| **${ad}** | — | otomatik kaynak yok | | |\n`; continue; }
-    const ms = [];
-    L.forEach((u, i) => {
-      const s = u.seri.map(([d, v]) => [d, v / kur(d)]), l = s[s.length - 1], dur = durdu(s, ref), v = degisim(s);
-      const et = u.merkez ? kisa(u.merkez) : u.sembol === "USDA" ? "ABD iç p." + (/feed/.test(u.ad) ? " feed" : /meal/.test(u.ad) ? " meal" : "") : "Chicago";
-      const kk = koken(u.merkez); if (kk && !dur && !u.eski) ms.push(l[1] + NAV[kk] + NAV.MS);
-      const taze = gunFark(ref, l[0]) <= 4;
-      if (taze && !dur && v !== null && Math.abs(v) >= 0.05) hareket.push([`${ad} (${et})`, v]);
-      o += `| ${i ? "" : "**" + ad + "**"} | ${et} | ${tr(l[1], 1).replace(/,0$/, "")}${dur || u.eski ? "*" : ""} | ${dur ? "kaynak durdu" : taze ? ok(v) : aylik(s) ? "aylık" : "yeni fiyat yok"} | ${tarih(l[0])} |\n`;
-    });
-    if (ms.length) { const a = Math.min(...ms), b = Math.max(...ms); mersin.push(`| ${ad} | ${tr(a)}${b - a >= 1 ? "–" + tr(b) : ""} | ${tr(a * kurSon / 1000, 2)}${b - a >= 1 ? "–" + tr(b * kurSon / 1000, 2) : ""} |`); }
+  satir.push("", "| Ürün | Borsa en ucuz TL/t | 1 hf | İthal Mersin TL/t | Not |", "|---|--:|--:|--:|---|");
+  const yok = [];
+  for (const r of A.satir) {
+    if (!r.ucuz && !r.eski && !r.ithal) { yok.push(r.kisa); continue; }
+    const not = [];
+    let bor = "—", hf = "";
+    if (r.ucuz) {
+      bor = `${tr(r.ucuz.tl)} ${r.ucuz.et}`;
+      hf = r.ucuz.supheli ? "?" : yz(r.ucuz.hf);
+      if (r.ucuz.supheli) not.push("fiyat çok oynuyor");
+      else if (r.ucuz.az) not.push("az işlem");
+    } else if (r.eski) { bor = `${tr(r.eski.tl)}* ${r.eski.et}`; not.push("son işlem " + gun(r.eski.d)); }
+    const it = r.ithal ? tl(r.ithal.mn) + (r.ithal.mx - r.ithal.mn >= 100 ? "–" + tl(r.ithal.mx) : "") : "—";
+    satir.push(`| ${r.kisa} | ${bor} | ${hf} | ${it} | ${not.join(", ")} |`);
   }
-  o += `\n"Günlük": son 4 günde gelen yeni fiyatın bir öncekine göre değişimi. "yeni fiyat yok": kaynak haftalık yayınlıyor, bu hafta henüz yeni fiyat gelmedi. "aylık": kaynak ayda bir yayınlıyor. *: kaynak bir süredir yeni fiyat vermiyor.\n\n`;
-  if (mersin.length) o += `### Tahmini Mersin liman teslim\n\n| Hammadde | USD/ton | TL/kg |\n|---|--:|--:|\n${mersin.join("\n")}\n\nİhracat limanı (FOB) fiyatı + navlun (Karadeniz 20, Fransa 35, G. Amerika 50, Avustralya 50, ABD Körfezi 45 $/t) + liman/sigorta 8 $/t. Kur ${tr(kurSon, 2)}.\n\n`;
-  hareket.sort((a, b) => b[1] - a[1]);
-  const art = hareket.filter((x) => x[1] > 0).slice(0, 3), dus = hareket.filter((x) => x[1] < 0).slice(-3).reverse();
-  let bas = "**Günün özeti:** ";
-  bas += art.length ? "en çok artan " + art.map(([n, v]) => `${n} +${tr(v, 1)}%`).join(", ") : "artan yok";
-  bas += dus.length ? "; en çok düşen " + dus.map(([n, v]) => `${n} −${tr(Math.abs(v), 1)}%`).join(", ") : "; düşen yok";
-  bas += `. USD/TL ${tr(kurSon, 2)}.\n\n`;
-  return o.replace("\n\n## Yurt içi", "\n\n" + bas + "## Yurt içi");
+  satir.push("");
+  satir.push("Borsa: güncel ve düzgün fiyatların en ucuzu; 1 hf = son 1 haftaya göre. İthal = FOB + navlun + liman, bugünkü kurla; gümrük ve KDV hariç.");
+  const ek = [];
+  if (A.disari.length) ek.push("Güncel olmadığı için ithal hesabına katılmayan: " + A.disari.join(", ") + ".");
+  if (yok.length) ek.push("Fiyatı olmayan: " + yok.join(", ").replace(/\.$/, "") + ".");
+  if (A.eksik.length) ek.push("⚠ uyarilar.json'da bulunamayan ürün: " + A.eksik.join(", ") + ".");
+  if (uy.length) ek.push(`Sizin fiyat sınırlarınız: ${uy.length}.`);
+  if (ek.length) satir.push(ek.join(" "));
+  return satir.join("\n") + "\n";
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(process.argv[1])) {
   const D = JSON.parse(fs.readFileSync(process.argv[2] || "fiyatlar.json", "utf8"));
-  process.stdout.write(ozet(D));
+  process.stdout.write(ozet(D, uyarilariOku(process.argv[3] || KOK + "uyarilar.json")));
 }

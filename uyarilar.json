@@ -1,0 +1,11 @@
+{
+  "_aciklama": [
+    "Sabah fiyat bildirimi için kullanıcının fiyat sınırları (tools/gunluk_ozet.mjs okur). Fiyatlar TL/ton.",
+    "Her uyarı bir satır: {\"urun\": \"Arpa\", \"borsa\": \"en ucuz\", \"alt\": 15000, \"ust\": null, \"not\": \"alım fırsatı\"}",
+    "urun: hammadde adı (Mısır, Arpa, Yemlik buğday, Soya fasulyesi, Soya küspesi, DDGS, Mısır gluten yemi (feed), Mısır gluteni (meal), Ayçiçeği küspesi, Çiğit (pamuk tohumu), Buğday kepeği).",
+    "borsa: \"en ucuz\" (güncel borsaların en ucuzu), bir borsa adı (\"Konya\", \"Polatlı\", \"Gaziantep\", \"Gaziantep kırık\", \"Adana\") ya da \"ithal\" (tahmini Mersin teslim; gümrük ve KDV hariç).",
+    "alt: fiyat bu rakama eşit ya da altındaysa uyarır; ust: eşit ya da üstündeyse uyarır. Kullanılmayanı null bırakın. not: isteğe bağlı, bildirimde yazılır.",
+    "Sınır aşık kaldığı sürece her sabah bildirimde görünür; istenmediğinde satırı silin."
+  ],
+  "uyarilar": []
+}
