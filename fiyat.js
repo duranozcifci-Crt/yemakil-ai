@@ -204,8 +204,8 @@ window.fpRender=function(){var el=document.getElementById("fpBody");if(!el)retur
 function fpGecerli(j){return j&&Array.isArray(j.urunler)&&j.urunler.length?j:null}
 function fpYedekOku(){try{var t=localStorage.getItem(YEDEK);return t?fpGecerli(JSON.parse(t)):null}catch(e){return null}}
 function fpYedekYaz(j){try{localStorage.setItem(YEDEK,JSON.stringify(j))}catch(e){}}
-window.fpLoad=function(){if(!window.FPDATA){var y=fpYedekOku();if(y){window.FPDATA=y;window._fpYedek=true;fpRender()}}
+window.fpLoad=function(){if(!window.FPDATA){var y=fpYedekOku();if(y){window.FPDATA=y;fpRender()}}/* önce telefondaki son veri hemen görünür; ağdan gelince yenilenir */
  var al=function(u,o){return fetch(u,o).then(function(r){if(!r.ok)throw new Error(r.status===404?"veri henüz oluşturulmadı":"sunucu hatası "+r.status);return r.json()}).then(function(j){if(!fpGecerli(j))throw new Error("fiyat dosyası boş geldi");return j})};
- al(RAW,{cache:"no-store"}).catch(function(){return al("fiyatlar.json",{cache:"no-cache"})}).then(function(j){window.FPDATA=j;window._fpYedek=false;window._fpErr=null;fpYedekYaz(j);fpRender()})
+ al(RAW,{cache:"no-store"}).catch(function(){return al("fiyatlar.json",{cache:"no-cache"})}).then(function(j){var y=fpYedekOku();if(y&&Date.parse(y.guncel)>Date.parse(j.guncel))j=y;/* sitedeki kopya telefondakinden eskiyse yenisi kalır */window.FPDATA=j;window._fpYedek=false;window._fpErr=null;fpYedekYaz(j);fpRender()})
  .catch(function(e){var m=String((e&&e.message)||e);window._fpErr=/fetch|network|load failed|internet/i.test(m)||e instanceof TypeError?"İnternete bağlanılamadı":m;if(!window.FPDATA)window.FPDATA=fpYedekOku();window._fpYedek=!!window.FPDATA;fpRender()})};
 })();
