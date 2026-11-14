@@ -269,6 +269,13 @@ export const FAO = [
   { ad: "Buğday", merkez: "Çin iç piyasa ort. (FAO)", uuid: "bb328835-7f56-4f3b-b8d5-50a062611965" },
   { ad: "Mısır", merkez: "Çin yem mısırı iç piyasa ort. (FAO)", uuid: "e3413759-5074-4063-822e-0f23b4ddd79e" },
   { ad: "Arpa", merkez: "Avustralya yemlik (FAO, aylık)", uuid: "992f1c4d-24ee-461c-aa57-bae353a2b1d5" },
+  // Ek ihracat (FOB) fiyatları (kullanıcı sorusu 2026-11-14: "Ukrayna FOB varken diğer ülkelerde neden yok"). FAO GIEWS uluslararası fiyatları.
+  { ad: "Mısır", merkez: "ABD Körfez FOB (FAO/USDA)", uuid: "5db69fc0-1005-440b-9e6c-065d1acec33e" },
+  { ad: "Mısır", merkez: "Brezilya Paranaguá FOB (FAO/IGC, aylık)", uuid: "d471f6ae-21d2-4c05-a910-55f042fdebf1" },
+  { ad: "Buğday", merkez: "Rusya FOB 12,5% (FAO/IGC, aylık)", uuid: "48593df4-3ed7-4f22-949d-1e7fa80db090" },
+  { ad: "Buğday", merkez: "ABD Körfez FOB SRW (FAO/USDA)", uuid: "62dc04d8-35cc-4a5b-b58f-4f50a998681b" },
+  { ad: "Buğday", merkez: "Arjantin FOB (FAO/IGC)", uuid: "e23b83a7-7cf7-40b0-87f7-6c03a2d3b2bc" },
+  { ad: "Buğday", merkez: "Avustralya FOB ASW (FAO/IGC, aylık)", uuid: "c030667e-131d-421a-ba94-ab6cf8ffe2ee" },
 ];
 export function faoSeri(j) {
   const dp = ((j && j.datapoints) || []).filter((x) => x && x.date && x.price_value_dollar > 0);
