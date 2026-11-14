@@ -4,6 +4,7 @@
    Arpa: Konya ~15.000 (kullanıcı sınırı alt 15.100 → uyarı); Polatlı 16,0–16,1'den 15,5'e: 3 ayın en düşüğü.
    Yemlik buğday: Gaziantep dökerli ve kırık ayrı seriler (en ucuz "Gaziantep kırık"). Ayçiçeği küspesi: 12 ↔ 16 zıplıyor (oynak, harekete girmez).
    DDGS: 100 günde 5 işlem, son işlem +%11 (az işlem, harekete girmez). Kepek: düzenli seri, son gün +%6 (olağan dışı hareket).
+   %2 eşiği: soya fasulyesi Adana 28,05 → 28,64 (+%2,1) uyarır, çiğit 17,75 → 17,413 (−%1,9) uyarmaz.
    Çiğit ayrı satır; pamuk tohumu küspesinde borsa işlemi yok. sakin: aynı gün, hiçbir şey olmayan veri. */
 function gun(n, adim, f0, son) { const a = []; let d = new Date(Date.parse(son + "T00:00:00Z") - (n - 1) * adim * 864e5); for (let i = 0; i < n; i++) { a.push([d.toISOString().slice(0, 10), f0(i, n)]); d = new Date(d.getTime() + adim * 864e5); } return a; }
 const SON = "2026-11-13", KUR = 50;
@@ -25,7 +26,8 @@ function ornek() {
       { ad: "Ayçiçeği küspesi", borsa: "Gaziantep", seri: gun(30, 3, sabit(16, 12), SON) },
       { ad: "DDGS", borsa: "Gaziantep", seri: gun(5, 20, (i, n) => (i === n - 1 ? 18.4 : 16.5), SON) },
       { ad: "Pamuk tohumu küspesi", borsa: "Gaziantep", seri: [] },
-      { ad: "Çiğit (pamuk tohumu)", borsa: "Adana", seri: gun(10, 1, () => 17.75, SON) },
+      { ad: "Çiğit (pamuk tohumu)", borsa: "Adana", seri: gun(10, 1, (i, n) => (i === n - 1 ? 17.413 : 17.75), SON) },
+      { ad: "Soya fasulyesi", borsa: "Adana", seri: gun(100, 1, (i, n) => (i === n - 1 ? 28.64 : i % 2 ? 28.0 : 28.05), SON) },
       { ad: "Buğday kepeği", borsa: "Gaziantep", seri: gun(100, 1, (i, n) => (i === n - 1 ? 14.9 : i % 2 ? 14.0 : 14.05), SON) },
     ] },
   };

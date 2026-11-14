@@ -186,12 +186,16 @@ function fpHamBlok(m,i,D){var ac=!!window._fpAc[i],kur=fpKur(D,'9999'),tk=fpTk()
    Sabah telefona gelen bildirim (tools/gunluk_ozet.mjs bu dosyayı OLDUĞU GİBİ yükleyip fpDikkat'i çağırır) ve sayfa açılınca üstteki
    "Dikkat" şeridi AYNI kuralları kullanır; iki ayrı kopya yok.
    Güvenilir seri (fpDuzenli): güncel (fpBak: eski ya da donmuş değil), oynak değil, son işlemde %15 sıçrama yok; borsada son 30 günde en az 6 işlem.
-   Olağan dışı hareket: borsada 1 günde %5 ya da 1 haftada %7; Chicago ve FOB'da 1 günde %3 ya da 1 haftada %5
-   (borsa günlük ortalaması kalite karışımıyla daha çok oynar: Temmuz–Kasım verisinde %3/gün eşiği Konya mısırda her 6 günde bir çalıyordu).
+   Fiyat hareketi (kullanıcı kararı 2026-11-14): bütün hammaddelerde fiyat bir öncekine göre %2'den ÇOK artar ya da düşerse uyarı
+   (borsada bir önceki işlem gününe, dünyada bir önceki yayımlanan fiyata göre; satırda süresi yazar: günlük, haftalık, aylık ya da "N günde").
+   Eşik değiştirilebilir: uyarilar.json "yuzde_esik" (sabah bildirimi), sayfada UYE.yuzde. Güvenilir serinin hareketi "Dikkat"e kendi satırıyla girer;
+   oynak, son işlemde sıçrayan ya da az işlem gören serinin %2'yi aşan hareketi gizlenmez, "Şüpheli" diye işaretli tek kısa satırda yazılır.
+   Donmuş ya da eski (güncel olmayan) seriler hareket sayılmaz.
    3 ayın en yükseği/düşüğü: son fiyat önceki 3 ayın en yükseğini/düşüğünü %1'den çok geçerse (en az 2 ay ve 10 kayıt geçmiş varsa).
    İthal–yerli: tahmini Mersin teslim (FOB + navlun + liman; gümrük, KDV hariç) en ucuz güvenilir borsa fiyatının altına iner ya da üstüne çıkarsa (bir önceki borsa gününe göre).
    Kullanıcı sınırı: {urun, borsa:"en ucuz" | borsa adı (Konya, Gaziantep kırık…) | "ithal", alt, ust} TL/ton; alt'a eşit/altında ya da ust'e eşit/üstünde ise uyarı. */
-var UYE={yiGun:5,yiHf:7,ydGun:3,ydHf:5,uc:1,ithal:1,dosya:3,borsa:2};
+var UYE={yuzde:2,uc:1,ithal:1,dosya:3,borsa:2};window.UYE_YUZDE=UYE.yuzde;
+function fpSure(g){return g<=4?'günlük':g<=10?'haftalık':g>=25&&g<=45?'aylık':g+' günde'}
 function fpTemiz(x){var b=x.b;return !!b&&!b.gecersiz&&!b.oynak&&!b.sicra}
 function fpDuzenli(x){if(!fpTemiz(x))return false;if(x.yer!=="yi")return true;var lim=dAdd(x.b.l[0],-30);return x.b.s.filter(function(p){return p[0]>=lim}).length>=6}
 function fpEt(x){return x.yer==="yi"?x.borsa+(x.tur?' '+x.tur:''):fpKisa(x.etiket)}
@@ -209,7 +213,7 @@ function fpUyDeger(e,P,kur){var n=fpNorm(e.urun),p=null;[function(q){return fpNo
  if(b==='ithal'||b==='ithalmersin'){var r=fpIthal(p.L);return {p:p,v:r?Math.round(r.mn*kur):null,et:'ithal (Mersin ≈)',it:1}}
  var u=fpUcuz(b==='enucuz'||!b?p.L:p.L.filter(function(x){return x.yer==="yi"&&fpNorm(fpEt(x)).indexOf(b)===0}));return {p:p,v:u?Math.round(u.tl):null,et:u?(b==='enucuz'||!b?'en ucuz borsa ('+u.et+')':u.et):e.borsa}}
 function fpIsGunu(a,b){var n=0,d=dAdd(a,1);while(d<b){var w=new Date(d+"T00:00:00Z").getUTCDay();if(w>0&&w<6)n++;d=dAdd(d,1)}return n}
-window.fpDikkat=function(D,uy,opt){opt=opt||{};var simdi=opt.simdi!=null?+opt.simdi:Date.now(),M=fpMerkez(D),ref=fpRefGun(D),kur=fpKur(D,'9999'),P=fpUrunler(M),I=[],eksik=[],hf=[];
+window.fpDikkat=function(D,uy,opt){opt=opt||{};var esik=opt.esik!=null&&isFinite(+opt.esik)&&+opt.esik>0?+opt.esik:UYE.yuzde,simdi=opt.simdi!=null?+opt.simdi:Date.now(),M=fpMerkez(D),ref=fpRefGun(D),kur=fpKur(D,'9999'),P=fpUrunler(M),I=[],eksik=[],hf=[];
  var bugun=new Date(simdi+3*36e5).toISOString().slice(0,10);/* Türkiye saati (UTC+3) */
  var T=function(v){return f(Math.round(v),0)},TT=function(v){return f(Math.round(v/100)*100,0)};
  /* 1) veri güncel mi */
@@ -231,16 +235,18 @@ window.fpDikkat=function(D,uy,opt){opt=opt||{};var simdi=opt.simdi!=null?+opt.si
   var ip=null;p.L.forEach(function(x){if(x.yer!=="yd"||!x.b||x.b.mersin==null)return;var q=fpSonD(x.usd,onc);if(!q)return;var v=(q[1]+fpNav(x.koken)+fpNav('MS'))*fpKur(D,onc);if(ip===null||v<ip)ip=v});
   if(dp===null||ip===null)return;var simd=r.ucuz.tl-r.ithal.mn,once=dp-ip;if(Math.abs(simd)/r.ucuz.tl*100<UYE.ithal||(simd>0)===(once>0)||once===0)return;
   var ucz=simd>0;I.push({t:'ithal',ad:p.kisa,k:'İthal '+p.kisa.toLocaleLowerCase('tr')+' yerliden '+(ucz?'ucuzladı':'pahalandı'),m:p.ad+': ithal artık yerli borsadan '+(ucz?'ucuz':'pahalı')+' — Mersin ≈ '+TT(r.ithal.mn)+', en ucuz borsa '+T(r.ucuz.tl)+' TL/ton ('+r.ucuz.et+'); gümrük ve KDV hariç.'})});
- /* 4) olağan dışı hareket ve 3 ayın en yükseği/düşüğü (yalnız güvenilir ve bugün yeni fiyatı olan seriler) */
- var H=[];P.forEach(function(p){var parca=[],sk=0,uc=0;p.L.forEach(function(x){var b=x.b,yd=x.yer==="yd";if(!fpDuzenli(x)||(yd&&/^ABD iç piyasa/.test(x.etiket)))return;
-   if(yd?gunFark(ref,b.l[0])>4:b.l[0]!==M.son)return;var s=b.s,l=b.l,o=s[s.length-2],gd=o&&o[1]>0&&gunFark(l[0],o[0])<=4?(l[1]/o[1]-1)*100:null,h=fpChange(s,7),G=yd?[UYE.ydGun,UYE.ydHf]:[UYE.yiGun,UYE.yiHf],ps=[];
+ /* 4) fiyat hareketi (%esik'ten çok) ve 3 ayın en yükseği/düşüğü: bugün yeni fiyatı olan güncel seriler; güvenilir olmayanlar "Şüpheli" satırına */
+ var H=[],SP=[];P.forEach(function(p){var parca=[],sk=0,uc=0;p.L.forEach(function(x){var b=x.b,yd=x.yer==="yd";if(!b||b.gecersiz)return;
+   if(yd?gunFark(ref,b.l[0])>4:b.l[0]!==M.son)return;var s=b.s,l=b.l,o=s[s.length-2],g=o?gunFark(l[0],o[0]):0,gd=o&&o[1]>0?(l[1]/o[1]-1)*100:null,h=fpChange(s,7),ps=[],fy=yd?f(l[1],0)+' $/t':T(l[1]*1000)+' TL/t';
+   if(!fpDuzenli(x)){if(gd!==null&&Math.abs(gd)>esik)SP.push(p.kisa+' '+fpEt(x)+' '+fpYz(gd,fpSure(g))+' → '+fy+' ('+(b.oynak?'fiyat çok oynuyor':b.sicra?'tek işlemde sıçrama':'az işlem')+')');return}
    if(!yd&&h!==null)hf.push({k:p.kisa+' '+fpEt(x),v:h});
-   if(gd!==null&&Math.abs(gd)>=G[0]){ps.push(fpYz(gd,'1 günde'));sk=Math.max(sk,Math.abs(gd))}else if(h!==null&&Math.abs(h)>=G[1]){ps.push(fpYz(h,'1 haftada'));sk=Math.max(sk,Math.abs(h))}
+   if(gd!==null&&Math.abs(gd)>esik){ps.push(fpYz(gd,fpSure(g)));sk=Math.max(sk,Math.abs(gd))}
    var lim=dAdd(l[0],-91),w=s.slice(0,-1).filter(function(q){return q[0]>=lim});
    if(w.length>=10&&w[0][0]<=dAdd(l[0],-60)){var mx=Math.max.apply(null,w.map(function(q){return q[1]})),mn=Math.min.apply(null,w.map(function(q){return q[1]}));
     if(l[1]>mx*(1+UYE.uc/100)){ps.push('3 ayın en yükseği');uc++}else if(l[1]<mn*(1-UYE.uc/100)){ps.push('3 ayın en düşüğü');uc++}}
-   if(ps.length)parca.push(fpEt(x)+' '+ps.join(', ')+' → '+(yd?f(l[1],0)+' $/t':T(l[1]*1000)+' TL/t'))});
+   if(ps.length)parca.push(fpEt(x)+' '+ps.join(', ')+' → '+fy)});
   if(parca.length)H.push({t:sk?'hareket':'uc',ad:p.kisa,sk:sk+uc,k:p.kisa+' '+parca[0].replace(/ → .*$/,''),m:p.ad+': '+parca.join('; ')+'.'})});
+ if(SP.length)H.push({t:'supheli',sk:-1,k:'Şüpheli: '+SP[0].replace(/ → .*$/,''),m:'Şüpheli (güvenilir değil, dikkatli okuyun): '+SP.join('; ')+'.'});
  H.sort(function(a,b){return b.sk-a.sk});I=I.concat(H);
  hf.sort(function(a,b){return Math.abs(b.v)-Math.abs(a.v)});
  var dis=[];M.forEach(function(m){m.L.forEach(function(x){if(x.yer==="yd"&&x.koken&&x.b&&x.b.gecersiz){var e=fpKisa(x.etiket);if(dis.indexOf(e)<0)dis.push(e)}})});

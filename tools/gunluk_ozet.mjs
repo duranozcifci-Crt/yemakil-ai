@@ -22,14 +22,16 @@ export function fiyatJs(yol = KOK + "fiyat.js") {
   return sb;
 }
 
-// uyarilar.json: ya liste ya da {"uyarilar":[...]} (açıklama alanları "_" ile başlar)
-export function uyarilariOku(yol) {
+// uyarilar.json: ya liste ya da {"yuzde_esik": 2, "uyarilar":[...]} (açıklama alanları "_" ile başlar)
+export function ayarOku(yol) {
   try {
     const j = JSON.parse(fs.readFileSync(yol, "utf8"));
     const L = Array.isArray(j) ? j : Array.isArray(j && j.uyarilar) ? j.uyarilar : [];
-    return L.filter((e) => e && typeof e === "object" && e.urun);
-  } catch (e) { return []; }
+    const e = j && !Array.isArray(j) && +j.yuzde_esik > 0 ? +j.yuzde_esik : null;
+    return { uy: L.filter((x) => x && typeof x === "object" && x.urun), esik: e };
+  } catch (e) { return { uy: [], esik: null }; }
 }
+export const uyarilariOku = (yol) => ayarOku(yol).uy;
 
 let FJ = null;
 export function analiz(D, uy = [], opt = {}) { FJ = FJ || fiyatJs(); return FJ.fpDikkat(D, uy, opt); }
@@ -65,7 +67,7 @@ export function ozet(D, uy = [], opt = {}) {
     satir.push(`| ${r.kisa} | ${bor} | ${hf} | ${it} | ${not.join(", ")} |`);
   }
   satir.push("");
-  satir.push("Borsa: güncel ve düzgün fiyatların en ucuzu; 1 hf = son 1 haftaya göre. İthal = FOB + navlun + liman, bugünkü kurla; gümrük ve KDV hariç.");
+  satir.push(`Uyarı eşiği: bir öncekine göre ±%${tr(opt.esik || FJ.UYE_YUZDE || 2, 1).replace(/,0$/, "")}. Borsa: güncel ve düzgün fiyatların en ucuzu; 1 hf = son 1 haftaya göre. İthal = FOB + navlun + liman, bugünkü kurla; gümrük ve KDV hariç.`);
   const ek = [];
   if (A.disari.length) ek.push("Güncel olmadığı için ithal hesabına katılmayan: " + A.disari.join(", ") + ".");
   if (yok.length) ek.push("Fiyatı olmayan: " + yok.join(", ").replace(/\.$/, "") + ".");
@@ -77,5 +79,6 @@ export function ozet(D, uy = [], opt = {}) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(process.argv[1])) {
   const D = JSON.parse(fs.readFileSync(process.argv[2] || "fiyatlar.json", "utf8"));
-  process.stdout.write(ozet(D, uyarilariOku(process.argv[3] || KOK + "uyarilar.json")));
+  const a = ayarOku(process.argv[3] || KOK + "uyarilar.json");
+  process.stdout.write(ozet(D, a.uy, a.esik ? { esik: a.esik } : {}));
 }
