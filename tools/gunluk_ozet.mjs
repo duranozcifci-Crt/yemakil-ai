@@ -10,8 +10,8 @@ const HAM = [
   ["Ayçiçeği küspesi", ["Ayçiçeği küspesi"]], ["Pamuk tohumu küspesi", ["Pamuk tohumu küspesi"]], ["Buğday kepeği", ["Buğday kepeği"]],
 ];
 // Navlun varsayımları panodakiyle aynı (telefonda değiştirilen navlun buraya gelmez): Karadeniz 20, AB 35, G. Amerika 50, Avustralya 50, liman/sigorta 8 $/t.
-const NAV = { KD: 20, AB: 35, GA: 50, AU: 50, MS: 8 };
-const koken = (m = "") => /Karadeniz|Ukrayna FOB|Rusya FOB/.test(m) ? "KD" : /^Fransa/.test(m) ? "AB" : /Arjantin FOB|Paranaguá/.test(m) ? "GA" : /^Avustralya/.test(m) ? "AU" : null;
+const NAV = { KD: 20, AB: 35, GA: 50, AU: 50, US: 45, MS: 8 };
+const koken = (m = "") => /Karadeniz|Ukrayna FOB|Rusya FOB/.test(m) ? "KD" : /^Fransa/.test(m) ? "AB" : /Arjantin FOB|Paranaguá/.test(m) ? "GA" : /^Avustralya/.test(m) ? "AU" : /^ABD Körfez FOB/.test(m) ? "US" : null;
 const gunEkle = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 const gunFark = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
 const tr = (v, d = 0) => Number(v).toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -19,7 +19,7 @@ const tarih = (d) => d.slice(8, 10) + "." + d.slice(5, 7);
 const kisa = (e) => String(e)
   .replace(/^Çin yem mısırı iç piyasa ort\.?|^Çin iç piyasa ort\.?/, "Çin iç p.").replace(/^Kanada (\S+) yemlik.*$/, "Kanada $1")
   .replace(/^Brezilya Paranaguá limanı.*$/, "Brezilya Paranaguá").replace(/^Brezilya Campinas.*$/, "Brezilya Campinas")
-  .replace(/^Arjantin FOB limanları.*$/, "Arjantin FOB").replace(/^(Fransa|Avustralya) yemlik.*$/, "$1")
+  .replace(/^Arjantin FOB limanları.*$/, "Arjantin FOB").replace(/^ABD Körfez FOB SRW/, "ABD Körfez FOB").replace(/ 12,5%/, "").replace(/^(Fransa|Avustralya) yemlik.*$/, "$1")
   .replace(/\s*\((?:FAO[^)]*|CEPEA|tarım bakanlığı)\)/g, "").replace(/\s*\([^)]*\)$/, "");
 
 // Seri olağan aralığının 3 katı (en az 14 gün; aylıkta 100 gün) yeni fiyat vermiyorsa durmuş sayılır (panodaki fpDurdu ile aynı).
@@ -71,7 +71,7 @@ export function ozet(D) {
     if (ms.length) { const a = Math.min(...ms), b = Math.max(...ms); mersin.push(`| ${ad} | ${tr(a)}${b - a >= 1 ? "–" + tr(b) : ""} | ${tr(a * kurSon / 1000, 2)}${b - a >= 1 ? "–" + tr(b * kurSon / 1000, 2) : ""} |`); }
   }
   o += `\n"Günlük": son 4 günde gelen yeni fiyatın bir öncekine göre değişimi. "yeni fiyat yok": kaynak haftalık yayınlıyor, bu hafta henüz yeni fiyat gelmedi. "aylık": kaynak ayda bir yayınlıyor. *: kaynak bir süredir yeni fiyat vermiyor.\n\n`;
-  if (mersin.length) o += `### Tahmini Mersin liman teslim\n\n| Hammadde | USD/ton | TL/kg |\n|---|--:|--:|\n${mersin.join("\n")}\n\nİhracat limanı (FOB) fiyatı + navlun (Karadeniz 20, Fransa 35, G. Amerika 50, Avustralya 50 $/t) + liman/sigorta 8 $/t. Kur ${tr(kurSon, 2)}.\n\n`;
+  if (mersin.length) o += `### Tahmini Mersin liman teslim\n\n| Hammadde | USD/ton | TL/kg |\n|---|--:|--:|\n${mersin.join("\n")}\n\nİhracat limanı (FOB) fiyatı + navlun (Karadeniz 20, Fransa 35, G. Amerika 50, Avustralya 50, ABD Körfezi 45 $/t) + liman/sigorta 8 $/t. Kur ${tr(kurSon, 2)}.\n\n`;
   hareket.sort((a, b) => b[1] - a[1]);
   const art = hareket.filter((x) => x[1] > 0).slice(0, 3), dus = hareket.filter((x) => x[1] < 0).slice(-3).reverse();
   let bas = "**Günün özeti:** ";
