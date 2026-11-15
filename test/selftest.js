@@ -193,6 +193,10 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  await p.click('#solApply');await p.waitForTimeout(400);
  const ap=await E(()=>({ee:metrics(curItems()).ee,lys:MPsut(metrics(curItems())).lys,bar:document.getElementById('farmSnap').innerText}));
  ok('Uygulanan öneride ham yağ referansta (3–7) ve lizin düşmemiş',ap.ee>=3&&ap.ee<=7&&ap.lys>=lys0-0.01,JSON.stringify({ee:ap.ee,lys:ap.lys,lys0}));
+ {const sv0=await E(()=>({n:(S.saved||[]).length,box:!!document.getElementById('solSaveBox')}));await E(()=>{document.getElementById('solSaveNm').value='Test çiftliği V203';document.getElementById('solSave').click()});await p.waitForTimeout(200);
+ const sv1=await E(()=>{var r=(S.saved||[])[0]||{},cur=S.feeds.filter(x=>x.on&&x.kg>0).map(x=>x.n+':'+x.kg).sort().join('|'),rf=(r.feeds||[]).map(x=>x.n+':'+x.kg).sort().join('|');return {n:(S.saved||[]).length,name:r.name,same:!!rf&&rf===cur,msg:document.getElementById('solSaveBox').innerText}});
+ ok('Çözüm uygulandıktan sonra "Çiftlik rasyonu olarak kaydet" (V203): kutu çıkıyor, çözülen rasyon adıyla kayıtlılara ekleniyor',sv0.box&&sv1.n===sv0.n+1&&sv1.name==='Test çiftliği V203'&&sv1.same&&/kaydedildi/.test(sv1.msg),JSON.stringify([sv0,sv1]).slice(0,300));
+ await E(()=>{S.saved=(S.saved||[]).filter(r=>r.name!=='Test çiftliği V203');save()});}
  ok('Öneri uygulanınca "Çiftlik rasyonu kayıtlı" çubuğu: şu an uygulanan öneri',/Çiftlik rasyonu kayıtlı/.test(ap.bar)&&/uygulanan öneri/.test(ap.bar),ap.bar.slice(0,120));
  await p.click('#fsFarm');await p.waitForTimeout(300);
  const fb=await E(()=>({kg:S.feeds.filter(x=>x.on).map(x=>x.kg).join(','),st:document.getElementById('farmSnap').innerText}));
