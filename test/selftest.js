@@ -662,6 +662,63 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   const mA=await mig(false),mB=await mig(true);
   ok('Taşıma: kayıtlı verisi olan eski kullanıcıda öğretici kapalı başlar',mA.k==="0"&&!mA.on&&!mA.err,JSON.stringify(mA));
   ok('Taşıma: Çiftlik yeminde öğretici açık olan (y.teach=true) kullanıcıda ortak anahtar açılır, teach alanı kayıttan kalkar, y.teach okunur',mB.k==="1"&&mB.on&&!mB.own&&mB.yt===true&&!mB.saved&&!mB.err,JSON.stringify(mB));
+  /* V207: Öğretici konu anlatımı — her risk kartı türünde "eşikler ve ne yapmalı" kutusu (eşikler REF/dönem tablosu/risk kodundan), bölüm özeti + eşik özet tablosu, değerlendirme tablosu satır satır */
+  {const OGRFx=(x,d)=>String(Math.round(x*Math.pow(10,d))/Math.pow(10,d)).replace('.',',');const SCN=[["sut",{mode:"lak",wk:4,dp:0}],["sut",{mode:"kuru",dp:270}],["sut",{mode:"duve"}],["besi",{temp:36}],["koyun",{mode:"kuzu"}],["koyun",{mode:"gebe"}],["koyun",{mode:"lak"}],["koyun",{mode:"idame"}],["buzagi",{}],["yem",{}]],rk={},seen={};
+   const sv=await q.evaluate(()=>JSON.stringify(S));
+   for(const [t,o] of SCN){await q.click('#seg button[data-t="'+t+'"]');await q.waitForTimeout(150);
+    await q.evaluate(([t,o])=>{if(t==="sut")Object.assign(S.b,o);if(t==="koyun")Object.assign(K_def(),o);if(t==="besi")Object.assign(S.bb,o);
+     if(t==="yem"){document.getElementById('ymCalc').click();return}S.feeds.forEach(x=>{x.on=false;x.kg=0});var set=(re,kg)=>{var x=S.feeds.filter(y=>re.test(y.n))[0];if(x){x.on=true;x.kg=kg}};
+     if(t==="buzagi"){set(/^Tam yağlı süt|^Süt ikame/,6);set(/^Arpa/,0.5)}else if(t==="koyun"){set(/^Kuru yonca/,0.8);set(/^Arpa/,0.9)}else{set(/^Mısır silajı/,t==="sut"?25:8);set(/^Arpa/,t==="sut"?8:6);set(/^Soya küspesi/,2)}
+     try{renderSeg();showPanels()}catch(e){}renderFarm();renderCmp()},[t,o]);await q.waitForTimeout(t==="yem"?700:300);
+    const d=await q.evaluate(()=>{var V=e=>e.offsetParent!==null,sp=null,out={cards:0,blk:0,miss:[],bad:[],txt:[],keys:[],sec:0,ov:0};
+     [...document.querySelectorAll('.rk')].filter(V).forEach(r=>{var K=OGRRKKEY(r);if(!K)return;sp=K.sp;out.cards++;var b=r.querySelector(':scope > details.ogrK');if(!b){out.miss.push(K.k);return}out.blk++;out.keys.push(K.k);b.open=true;
+      var tx=b.innerText;['Ne demek','Kritik değerler','Neden olur','Nasıl anlaşılır','Ne yapmalı','veteriner','Kaynak'].forEach(w=>{if(tx.indexOf(w)<0)out.txt.push(K.k+':'+w)});if(/NaN|undefined|Infinity/.test(tx))out.txt.push(K.k+':NaN');if(!b.querySelectorAll('table.ogrT tr').length)out.txt.push(K.k+':tablo')});
+     if(sp){var C=OGRCTX(sp);(OGRRKM[sp]||[]).forEach(a=>{var R=OGRRKROWS(a[1],C);if(!R.length||R.some(x=>x.bad))out.bad.push(a[1]+':'+R.filter(x=>x.bad).map(x=>x.n).join('/'))})}
+     var s=[...document.querySelectorAll('.ogrB[data-ogr=risk]')].filter(V);out.sec=s.length&&/Eşikler özet tablosu/.test(s[0].innerText)&&/Kartlar nasıl okunur/.test(s[0].innerText)&&s[0].querySelectorAll('tr.ogrG').length>0?1:0;
+     document.querySelectorAll('details.ogrP,details.ogrB').forEach(e=>e.open=true);out.w=document.documentElement.scrollWidth;out.ov=[...document.querySelectorAll('.ogrB table.ogrT')].filter(V).filter(t=>t.getBoundingClientRect().right>390.5).length;return out});
+    rk[t+(o.mode?'/'+o.mode:'')]=d;d.keys.forEach(k=>seen[k]=1)}
+   ok('Öğretici risk (V207): her ekranda (süt, kuru, düve, besi, küçükbaş 4 dönem, buzağı, çiftlik yemi) görünen her risk kartında "eşikler ve ne yapmalı" kutusu var; ne demek/kritik değerler/neden/belirti/ne yapmalı/veteriner/kaynak dolu; NaN yok',Object.values(rk).every(d=>d.cards>0&&d.blk===d.cards&&!d.miss.length&&!d.txt.length),JSON.stringify(Object.fromEntries(Object.entries(rk).map(([k,d])=>[k,d.blk+'/'+d.cards+' '+d.miss.join(',')+' '+d.txt.slice(0,3).join(',')]))));
+   ok('Öğretici risk: her risk türünün her eşiği programdan okunuyor (REF, dönem tablosu veya risk kodu; okunamayan eşik yok)',Object.values(rk).every(d=>!d.bad.length),JSON.stringify(Object.fromEntries(Object.entries(rk).map(([k,d])=>[k,d.bad]))));
+   const allK=await q.evaluate(()=>Object.keys(OGRRK));const unseen=allK.filter(k=>!seen[k]&&!['ygos','yuro','ymyco'].includes(k));
+   ok('Öğretici risk: örnek rasyonlarda risk türlerinin hepsi ekranda kutusuyla görüldü (yem: gossipol/idrar taşı/küf yalnız risk varken çıkar)',!unseen.length,unseen.join(','));
+   ok('Öğretici risk: her ekranda bölüm özeti (konu + eşikler özet tablosu + kart okuma notu) var',Object.values(rk).every(d=>d.sec===1),JSON.stringify(Object.fromEntries(Object.entries(rk).map(([k,d])=>[k,d.sec]))));
+   ok('Öğretici risk ve tablo kutuları açıkken 390 px taşma yok',Object.values(rk).every(d=>d.w<=390&&d.ov===0),JSON.stringify(Object.fromEntries(Object.entries(rk).map(([k,d])=>[k,d.w+'/'+d.ov]))));
+   /* gebelik toksemisi, idrar taşı vb. için ayrı: yem gossipol/idrar/küf kartları — rows doğrudan */
+   const ym=await q.evaluate(()=>{var C=OGRCTX("yem");return ['ygos','yuro','ymyco'].map(k=>{var R=OGRRKROWS(k,C);return k+':'+(R.length&&!R.some(x=>x.bad)?'ok':'X')}).join(',')});
+   ok('Öğretici risk: çiftlik yemi gossipol, idrar taşı, küf eşikleri koddan okunuyor',!/X/.test(ym),ym);
+   /* altın örnekler: süt sağmal — eşik REF'i ve risk kodunu izler, şimdiki değer ve ✓/⚠ doğru */
+   await q.click('#seg button[data-t="sut"]');await q.waitForTimeout(150);
+   const g=await q.evaluate(()=>{var o={};Object.assign(S.b,{mode:"lak",wk:4,dp:0,mun:20});S.feeds.forEach(x=>{x.on=false;x.kg=0});var set=(re,kg)=>{var x=S.feeds.filter(y=>re.test(y.n))[0];if(x){x.on=true;x.kg=kg}};set(/^Mısır silajı/,25);set(/^Arpa/,8);set(/^Soya küspesi/,2);renderSeg();showPanels();renderFarm();renderCmp();return 1});
+   await q.waitForTimeout(300);
+   const row=async(k,nm)=>q.evaluate(([k,nm])=>{var b=document.querySelector('.ogrK[data-ogr="rk-'+k+'"]');if(!b)return null;var tr=[...b.querySelectorAll('table.ogrT tr')].filter(t=>t.cells[0]&&t.cells[0].textContent.indexOf(nm)===0)[0];return tr?{th:tr.cells[1].innerHTML.replace(/<br>/g,' | ').replace(/&gt;/g,'>').replace(/&lt;/g,'<'),v:tr.cells[2].textContent,c:tr.cells[2].className}:null},[k,nm]);
+   const st0=await q.evaluate(()=>{var r=sutRisk();return {sta:r.m.sta,pe:r.m.pendf}});
+   const nS=await row('acid','Nişasta'),nP=await row('acid','Fiziksel'),mun=await row('fert','Süt üresi');
+   const expS=st0.sta>30?'no':st0.sta>26?'wa':'ok',expP=st0.pe<20?'no':st0.pe<22?'wa':'ok';
+   ok('Öğretici risk altın örnek: nişasta eşiği REF.staLak (%26 dikkat, %30 risk), şimdiki değer ve işaret doğru',nS&&/Dikkat: %26–30/.test(nS.th)&&/Risk: > %30/.test(nS.th)&&nS.v.indexOf(OGRFx(st0.sta,1))>=0&&nS.c===expS&&/^(✓|⚠)/.test(nS.v),JSON.stringify(nS)+' '+st0.sta);
+   ok('Öğretici risk altın örnek: peNDF eşiği REF.pendf (22/20), işaret doğru; MUN 20 → "⚠ 20 mg/dL" risk',nP&&/Normal: ≥ %22/.test(nP.th)&&/Risk: < %20/.test(nP.th)&&nP.c===expP&&mun&&mun.v==="⚠ 20 mg/dL"&&mun.c==="no"&&/Dikkat: 14–19 mg\/dL/.test(mun.th),JSON.stringify([nP,mun]));
+   await q.evaluate(()=>{window._pm=REF.pendf.min;REF.pendf.min=24;window._su=sutRisk;window.sutRisk=(0,eval)('('+sutRisk.toString().replace('if(m.fn<19)','if(m.fn<18)')+')');S.b.mun=10;renderCmp()});await q.waitForTimeout(300);
+   const nP2=await row('acid','Fiziksel'),fn2=await row('acid','Kaba yemden'),mun2=await row('fert','Süt üresi');
+   await q.evaluate(()=>{REF.pendf.min=window._pm;window.sutRisk=window._su;S.b.mun=0;renderCmp()});await q.waitForTimeout(250);
+   ok('Öğretici risk altın örnek: REF.pendf.min 24 yapılınca tablo "≥ %24" gösterir; risk kodunda kaba NDF 19→18 değişince tablo "< %18" gösterir; MUN 10 → ✓',nP2&&/Normal: ≥ %24/.test(nP2.th)&&fn2&&/Risk: < %18/.test(fn2.th)&&mun2&&mun2.c==="ok"&&/^✓/.test(mun2.v),JSON.stringify([nP2,fn2,mun2]));
+   /* değerlendirme tablosu: satır satır öğretici — değer/hedef tablonun kendisinden, REF değişince izler */
+   const tb=await q.evaluate(()=>{var o={};var t=document.querySelector('#cmp > table.c');var b=document.querySelector('.ogrB[data-ogr=analiz]');var P=b?[...b.querySelectorAll('details.ogrP')]:[];o.n=P.length;o.rows=t.rows.length-1;
+     var tr=[...t.rows].filter(r=>r.cells[0]&&/^Nişasta/.test(r.cells[0].textContent))[0],ps=P.filter(p=>/^Nişasta:/.test(p.querySelector('summary').textContent))[0];o.s=ps&&ps.querySelector('summary').textContent;o.cell=[tr.cells[1].textContent,tr.cells[2].textContent,tr.cells[3].className];
+     o.mk=ps&&ps.querySelector('summary span')?ps.querySelector('summary span').className:'';o.txt=b?b.innerText:'';o.parts=ps?['Ne demek','Düşükse','Yüksekse','Ne yapmalı','Kaynak'].every(w=>ps.textContent.indexOf(w)>=0):false;
+     o.x=document.querySelectorAll('.ogrB[data-ogr=tablo] details.ogrP').length;window._su2=REF.staLak.ust;REF.staLak.ust=31;renderCmp();return o});
+   await q.waitForTimeout(300);
+   const tb2=await q.evaluate(()=>{var b=document.querySelector('.ogrB[data-ogr=analiz]');var ps=[...b.querySelectorAll('details.ogrP summary')].filter(s=>/^Nişasta:/.test(s.textContent))[0];var r=ps&&ps.textContent;REF.staLak.ust=window._su2;renderCmp();return r});
+   await q.waitForTimeout(250);
+   ok('Öğretici tablo (V207): değerlendirme tablosunun her satırında dokununca açılan konu anlatımı (ne demek, düşük/yüksekse, ne yapmalı, kaynak); protein–mineral ayrıntı tablosunda da var',tb.n===tb.rows&&tb.parts&&tb.x>=8&&!/NaN|undefined/.test(tb.txt)&&/Konu:/.test(tb.txt),JSON.stringify({n:tb.n,rows:tb.rows,x:tb.x,parts:tb.parts}));
+   ok('Öğretici tablo altın örnek: nişasta satırı tablodaki değer, hedef ve ✓/⚠ ile aynı; REF.staLak.ust 31 yapılınca "hedef %20,0–31,0"',tb.s&&tb.s.indexOf(tb.cell[0])>=0&&tb.s.indexOf(tb.cell[1])>=0&&tb.mk===tb.cell[2]&&tb2&&/hedef %20,0–31,0/.test(tb2),JSON.stringify([tb.s,tb.cell,tb.mk,tb2]));
+   const dz=await q.evaluate(()=>{var re=/(monensin|propilen|tiamin|tylosin|kolin|antibiyotik|boroglukonat|oksitetrasiklin|penisilin|serum)[^.;]{0,50}\d+\s*(mg|g|mL|ml|IU|cc)\b/i;var bad=[];document.querySelectorAll('.ogrK,.ogrB[data-ogr=risk],.ogrB[data-ogr=analiz],.ogrB[data-ogr=tablo]').forEach(b=>{var t=b.textContent.replace(/Kaynak:.*$/,'');if(re.test(t))bad.push(t.match(re)[0])});
+     Object.keys(OGRRK).forEach(k=>{var D=OGRRK[k],t=[D.ne].concat(D.neden,D.bel,OGRVAL(D.yap),[D.vet]).join(' ');if(re.test(t))bad.push(k+':'+t.match(re)[0])});var h=reportHTML(),x=reportText();return {bad:bad,rep:/eşikler ve ne yapmalı|ogrP|ogrK|Eşikler özet|ölçüler ne demek/.test(h+x)}});
+   ok('Öğretici konu anlatımında ilaç dozu yok (ilaç/tedavi kararı veteriner hekimde); kutular rapora ve paylaşım metnine girmez',!dz.bad.length&&!dz.rep,JSON.stringify(dz));
+   await q.click('#ogrTgl');await q.waitForTimeout(250);
+   const offK=await q.evaluate(()=>document.querySelectorAll('.ogrK,.ogrP,table.ogrT').length);
+   await q.click('#ogrTgl');await q.waitForTimeout(300);
+   const onK=await q.evaluate(()=>document.querySelectorAll('.ogrK').length);
+   ok('Öğretici kapalı → risk/tablo konu kutuları yok; açınca geri gelir',offK===0&&onK>0,offK+' / '+onK);
+   await q.evaluate(s=>{S=JSON.parse(s);if(S.ym)ogrBind(S.ym);renderSeg();showPanels();renderFarm();renderCmp()},sv);}
   ok('Öğretici mod testlerinde JS hatası yok',!qe.length,qe.slice(0,3).join(' | '));
   await ctx.close();}
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
