@@ -623,6 +623,47 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Besi riskine göre çözüm de düğmenin altında; ana "Çözüm öner" sonucu eski yerine alır (V204)',bs.btn&&bs.under&&bs.txt&&bs.back,JSON.stringify(bs));}
  {const un=await E(()=>{var sv=JSON.stringify(S),o={};S.type='sut';Object.assign(S.b,{bw:650,mode:'lak',milk:35,wk:10});S.feeds.forEach(function(x){x.on=false;x.kg=0});[['Mısır silajı',25],['Kuru yonca',4],['Arpa',5],['Mısır tane',4],['Soya küspesi',3]].forEach(function(a){var x=S.feeds.filter(function(y){return y.n.indexOf(a[0])===0})[0];if(x){x.on=true;x.kg=a[1]}});renderSeg();showPanels();renderCmp();var r=carbRef();o.hi=r.undf?[+r.undf[0].toFixed(2),+r.undf[1].toFixed(2)]:null;o.txt=/≈1,95?–2,6 kg/.test(document.getElementById('cmp').innerText)||/≈2,0–2,6 kg/.test(document.getElementById('cmp').innerText);S.b.milk=20;o.lo=!carbRef().undf;S=JSON.parse(sv);renderSeg();showPanels();renderCmp();return o});
  ok('Sindirilemeyen NDF referansı (V205): 30 kg+ sütte günlük kg ≈ canlı ağırlığın %0,30–0,40’ı (650 kg → 1,95–2,6 kg); düşük verimde gösterilmez',un.hi&&un.hi[0]===1.95&&un.hi[1]===2.6&&un.txt&&un.lo,JSON.stringify(un));}
+ /* V206: Öğretici mod — tek anahtar "yemakil-ogretici" (ortak arayüz tercihi), tüm bölümlerde öğretici kutular, y.teach taşıma, rapora girmez, hesap değişmez */
+ {const OK_ALL=await E(()=>{var keys=OGR_A.map(a=>a[1]).concat(["tmr","risk"]),bad=keys.filter(k=>{var D=OGR(k);return !D||!D.t||!D.ne||!(D.adim&&D.adim.length)});var nm=/NaN|undefined/;var txt=keys.map(k=>JSON.stringify(OGR(k))).join(' ');return {bad:bad,nan:nm.test(txt),risk:OGRRISK.length}});
+  ok('Öğretici mod: her bölüm anahtarının metni var (ne işe yarar, adımlar), sayılarda NaN/undefined yok',!OK_ALL.bad.length&&!OK_ALL.nan&&OK_ALL.risk>=10,JSON.stringify(OK_ALL));
+  const ctx=await b.newContext({viewport:{width:390,height:844}});const q=await ctx.newPage();const qe=[];q.on('pageerror',e=>qe.push(e.message));
+  await q.goto('file://'+path.resolve(FILE));await q.waitForTimeout(500);
+  const fresh=await q.evaluate(()=>({k:localStorage.getItem('yemakil-ogretici'),on:document.body.classList.contains('ogr-on'),pr:document.getElementById('ogrTgl').getAttribute('aria-pressed'),h:document.getElementById('ogrTgl').getBoundingClientRect().height}));
+  ok('Öğretici mod: ilk kez açan kullanıcıda açık başlar ve "yemakil-ogretici"=1 yazılır; başlık düğmesi ≥ 32 px',fresh.k==="1"&&fresh.on&&fresh.pr==="true"&&fresh.h>=32,JSON.stringify(fresh));
+  const SEC={sut:"sutPanel",besi:"besiPanel",koyun:"koyunPanel",buzagi:"buzPanel",yem:"yemPanel",mikro:"mikroPanel"},vis={},w={};
+  for(const t of Object.keys(SEC)){await q.click('#seg button[data-t="'+t+'"]');await q.waitForTimeout(250);
+   await q.evaluate(t=>{if(!/^(yem|mikro)$/.test(t)){S.feeds.forEach(x=>{x.on=false;x.kg=0});var set=(re,kg)=>{var x=S.feeds.filter(y=>re.test(y.n))[0];if(x){x.on=true;x.kg=kg}};if(t==="buzagi"){set(/^Tam yağlı süt|^Süt ikame/,6);set(/^Arpa/,0.5)}else if(t==="koyun"){set(/^Kuru yonca/,0.8);set(/^Arpa/,0.9)}else{set(/^Mısır silajı/,t==="sut"?25:8);set(/^Arpa/,t==="sut"?8:6)}renderFarm();renderCmp()}},t);await q.waitForTimeout(250);
+   vis[t]=await q.evaluate(id=>{var V=e=>e.offsetParent!==null;var all=[...document.querySelectorAll('.ogrB')].filter(V).map(e=>e.dataset.ogr||'ic');var rk=[...document.querySelectorAll('.rk')].filter(V),risky=rk.filter(r=>{var em=r.querySelector('h3 em');return em&&/\b(wa|no)\b/.test(em.className)});return {own:!!document.querySelector('#'+id+' > details.ogrB[open]'),n:all.length,keys:all,risky:risky.length,lined:risky.filter(r=>r.querySelector('.ogrL')).length}},SEC[t]);
+   w[t]=await q.evaluate(()=>document.documentElement.scrollWidth)}
+  ok('Öğretici mod açık: her sekmede (Süt, Besi, Küçükbaş, Buzağı, Çiftlik yemi, Premiks) kendi açık "Öğretici ·" kutusu görünür',Object.values(vis).every(v=>v.own&&v.n>=3),JSON.stringify(vis));
+  ok('Öğretici mod açık: rasyon, analiz, risk, hastalık rehberi, aşı, çözüm asistanı, sıfırdan karışım, yedek, formül/premiks, etiket bölümlerinde kutu var',['rasyon','analiz','risk','hastalik','asi','cozum','sifir','yedek','hedef','kayit','tmr','saha'].every(k=>vis.sut.keys.includes(k))&&['ymplan','ympmx'].every(k=>vis.yem.keys.includes(k))&&['etiket','yemetiket'].every(k=>vis.mikro.keys.includes(k)),JSON.stringify(vis.sut.keys)+' | '+JSON.stringify(vis.yem.keys)+' | '+JSON.stringify(vis.mikro.keys));
+  ok('Öğretici mod açık: orta/yüksek her risk kartında "neden → sonuç → ne yapmalı" satırı var',Object.values(vis).every(v=>v.lined===v.risky)&&Object.values(vis).some(v=>v.risky>0),JSON.stringify(Object.fromEntries(Object.entries(vis).map(([k,v])=>[k,v.lined+'/'+v.risky]))));
+  ok('Öğretici mod açık: hiçbir sekme 390 px\'i taşmıyor',Object.values(w).every(x=>x<=390),JSON.stringify(w));
+  await q.click('#seg button[data-t="sut"]');await q.waitForTimeout(250);
+  const rep=await q.evaluate(()=>{var h=reportHTML(),t=reportText();return {h:/Öğretici ·|ogrB|ogrL/.test(h),t:/Öğretici/.test(t),still:document.querySelectorAll('#cmp .ogrB').length}});
+  ok('Öğretici kutular rapora ve paylaşım metnine girmez, ekranda kalır',!rep.h&&!rep.t&&rep.still>0,JSON.stringify(rep));
+  const m1=await q.evaluate(()=>JSON.stringify([metrics(curItems()),REQ()]));
+  await q.click('#ogrTgl');await q.waitForTimeout(250);
+  const off={};for(const t of Object.keys(SEC)){await q.click('#seg button[data-t="'+t+'"]');await q.waitForTimeout(250);off[t]=await q.evaluate(()=>document.querySelectorAll('.ogrB,.ogrL').length)}
+  await q.click('#seg button[data-t="sut"]');await q.waitForTimeout(250);
+  const offS=await q.evaluate(()=>({k:localStorage.getItem('yemakil-ogretici'),on:document.body.classList.contains('ogr-on'),yt:Y_def().teach,saved:/"teach"/.test(localStorage.getItem(KEY)||''),m:JSON.stringify([metrics(curItems()),REQ()])}));
+  ok('Öğretici mod kapalı: hiçbir sekmede öğretici kutu/satır yok; anahtar "0", y.teach=false, rasyon kaydına "teach" yazılmaz',Object.values(off).every(n=>n===0)&&offS.k==="0"&&!offS.on&&offS.yt===false&&!offS.saved,JSON.stringify(off)+' '+JSON.stringify(offS).slice(0,120));
+  ok('Öğretici mod hesaplamayı değiştirmez (açık/kapalı metrik ve ihtiyaç aynı)',m1===offS.m);
+  await q.reload();await q.waitForTimeout(500);
+  const per=await q.evaluate(()=>({k:localStorage.getItem('yemakil-ogretici'),n:document.querySelectorAll('.ogrB,.ogrL').length,pr:document.getElementById('ogrTgl').getAttribute('aria-pressed')}));
+  await q.evaluate(()=>{Y_def().teach=true});await q.waitForTimeout(200);
+  const yt=await q.evaluate(()=>({k:localStorage.getItem('yemakil-ogretici'),n:document.querySelectorAll('.ogrB').length}));
+  ok('Öğretici tercihi yeniden açılışta korunur; y.teach yazmak ortak anahtarı açar',per.k==="0"&&per.n===0&&per.pr==="false"&&yt.k==="1"&&yt.n>0,JSON.stringify(per)+' '+JSON.stringify(yt));
+  /* taşıma: eski kullanıcı (kayıtlı veri var, anahtar yok) → kapalı; eski kullanıcı y.teach=true → açık ve alan kayıttan silinir */
+  const data=await q.evaluate(()=>localStorage.getItem(KEY));
+  const mig=async(teach)=>{const c2=await b.newContext({viewport:{width:390,height:844}});const r=await c2.newPage();const re=[];r.on('pageerror',e=>re.push(e.message));await r.goto('file://'+path.resolve(FILE));
+   await r.evaluate(([d,tc])=>{localStorage.clear();var o=JSON.parse(d);o.ym=o.ym||{};if(tc)o.ym.teach=true;else delete o.ym.teach;localStorage.setItem(KEY,JSON.stringify(o))},[data,teach]);await r.reload();await r.waitForTimeout(500);
+   const o=await r.evaluate(()=>({k:localStorage.getItem('yemakil-ogretici'),on:document.body.classList.contains('ogr-on'),own:Object.keys(S.ym||{}).includes('teach'),yt:S.ym&&S.ym.teach,saved:/"teach"/.test(localStorage.getItem(KEY)||'')}));o.err=re.length;await c2.close();return o};
+  const mA=await mig(false),mB=await mig(true);
+  ok('Taşıma: kayıtlı verisi olan eski kullanıcıda öğretici kapalı başlar',mA.k==="0"&&!mA.on&&!mA.err,JSON.stringify(mA));
+  ok('Taşıma: Çiftlik yeminde öğretici açık olan (y.teach=true) kullanıcıda ortak anahtar açılır, teach alanı kayıttan kalkar, y.teach okunur',mB.k==="1"&&mB.on&&!mB.own&&mB.yt===true&&!mB.saved&&!mB.err,JSON.stringify(mB));
+  ok('Öğretici mod testlerinde JS hatası yok',!qe.length,qe.slice(0,3).join(' | '));
+  await ctx.close();}
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
  /* Bozuk kayıt: uygulama varsayılanlarla açılıyor */
  for(const bad of ['{"type":"sut","t":{},"feeds":[null]}','{"feeds":{"a":1},"t":{}}']){const q=await b.newPage({viewport:{width:390,height:844}});const qe=[];q.on('pageerror',e=>qe.push(e.message));await q.goto('file://'+path.resolve(FILE));await q.evaluate(v=>localStorage.setItem(KEY,v),bad);await q.reload();await q.waitForTimeout(500);const nb=await q.evaluate(()=>document.querySelectorAll('#seg button').length);ok('Bozuk kayıtla açılış hatasız: '+bad.slice(0,30),!qe.length&&nb>0,qe.join('|')+' seg='+nb);await q.evaluate(()=>localStorage.clear());await q.close()}

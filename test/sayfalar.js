@@ -397,6 +397,44 @@ if(path.basename(FILE)==='yemakil.html'){
    ok('Fiyat uyarıları: sayfadaki "Dikkat" kuralları sabah bildirimiyle birebir aynı (aynı veriyle tarayıcıda ve tools/gunluk_ozet.mjs\'te aynı maddeler: Arpa sınırı, ithal mısır yerliden ucuzladı, kepek +%6, Arpa Polatlı 3 ayın en düşüğü)',nd&&JSON.stringify(uy.dk)===JSON.stringify(nd)&&uy.dk.length>=4&&/^⚠ Arpa 15\.000/.test(uy.baslik),JSON.stringify(uy.dk).slice(0,400)+' | '+JSON.stringify(nd).slice(0,200));
    ok('Fiyat uyarıları: sayfa açılınca üstte "⚠ Dikkat" şeridi (sınır aşıldı, ithal–yerli, olağan dışı hareket); %2 kuralı: soya +%2,1 günlük var, çiğit −%1,9 yok; oynak ayçiçeği ve az işlem gören DDGS gizlenmiyor, "Şüpheli" satırında',uy.ilk==='fpDikkat'&&/⚠ Dikkat/.test(uy.serit)&&/sınırınızın \(15\.100\) altına indi/.test(uy.serit)&&/ithal artık yerli borsadan ucuz/.test(uy.serit)&&/Buğday kepeği: Gaziantep \+6,0%/.test(uy.serit)&&/Şüpheli \(güvenilir değil[^\n]*DDGS Gaziantep \+11,5%[^\n]*Ayçiçeği küsp\. Gaziantep \+33,3%/.test(uy.serit)&&/Soya fasulyesi: Adana \+2,1% \(günlük\)/.test(uy.serit)&&!/Çiğit[^\n]*−1,9%/.test(uy.serit),uy.serit.slice(0,400));
    ok('"Fiyat uyarılarım": hammadde + hangi fiyat (en ucuz borsa / borsa / ithal) + alt/üst TL/ton; boş sınır ve alt ≥ üst reddedilir; 14.000 eklenince kayıt fiyat-v1\'de (sayfanın save() sonrası da duruyor) ve Mısır Konya 14.000 şeride giriyor; silinince kayıttan çıkıyor; 390 px',/Fiyat uyarılarım/.test(uy.bolum)&&/şu an 15\.000/.test(uy.bolum)&&/sınır aşıldı/.test(uy.bolum)&&/en az birini/.test(uy.h1||'')&&/küçük olmalı/.test(uy.h2||'')&&!uy.h3&&JSON.stringify(uy.kay)===JSON.stringify([["Arpa","en ucuz",15100,null],["Mısır","Konya",14000,null]])&&/Mısır Konya 14\.000 TL\/ton: sınırınızın \(14\.000\) altına indi/.test(uy.serit2)&&uy.sil===0&&uy.w<=390,JSON.stringify({h:[uy.h1,uy.h2,uy.h3],kay:uy.kay,w:uy.w,sil:uy.sil}));}
+ /* Öğretici mod (kullanıcı isteği 2026-11-15): Fiyatlar ve Sipariş'te ortak tercih "yemakil-ogretici" (Rasyon ile aynı anahtar); her bölümde "Öğretici · …" katlanır kutular */
+ if(/window\.ogSet=/.test(html)&&(/window\.fpRender=/.test(html)||/window\.spRender=/.test(html))){const FP=/window\.fpRender=/.test(html),VK=FP?'fiyat-v1':'siparis-v1';
+  const VERI=FP?JSON.stringify({navlun:{KD:25},teklif:[]}):JSON.stringify({sip:{ls:[{id:1,no:'SP-2026-1',t:'2026-11-15',k:[{f:'basaran',ad:'Başaran Süt 19 Pelet',a:10}]}],cari:[{ad:'TEST CARİ'}]}});
+  const yeniSayfa=async(on)=>{const q=await b.newPage({viewport:{width:390,height:844}});const e=[];q.on('pageerror',x=>e.push(x.message));await q.route(/nominatim\.openstreetmap|project-osrm|raw\.githubusercontent/,r=>r.abort());if(on)await q.addInitScript(on);await q.goto('file://'+FILE);await q.waitForTimeout(500);return {q,e}};
+  const durum=q=>q.evaluate(()=>({ac:ogAcik(),cb:!!(document.getElementById('ogT')||{}).checked,blok:document.querySelectorAll('details.og').length,key:localStorage.getItem('yemakil-ogretici'),h:(document.getElementById('ogT')||{getBoundingClientRect:()=>({height:0})}).closest('label').getBoundingClientRect().height,bar:!!document.querySelector('h1 + #ogBar, h1 ~ #ogBar')}));
+  const V=k=>`(()=>{try{localStorage.setItem('${VK}',${JSON.stringify(VERI)})${k==null?'':`;localStorage.setItem('yemakil-ogretici','${k}')`}}catch(e){}})()`;
+  const K=k=>`(()=>{try{localStorage.setItem('yemakil-ogretici','${k}')}catch(e){}})()`;
+  const d1=await yeniSayfa(null),s1=await durum(d1.q);
+  const d2=await yeniSayfa(V(null)),s2=await durum(d2.q);
+  const d3=await yeniSayfa(V('1')),s3=await durum(d3.q);
+  const d4=await yeniSayfa(K('0')),s4=await durum(d4.q);
+  ok('Öğretici mod varsayılanı: anahtar yok + bu programda kayıt yok → açık (kutu işaretli, "Öğretici" blokları var, anahtar yazılmıyor); anahtar yok + kayıt var → kapalı; "1" → kayıt olsa da açık; "0" → kayıt olmasa da kapalı; düğme başlığın altında, dokunma alanı ≥ 32 px',s1.ac&&s1.cb&&s1.blok>0&&s1.key===null&&!s2.ac&&!s2.cb&&s2.blok===0&&s3.ac&&s3.blok>0&&!s4.ac&&s4.blok===0&&s1.bar&&s1.h>=32,JSON.stringify([s1,s2,s3,s4]));
+  [d2,d3,d4].forEach(d=>d.q.close());
+  const q=d1.q;
+  const t=await q.evaluate(async FP=>{var o={},W=ms=>new Promise(r=>setTimeout(r,ms)),cb=()=>document.getElementById('ogT');
+   var keys=()=>[].map.call(document.querySelectorAll('details.og'),d=>d.getAttribute('data-og')),ogn=()=>document.querySelectorAll('.ogn').length,acHepsi=()=>{document.querySelectorAll('details.og').forEach(d=>d.open=true)};
+   var tara=function(){var r={};if(FP){fpRender();r.ana={k:keys(),n:ogn(),serit:((document.getElementById('fpDikkat')||{}).innerText||'')};acHepsi();r.ana.w=document.documentElement.scrollWidth;window._fpAc={0:true};fpRender();acHepsi();r.ac={k:keys(),w:document.documentElement.scrollWidth};window._fpAc={};fpRender()}
+    else{['duz','gec','fl','fir'].forEach(function(v){window._spV=v;if(v==='duz'){window._spFS='basaran';window._spDk=true}spRender();acHepsi();r[v]={k:keys(),n:ogn(),w:document.documentElement.scrollWidth,txt:document.getElementById('spBody').innerText.length};window._spDk=false;window._spFS=null});window._spV='duz';spRender()}return r};
+   if(FP){var mk=(n,f0)=>{var a=[],d=new Date(Date.now()-(n-1)*864e5);for(var i=0;i<n;i++){a.push([d.toISOString().slice(0,10),f0(i)]);d.setUTCDate(d.getUTCDate()+1)}return a};
+    window.FPDATA={guncel:new Date().toISOString(),kaynak:'t',not:'',usdtry:mk(40,()=>40),urunler:[{ad:'Arpa',sembol:'FAO',merkez:'Karadeniz FOB (FAO)',seri:mk(40,i=>200+i)}],yurtici:{kaynak:'t',not:'',urunler:[{ad:'Arpa',borsa:'Konya',seri:mk(40,i=>15+i*0.01)}]}};
+    S.uyari=[{id:'og1',urun:'Arpa',borsa:'en ucuz',alt:null,ust:1000}]}
+   else{var c=spFirmalar();o.firma=c.length}
+   o.on=tara();
+   cb().click();await W(50);o.keyOff=localStorage.getItem('yemakil-ogretici');o.acOff=ogAcik();o.off=tara();
+   cb().click();await W(50);o.keyOn=localStorage.getItem('yemakil-ogretici');
+   /* açılan kutu yeniden çizimde açık kalır */
+   var d=document.querySelector('details.og');d.open=true;d.dispatchEvent(new Event('toggle'));var k=d.getAttribute('data-og');if(FP)fpRender();else spRender();o.acik=(document.querySelector('details.og[data-og="'+k+'"]')||{}).open===true;
+   if(FP){S.uyari=[];save()}
+   return o},FP);
+  await q.reload();await q.waitForTimeout(500);const sr=await durum(q);
+  const off=t.off,on=t.on;let tumu,gizli,dar,ogn;
+  if(FP){const B=['genel','dikkat','ozet','isaret','paylas','uyari','yuzde','grafik','teklif','navlun','alis'];tumu=B.every(k=>on.ana.k.indexOf(k)>=0)&&on.ac.k.length===on.ana.k.length;gizli=off.ana.k.length===0&&off.ana.n===0&&off.ac.k.length===0;dar=[on.ana.w,on.ac.w].every(w=>w<=390);
+   ogn=/sınırınızın[\s\S]*🎓 Neden: kendi koyduğunuz sınır aşıldı\. → Ne yapmalı/.test(on.ana.serit)&&!/🎓/.test(off.ana.serit)}
+  else{const B={duz:['sp-adim','sp-firma','sp-cari','sp-nak','sp-ozet'],gec:['sp-gec'],fl:['sp-fl','sp-ai'],fir:['sp-fir','sp-yedek']};tumu=Object.keys(B).every(v=>B[v].every(k=>on[v].k.indexOf(k)>=0));gizli=Object.keys(B).every(v=>off[v].k.length===0&&off[v].n===0&&off[v].txt<on[v].txt);dar=Object.keys(B).every(v=>on[v].w<=390);ogn=on.duz.n>=1}
+  ok('Öğretici mod açıkken '+(FP?'her bölümde (Dikkat, özet tablolar, * ve !, Paylaş, Fiyat uyarılarım, 1 hf–3 ay, grafik, gelen teklif, navlun, alış fiyatları)':'her sekmede (Sipariş gir: adımlar, ödeme/çuvallı-dökme, cari, nakliye, toplamlar-mesaj-PDF; Siparişler; Fiyat listesi + yapay zekâ anahtarı; Cariler ve ayarlar + yedek)')+' "Öğretici · …" blokları var, uyarının yanında "neden → ne yapmalı" satırı; kapalıyken hiçbiri yok',tumu&&gizli&&ogn,JSON.stringify(FP?[on.ana.k,on.ac.k,off.ana.k,on.ana.n,off.ana.n,on.ana.serit.slice(0,300)]:[on,off].map(r=>Object.keys(r).map(v=>[v,r[v].k,r[v].n]))));
+  ok('Öğretici mod düğmesi tercihi "yemakil-ogretici" anahtarına yazar ("0" kapalı, "1" açık; Rasyon ile ortak) ve yeniden açılışta korunur (kayıt olsa da açık kalır); açılan kutu yeniden çizimde açık kalır',t.keyOff==='0'&&t.acOff===false&&t.keyOn==='1'&&sr.ac&&sr.cb&&sr.blok>0&&t.acik,JSON.stringify([t.keyOff,t.acOff,t.keyOn,sr,t.acik]));
+  ok('Öğretici mod: tüm bloklar açıkken 390 px taşma yok, JS hatası yok; hesaplar değişmiyor (kutular yalnız açıklama)',dar&&!d1.e.length,JSON.stringify([FP?[on.ana.w,on.ac.w]:Object.keys(on).map(v=>on[v].w),d1.e.slice(0,3)]));
+  await q.close()}
  ok('390 px taşma yok',await E(()=>document.documentElement.scrollWidth)<=390);
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
  await b.close();done();
