@@ -1506,7 +1506,7 @@ function ogrScan(){if(!ogrOn()||typeof OGR!=="function")return;
  var ps=document.getElementById("psin");if(ps&&ps.closest)ogrPut(ps.closest("details"),"tmr","sum");
  Array.prototype.forEach.call(document.querySelectorAll("#cmp h2,#ymOut h2"),function(h){if(/riskleri/i.test(h.textContent))ogrPut(h,"risk","after")});
  Array.prototype.forEach.call(document.querySelectorAll(".rk"),function(r){if(r.querySelector(":scope > .ogrL"))return;var em=r.querySelector("h3 em");if(!em||!/\b(wa|no)\b/.test(em.className))return;var h3=r.querySelector("h3"),nm=h3?h3.firstChild&&h3.firstChild.textContent||h3.textContent:"",t=OGRRISK0;
-  for(var i=0;i<OGRRISK.length;i++)if(OGRRISK[i][0].test(nm)){t=OGRRISK[i][1];break}var p=document.createElement("p");p.className="ogrL";p.innerHTML='<b>Öğretici:</b> '+t;r.appendChild(p)})}
+  for(var i=0;i<OGRRISK.length;i++)if(OGRRISK[i][0].test(nm)){t=OGRRISK[i][1];break}var p=document.createElement("p");p.className="ogrL";p.innerHTML='<b>Öğretici:</b> '+t;if(h3&&h3.parentNode===r)r.insertBefore(p,h3.nextSibling);else r.appendChild(p)})}
 function ogrApply(){var on=ogrOn();document.body.classList.toggle("ogr-on",on);var b=document.getElementById("ogrTgl");if(b){b.setAttribute("aria-pressed",on?"true":"false");b.setAttribute("aria-label","Öğretici mod "+(on?"açık":"kapalı"))}
  if(on)ogrScan();else Array.prototype.forEach.call(document.querySelectorAll(".ogrB,.ogrL"),function(e){e.parentNode.removeChild(e)})}
 (function(){var b=document.getElementById("ogrTgl");if(b)b.onclick=function(){ogrSet(!ogrOn())};
