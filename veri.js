@@ -171,3 +171,427 @@ var OGRRISK=[
  [/büyüme|enerji açığı|kondisyon/i,"Enerji veya protein ihtiyaçtan az → büyüme yavaşlar, bağışıklık ve kondisyon düşer → süt/başlangıç yemi veya kesifi ihtiyaca göre artırın."]
 ];
 var OGRRISK0="Bu kartta sınırı aşan ölçü var → verim veya sağlık kaybı yapabilir → kartın \"Ne yapılmalı\" kısmını uygulayın.";
+
+/* ===== ÖĞRETİCİ · KONU ANLATIMI (V207): risk kartları ("eşikler ve ne yapmalı") ve rasyon değerlendirme tablosu (satır satır).
+   Tek kaynak: eşikler çalışma anında REF, dönem tabloları (PHT, KPT, xProf, CREQ…) veya risk fonksiyonunun KENDİ kodundan okunur:
+   OGRN("sutRisk","m.fn<#") → 19. Kod değişirse öğretici tablo da değişir; okunamayan eşik öz-denetimde yakalanır. Yeni sayı uydurulmaz.
+   İlaç dozu yazılmaz (hastalık rehberi kuralı); ilaç/tedavi kararı veteriner hekimindir. Yalnız görünüm: hesaplara dokunmaz, rapora girmez. ===== */
+var OGRNC={};
+function OGRN(fn,pat){try{var g=typeof window!=="undefined"?window[fn]:null;if(typeof g!=="function")return NaN;var c=OGRNC[fn];if(!c||c.f!==g)c=OGRNC[fn]={f:g,s:Function.prototype.toString.call(g)};
+ var re=new RegExp(pat.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace("#","(-?\\d+(?:\\.\\d+)?)")),m=c.s.match(re);return m?+m[1]:NaN}catch(e){return NaN}}
+function OGRF(x,d){if(typeof x!=="number"||!isFinite(x))return "—";var p=Math.pow(10,d===undefined?2:d),v=Math.round(x*p)/p,s=String(Math.abs(v)).split("."),i=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,".");return (v<0?"−":"")+i+(s[1]?","+s[1]:"")}
+function OGRU(x,u,d){var t=OGRF(x,d);return t==="—"?t:(u==="%"?"%"+t:t+(u||""))}
+function OGRG(f){try{var x=f();return typeof x==="number"&&isFinite(x)?x:null}catch(e){return null}}
+/* eşik satırı: n ad; y "ust" (yüksek kötü) / "alt" (düşük kötü) / "ara" (iki yönlü); a dikkat sınırı, r risk sınırı (null = yok; NaN = okunamadı → hata);
+   v şimdiki değer; o: u birim ("%" önde, diğerleri sonda), d ondalık, eq (sınır dahil), na (değer yoksa yazı), nt (ek not), th (hazır eşik yazısı) */
+function OGRRow(n,y,a,r,v,o){o=o||{};var u=o.u===undefined?"%":o.u,d=o.d===undefined?2:o.d,P=function(x){return OGRU(x,u,d)},E=!!o.eq,L=[],st="",H=function(x){return typeof x==="number"&&isFinite(x)};
+ var bad=(a!==null&&a!==undefined&&!H(a))||(r!==null&&r!==undefined&&!H(r));if(H(a)&&H(r)&&y!=="ara"&&OGRF(a,d)===OGRF(r,d))a=null;var RG=function(x,z){var p=OGRF(x,d)+"–"+OGRF(z,d);return u==="%"?"%"+p:p+(u||"")};
+ if(y==="ust"){if(H(a)&&H(r))L=["Normal: "+(E?"< ":"≤ ")+P(a),"Dikkat: "+RG(a,r),"Risk: "+(E?"≥ ":"> ")+P(r)];else if(H(r))L=["Normal: "+(E?"< ":"≤ ")+P(r),"Risk: "+(E?"≥ ":"> ")+P(r)];else if(H(a))L=["Normal: "+(E?"< ":"≤ ")+P(a),"Dikkat: "+(E?"≥ ":"> ")+P(a)];
+  if(H(v))st=(H(r)&&(E?v>=r:v>r))?"no":(H(a)&&(E?v>=a:v>a))?"wa":"ok"}
+ else if(y==="alt"){if(H(a)&&H(r))L=["Normal: "+(E?"> ":"≥ ")+P(a),"Dikkat: "+RG(r,a),"Risk: "+(E?"≤ ":"< ")+P(r)];else if(H(r))L=["Normal: "+(E?"> ":"≥ ")+P(r),"Risk: "+(E?"≤ ":"< ")+P(r)];else if(H(a))L=["Normal: "+(E?"> ":"≥ ")+P(a),"Dikkat: "+(E?"≤ ":"< ")+P(a)];
+  if(H(v))st=(H(r)&&(E?v<=r:v<r))?"no":(H(a)&&(E?v<=a:v<a))?"wa":"ok"}
+ else{L=["Normal: "+RG(a,r),"Dikkat: "+(E?"≤ ":"< ")+P(a)+" veya "+(E?"≥ ":"> ")+P(r)];if(H(v))st=(E?(v<=a||v>=r):(v<a||v>r))?"wa":"ok"}
+ if(o.th)L=o.th.slice();if(o.nt)L.push(o.nt);
+ return {n:n,th:L,v:H(v)?P(v):(o.na||"—"),st:H(v)?st:"",bad:bad,a:a,r:r,raw:H(v)?v:null}}
+var OGRVET="İlaç, serum ve doz kararı veteriner hekimindir; bu bölüm doz vermez.";
+/* ---- bağlam: kartın bulunduğu ekranın şimdiki değerleri (yalnız okunur; hesap fonksiyonları değiştirilmez) ---- */
+function OGRSP(el){if(el&&el.closest&&el.closest("#ymOut"))return "yem";var t=S.type;if(t==="sut")return isDry()?"kuru":isHf()?"duve":"sut";return t}
+function OGRCTX(sp){var C={sp:sp};try{
+ if(sp==="yem"){C.R=window.YRLAST||null;C.o=C.R?C.R.o:{};C.th=C.R&&C.R.th||{};C.sheep=!!(C.th.sheep);return C}
+ var it=sp==="buzagi"?cItems():curItems();C.m=metrics(it);var m=C.m;
+ if(sp==="sut"){C.r=sutRisk()||{};C.b=S.b;C.e=enBal();C.def=C.r.ratio>0?(1-C.r.ratio)*100:null;C.X=xProf()}
+ else if(sp==="kuru"){C.b=S.b;C.e=enBal();var sup=KL*fLv(m.meT)*m.meT;C.ratio=sup/C.e.req;C.def=(1-C.ratio)*100;C.R=refSut();var dm=m.dm_||0,alf=0;S.feeds.forEach(function(x){if(x.on&&x.kg>0&&/yonca/i.test(x.fam||x.n))alf+=x.kg*x.dm/100});C.alf=dm>0?alf/dm*100:null;C.dmr=C.R.dmi>0?dm/C.R.dmi*100:null}
+ else if(sp==="duve"){C.b=BA();C.P=PHT();var g=bGain(m.dmi,m.meT,m.cp*m.dmi*10,m);C.adg=Math.min(g.adg,g.adgp);C.pre=C.b.bw<0.55*C.b.fin}
+ else if(sp==="besi"){C.r=besiRisk()||{};C.b=BA();C.P=PHT();C.ph=BREQ().phase;var dd=0,D=0;it.forEach(function(o){D+=o.d;if(/DDGS|gluten|Melas|Vinas|Bira/i.test(o.x.fam||o.x.n))dd+=o.d});C.dd=D>0?dd/D*100:null}
+ else if(sp==="koyun"){C.P=KPT();C.k=K_def();C.KZ=kuzu();C.R=KREQ();C.g=kGain(m.dmi,m.meT,m.cp*m.dmi*10);C.cpr=m.ph>0?m.ca/m.ph:null;C.cf=it.filter(function(o){return CUF.test(o.x.fam||o.x.n)}).length}
+ else if(sp==="buzagi"){C.c=C_def();C.R=CREQ(m);C.g=cGain(m);C.W=C.R.W;C.lq=m.lql||0;C.adg=Math.min(C.g.adg,C.g.adgp)}
+ }catch(e){C.err=String(e)}return C}
+/* ---- risk kartları: ad, ne demek, eşik satırları (C = bağlam), neden, belirti, ne yapmalı, veteriner, kaynak ---- */
+var OGRRK={
+ acid:{ad:"Asidoz (SARA)",ne:"Rumende (işkembede) asit birikip pH'ın uzun süre düşmesidir. Çoğu zaman sessiz (subakut, SARA) geçer; süt yağı, yem tüketimi ve ayak sağlığı bozulur.",
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},V=OGRG,S_="sutRisk",n=V(function(){return rkNRC(m.fn)});return [
+   OGRRow("Fiziksel etkin lif (peNDF)","alt",REF.pendf.min,REF.pendf.kritik,V(function(){return m.pendf}),{d:1}),
+   OGRRow("Kaba yemden gelen NDF","alt",OGRN(S_,"else if(m.fn<#)"),OGRN(S_,"if(m.fn<#)"),V(function(){return m.fn}),{d:1}),
+   OGRRow("Toplam NDF","alt",null,V(function(){return rkNRC(m.fn)[1]}),V(function(){return m.ndf}),{d:1,nt:"(kaba NDF'ye göre değişir, NRC 2001)"}),
+   OGRRow("NFC (nişasta+şeker+pektin)","ust",V(function(){return rkNRC(m.fn)[2]-OGRN(S_,"nfc>nrc[2]-#")}),V(function(){return rkNRC(m.fn)[2]}),V(function(){return r.nfc}),{d:1}),
+   OGRRow("Nişasta","ust",REF.staLak.dikkat,REF.staLak.ust,V(function(){return m.sta}),{d:1,nt:"hedef %"+REF.staLak.hedef.join("–")}),
+   OGRRow("Rumende yıkılan nişasta","ust",REF.rfs.hedef,REF.rfs.ust,V(function(){return r.rfs}),{d:1}),
+   OGRRow("Kaba yem payı","alt",OGRN(S_,"else if(m.kaba<#)"),OGRN(S_,"if(m.kaba<#)"),V(function(){return m.kaba}),{d:0}),
+   OGRRow("Doymamış yağ yükü (RUFAL)","ust",OGRN(S_,"else if(ruf>#)"),OGRN(S_,"if(ruf>#)"),V(function(){return r.ruf}),{d:1}),
+   OGRRow("Süt yağı / protein","alt",OGRN(S_,"else if(fpr>0&&fpr<#)"),OGRN(S_,"if(fpr>0&&fpr<#)"),r.fpr>0?r.fpr:null,{u:"",na:"girilmedi"}),
+   OGRRow("DCAD","alt",REF.dcadLak.lo,null,V(function(){return m.dcad}),{u:" mEq/kg",d:0}),
+   OGRRow("THI (sıcak stresi)","ust",OGRN(S_,"if(thi>=#)add(A"),null,r.thi>0?r.thi:null,{u:"",d:0,eq:true,na:"sıcaklık girilmedi"})]},
+  neden:["Çok nişasta, özellikle hızlı yıkılan tahıl (arpa, buğday), rumende kısa sürede asite döner.","Etkili lif (uzun kıyımlı kaba yem) azsa inek az geviş getirir; tükürükle gelen doğal tampon azalır.","Doymamış yağ fazlası (tam yağlı soya, bitkisel yağ, DDGS) süt yağını düşürür; sıcak stresi geviş getirmeyi azaltır."],
+  bel:["Süt yağı düşer; yağ/protein oranı 1,0'ın altına iner.","Yem tüketimi günden güne dalgalanır; dinlenen ineklerin azı geviş getirir.","Dışkı gevşek, köpüklü, gaz kabarcıklı; içinde sindirilmemiş tane görülür.","Topallık ve tırnak sorunları artar."],
+  yap:function(){return ["Kaba yem NDF'sini %21–24'e, peNDF'i %"+REF.pendf.min+" üstüne çıkarın: uzun kıyımlı saman veya kuru ot (2–4 cm).","Nişastayı %"+REF.staLak.hedef.join("–")+" aralığına indirin; arpa/buğday yerine kırma mısır veya lifli enerji (pancar posası, kepek, soya kabuğu) kullanın.","Tampon: sodyum bikarbonat KM'nin %0,75–1'i; DCAD'ı +"+REF.dcadLak.lo+"…+"+REF.dcadLak.hi+" mEq/kg'a getirin.","Doymamış yağı azaltın; TMR'yi günde 2 kez verin, sık itin; rasyon değişimini 7–10 günde yapın.","Kartın \"Bu riske göre çözüm öner\" düğmesi rasyonu bu sınırlara göre düzeltir."]},
+  vet:"Topallık yaygınsa, inek yem yemiyorsa, ishal ve ateş varsa veteriner hekime danışın.",kay:function(){return RKSRC.acid}},
+ keto:{ad:"Ketozis",ne:"Doğumdan sonraki ilk haftalarda süt için gereken enerji yemden karşılanamayınca inek vücut yağını hızla eritir; karaciğer bu yağı işleyemez, kanda keton (BHB) yükselir, karaciğer yağlanır.",
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},b=C.b||{},V=OGRG,S_="sutRisk",l0=V(function(){return C.e.lim[0]});return [
+   OGRRow("Süt yağı / protein (ilk 100 gün)","ust",OGRN(S_,"else if(wk<=14&&fpr>#)"),OGRN(S_,"if(wk<=14&&fpr>#)"),r.fpr>0?r.fpr:null,{u:"",na:"girilmedi"}),
+   OGRRow("Enerji açığı (karşılanmayan pay)","ust",l0!==null?(1-l0)*100:NaN,OGRN(S_,"if(defi>#)")*100,C.def!==null?Math.max(0,C.def):null,{d:0}),
+   OGRRow("Kondisyon (ilk 8 hafta)","ara",OGRN(S_,"b.bcs>0&&b.bcs<=#)add(K"),OGRN(S_,"early&&b.bcs>=#)add(K"),b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi"}),
+   OGRRow("Doğumdan beri kondisyon kaybı","ust",OGRN(S_,"else if(bcsL>=#)add(K"),OGRN(S_,"if(bcsL>=#)add(K"),V(function(){return r.bcsL}),{u:" puan",eq:true,na:"doğumdaki kondisyon girilmedi"}),
+   OGRRow("Nişasta (taze inek)","alt",OGRN(S_,"else if(early&&m.sta<#)"),OGRN(S_,"if(early&&m.sta<#)"),V(function(){return m.sta}),{d:1}),
+   OGRRow("Metiyonin (% MP)","alt",REF.met.min,null,V(function(){return r.Q.met>0?r.Q.met:null}),{nt:"hedef %"+REF.met.hedef})]},
+  neden:["Doğumdan sonra süt verimi yem tüketiminden hızlı artar; aradaki enerji açığı vücut yağıyla kapanır.","Doğuma yağlı giren inek daha az yer, daha çok yağ eritir.","Yaşlı inek, sıcak stresi, düşük nişasta (glikoz öncülü az) ve bozuk (bütirik) silaj riski artırır."],
+  bel:["İştah düşer, önce kesif yemi bırakır; süt verimi düşer.","Hızlı zayıflama; dışkı sert ve kuru.","Nefeste ve sütte aseton (çürük elma) kokusu; bazen sinirsel belirtiler (yalanma, sendeleme).","Kesin tanı kan testiyle: BHB ≥ 1,2 mmol/L gizli, ≥ 3,0 klinik ketozis."],
+  yap:function(){return ["Taze inekte enerjiyi artırın ama nişastayı %"+REF.staLak.hedef.join("–")+" aralığında tutun; yem masası hiç boş kalmasın.","Kuru dönemde kondisyonu 3,0–3,5'te tutun; yakın dönemde enerjiyi kontrollü artırın.","Doğumdan sonraki 3–16. günlerde haftada 2 kez BHB testi yapın.","Bütirik asitli (kokulu) silajı taze ineğe vermeyin.","Korunmuş kolin ve korunmuş metiyonin seçenekleri kartın \"Ne yapılmalı\" kısmındadır."]},
+  vet:"İştahsız, hızla zayıflayan, aseton kokulu ya da sinirsel belirti gösteren inekte hemen veteriner hekim çağırın.",kay:function(){return RKSRC.keto}},
+ fert:{ad:"Döl tutma ve kızgınlık",ne:"İneğin doğumdan sonra zamanında kızgınlık göstermesi ve tohumlamada gebe kalmasıdır. Enerji açığı, fazla protein, iz mineral eksikliği ve sıcak stresi döl verimini düşürür.",
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},b=C.b||{},V=OGRG,S_="sutRisk",X=C.X||{},l0=V(function(){return C.e.lim[0]});return [
+   OGRRow("Enerji açığı","ust",l0!==null?(1-l0)*100:NaN,OGRN(S_,"defi>#?3:2")*100,C.def!==null?Math.max(0,C.def):null,{d:0}),
+   OGRRow("Süt üresi (MUN)","ust",OGRN(S_,"else if(b.mun>#)"),OGRN(S_,"if(b.mun>#)add(F,2"),b.mun>0?+b.mun:null,{u:" mg/dL",d:1,na:"girilmedi",nt:"hedef 8–14"}),
+   OGRRow("Ham protein (MUN girilmediyse)","ust",null,OGRN(S_,"if(m.cp>#)add(F"),V(function(){return m.cp}),{d:1}),
+   OGRRow("Doğumdan beri kondisyon kaybı","ust",OGRN(S_,"else if(bcsL>=#)add(F"),OGRN(S_,"if(bcsL>=#)add(F"),V(function(){return r.bcsL}),{u:" puan",eq:true,na:"doğumdaki kondisyon girilmedi"}),
+   OGRRow("Tohumlamada kondisyon","alt",null,OGRN(S_,"b.bcs<#)add(F"),b.bcs>0?+b.bcs:null,{u:"",na:"girilmedi"}),
+   OGRRow("Selenyum","alt",null,REF.seLak.lo,V(function(){return m.se}),{u:" mg/kg"}),
+   OGRRow("Çinko","alt",null,V(function(){return X.zn[0]}),V(function(){return m.zn}),{u:" mg/kg",d:0}),
+   OGRRow("Bakır","alt",null,V(function(){return X.cu[0]}),V(function(){return m.cu}),{u:" mg/kg",d:0}),
+   OGRRow("THI (sıcak stresi)","ust",OGRN(S_,"else if(thi>=#)add(F"),OGRN(S_,"if(thi>=#)add(F"),r.thi>0?r.thi:null,{u:"",d:0,eq:true,na:"sıcaklık girilmedi"})]},
+  neden:["Enerji açığında yumurtalık geç çalışır: ilk yumurtlama gecikir, kızgınlık zayıf veya sessiz geçer.","Fazla ya da rumende hızlı çözünen protein kanda ve sütte üreyi yükseltir; rahim ortamı bozulur, embriyo kaybı artar.","Selenyum, çinko, bakır eksikliği bağışıklığı ve sonun atılmasını bozar; sıcak stresi kızgınlığı kısaltır."],
+  bel:["Kızgınlık görülmüyor veya çok kısa; tekrar tekrar tohumlama.","Doğumdan sonra hızlı zayıflama; sonun atılamaması, rahim akıntısı.","Süt üresi (MUN) 14 mg/dL üstünde."],
+  yap:["Enerji dengesini kurun: doğumdan tohumlamaya kondisyon kaybı 0,5 puanı geçmesin (tohumlamada kondisyon ≥ 2,75).","Süt üresini 8–14 mg/dL'de tutun: proteini ihtiyaç kadar verin, enerji–protein dengesini sağlayın.","İz mineral ve vitaminleri (selenyum, çinko, bakır, mangan, iyot; E ve A vitamini) premiksle tamamlayın.","Fosforu ihtiyaç kadar verin; fazlası döl tutmayı artırmaz.","Sıcakta gölge, fan, duş; yemi serin saatlerde verin."],
+  vet:"Kızgınlık görülmeyen, sonu atılmayan, akıntılı ya da tekrar tekrar tohumlanan inekte veteriner muayenesi (rahim, yumurtalık) gerekir; hormon programları veteriner kararıdır.",kay:function(){return RKSRC.fert}},
+ humma:{ad:"Süt humması",ne:"Doğum sırasında ve hemen sonra kandaki kalsiyumun düşmesidir. Süt başlayınca kalsiyum ihtiyacı birden artar; vücut hazır değilse inek kaslarını kullanamaz, yatar.",
+  rows:function(C){var m=C.m||{},b=C.b||{},V=OGRG,F_="risks";return [
+   OGRRow("Kalsiyum (yakın dönem)","ust",OGRN(F_,"else if(caP>#)"),OGRN(F_,"if(caP>#&&"),V(function(){return m.ca})),
+   OGRRow("Fosfor","ust",null,OGRN(F_,"if(pP>#)"),V(function(){return m.ph})),
+   OGRRow("Potasyum","ust",OGRN(F_,"else if(MXm.k>#&&cl)"),OGRN(F_,"if(MXm.k>#)"),V(function(){return m.k})),
+   OGRRow("DCAD (yakın dönem)","ust",null,OGRN(F_,"MXm.dcad>#)"),V(function(){return m.dcad}),{u:" mEq/kg",d:0}),
+   OGRRow("Magnezyum","alt",null,OGRN(F_,"MXm.mg<#)"),V(function(){return m.mg})),
+   OGRRow("Yonca payı","ust",null,OGRN(F_,"if(alf>#)"),C.alf,{d:0}),
+   OGRRow("Kondisyon","ust",null,OGRN(F_,"if(b.bcs>=#){dk"),b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi"})]},
+  neden:["Doğumdan önce rasyonda çok kalsiyum varsa vücut kemikten kalsiyum çekmeye alışmaz; doğumda yetişemez.","Potasyum fazlası (yonca, gübreli çayır otu) kanı bazik yapar (yüksek DCAD); kalsiyum harekete geçmez.","Magnezyum eksikliği kalsiyumu düzenleyen hormonu bozar; yaşlı ve yağlı inekte risk yüksektir."],
+  bel:["Doğumdan hemen önce ve sonraki 2–3 günde: titreme, sendeleme, kulak ve ayaklar soğuk.","İnek göğüs üstü yatar, başını böğrüne kıvırır, kalkamaz.","Gizli hâlde: sonun atılamaması, abomazum kayması, ketozis ve mastitis artar."],
+  yap:["Doğuma son 3 haftada kalsiyumu %0,6, fosforu %0,35 altında tutun; yoncayı sınırlayın.","Potasyumu düşük kaba yem (saman, mısır silajı) kullanın; magnezyumu %0,35–0,40'a çıkarın.","Anyonik tuz (negatif DCAD) kullanılıyorsa kalsiyumu %1,0–1,5'e çıkarın, idrar pH'ını (6,0–6,8) izleyin.","Kondisyonu 3,25–3,75 arasında tutun."],
+  vet:"Yatan, kalkamayan inek ACİL durumdur: hemen veteriner hekim çağırın. Doğumda ağızdan kalsiyum verilecekse veterinere danışın.",kay:"NDSU; Merck Veterinary Manual; NASEM 2021; GfE."},
+ dketo:{ad:"Doğum sonrası ketozis",ne:"Kuru dönem beslemesinin doğumdan sonra çıkan sonucudur: yağlı ya da enerji açığındaki inek doğumdan sonra az yer, yağ eritir; ketozis ve karaciğer yağlanması gelişir.",
+  rows:function(C){var m=C.m||{},b=C.b||{},V=OGRG,F_="risks",e=C.e||{lim:[NaN,NaN]};return [
+   OGRRow("Kondisyon","ust",null,OGRN(F_,"if(b.bcs>=#){dk"),b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi",nt:"hedef 3,25–3,75"}),
+   OGRRow("Enerji açığı","ust",null,(1-e.lim[0])*100,C.def>0?C.def:C.def!==undefined?0:null,{d:0}),
+   OGRRow("Enerji fazlası","ust",null,(e.lim[1]-1)*100,C.def<0?-C.def:C.def!==undefined?0:null,{d:0}),
+   OGRRow("KM alımı / beklenen","alt",null,OGRN(F_,"dm<R.dmi*#)")*100,C.dmr,{d:0})]},
+  neden:["Doğuma yağlı giren inek doğumdan sonra iştahsız kalır, yağını hızla eritir.","Kuru dönemde enerji açığı ya da fazlası, yakın dönemde ani rasyon değişimi."],
+  bel:["Doğumdan sonra iştah ve süt düşüşü, hızlı zayıflama.","Nefeste aseton kokusu; sonun atılamaması ve abomazum kayması sıklaşır."],
+  yap:["Kuru dönemde kondisyonu 3,25–3,75 arasında tutun.","Yakın dönemde enerji yoğunluğunu kademeli artırın, yem masasını boş bırakmayın.","Doğumdan sonraki ilk 2 haftada BHB testi yaptırın."],
+  vet:"Doğumdan sonra yem yemeyen, aseton kokulu inekte veteriner hekim çağırın.",kay:"NASEM 2021; Roche 2009; Duffield 2009."},
+ dacid:{ad:"Asidoz (kuru dönem)",ne:"Kuru dönemde de rumen sağlığı korunmalıdır; yakın dönemde kesif yemi birden artırmak doğum sonrası asidoz ve abomazum kaymasına zemin hazırlar.",
+  rows:function(C){var m=C.m||{},V=OGRG,F_="risks",t=S.t.sut;return [
+   OGRRow("Kesif yem payı","ust",null,OGRN(F_,"D&&ks>#"),V(function(){return 100-m.kaba}),{d:0}),
+   OGRRow("Kaba yem payı","alt",null,t.kMin,V(function(){return m.kaba}),{d:0}),
+   OGRRow("Rasyon NDF","alt",null,t.NDFmin,V(function(){return m.ndf}),{d:1}),
+   OGRRow("Kaba yem NDF","alt",null,OGRN(F_,"fnM=D?#:"),V(function(){return m.fn}),{d:1}),
+   OGRRow("ADF","alt",null,OGRN(F_,"adM=D?#:"),V(function(){return m.adf}),{d:1})]},
+  neden:["Kesif yem rumende hızla asit yapar; kuru inek az yediği için kaba yem payı korunmalıdır.","Yakın dönemde kesifin birden artırılması rumeni hazırlıksız yakalar."],
+  bel:["Gevşek dışkı, yem tüketiminde dalgalanma.","Doğumdan sonra abomazum kayması, topallık."],
+  yap:["Kesif payını %50 altında tutun, yakın dönemde kademeli artırın.","Kaba yemi uzun kıyımlı verin."],vet:"Doğum sonrası iştahsızlık, sol tarafta 'ping' sesi (abomazum kayması) şüphesinde veteriner.",kay:"NASEM 2021; NRC 2001."},
+ ov:{ad:"Aşırı besleme / yağlanma",ne:"Düvenin gereğinden hızlı büyüyüp yağlanmasıdır; tohumlama öncesi hızlı artışta meme dokusuna yağ birikir, ileride süt verimi düşer.",
+  rows:function(C){var m=C.m||{},b=C.b||{},P=C.P||{me:[]},F_="renderCmpBesi";return [
+   OGRRow("Günlük artış (tohumlama öncesi)","ust",OGRN(F_,"else if(pre&&adg>#)"),OGRN(F_,"if(pre&&adg>#)"),C.pre?C.adg:null,{u:" g/gün",d:0,na:"tohumlama dönemini geçti"}),
+   OGRRow("Kondisyon","ust",null,OGRN(F_,"if(b.bcs>=#){ov"),b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi"}),
+   OGRRow("Enerji yoğunluğu (ME)","ust",null,P.me[1],OGRG(function(){return m.me}),{u:" Mcal/kg"})]},
+  neden:["Kesifi bol, enerjisi yüksek rasyon ve az kaba yem.","Tohumlama öncesi (olgun ağırlığın %55'ine kadar) meme hızla gelişir; fazla enerji meme dokusunu yağlandırır."],
+  bel:["Düve yaşına göre iri ve yuvarlak; sağrı ve kuyruk dibi yağlı.","İleride güç doğum, doğum sonrası ketozis, düşük ilk laktasyon verimi."],
+  yap:["Tohumlama öncesi artışı 700–900 g/gün aralığında tutun.","Enerji yoğunluğunu düşürün, kaba yemi artırın; kondisyonu 3,0–3,5 arasında hedefleyin."],vet:"Yağlı düvede doğumu veteriner hekimle planlayın.",kay:"NRC 2001; NASEM 2016."},
+ ug:{ad:"Yetersiz büyüme",ne:"Düvenin hedef hızda büyüyememesidir; ilk tohumlama ve ilk doğum gecikir, yetiştirme maliyeti artar.",
+  rows:function(C){var b=C.b||{},F_="renderCmpBesi";return [
+   OGRRow("Günlük artış","alt",null,OGRN(F_,"if(adg<#){ug"),C.adg,{u:" g/gün",d:0}),
+   OGRRow("Artış / hedef","alt",null,OGRN(F_,"if(adg<tgtA*#)")*100,b.adg>0&&C.adg!==undefined?C.adg/b.adg*100:null,{d:0})]},
+  neden:["Rasyonda enerji veya protein az; kaba yem kalitesi düşük.","İç parazit, ishal, solunum hastalığı büyümeyi durdurur."],
+  bel:["Yaşına göre küçük, kaba ve mat tüylü, karnı büyük düve.","Kızgınlık geç başlar."],
+  yap:["Enerji ve protein yoğunluğunu artırın.","Tohumlama için olgun ağırlığın %55'i (ör. Holstein ~375 kg, 13–15 ay) hedeflenir."],vet:"İshal, öksürük, kötü tüy ve iç parazit şüphesinde veteriner hekime danışın.",kay:"NRC 2001 (düve büyüme modeli)."},
+ hacid:{ad:"Asidoz (rumen asiditesi)",ne:"Rumende asit birikmesidir; kesifi bol, kaba yemi az rasyonda gelişir.",
+  rows:function(C){var m=C.m||{},P=C.P||{sta:[],kb:[]},V=OGRG,F_="renderCmpBesi";return [
+   OGRRow("Nişasta","ust",P.sta[1],OGRN(F_,"if(sta>#){a+=2"),V(function(){return m.sta}),{d:0}),
+   OGRRow("Kaba yem payı","alt",null,P.kb[0],V(function(){return m.kaba}),{d:0}),
+   OGRRow("Kaba yem NDF","alt",null,P.fn,V(function(){return m.fn}),{d:1}),
+   OGRRow("Kükürt","ust",null,OGRN(F_,"if(m.s>#){a+=1"),V(function(){return m.s}))]},
+  neden:["Çok nişasta (özellikle hızlı yıkılan buğday, arpa) rumende hızla asite döner.","Az kaba yem: az geviş, az tükürük (doğal tampon)."],
+  bel:["Gevşek, köpüklü dışkı; yem tüketiminde dalgalanma.","Topallık; besi sığırında kesimde karaciğer apsesi."],
+  yap:["Kaba yemi dönem alt sınırının üstüne çıkarın, nişastayı düşürün.","Kesif yemi kademeli (en az 3–4 haftada) artırın; uzun kıyımlı saman verin."],vet:"Yem yemeyen, ishalli, topal ya da yatan hayvanda veteriner.",kay:"NASEM 2016; Owens 1998."},
+ bacid:{ad:"Asidoz, karaciğer apsesi ve topallık",ne:"Yüksek kesifli besi rasyonunda rumenin asitleşmesidir. Asit rumen duvarını zedeler; mikroplar kana geçip karaciğerde apse yapar, tırnakta topallık görülür.",
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},P=C.P||{kb:[],sta:[]},V=OGRG,F_="besiRisk",km=P.kb[0],kh=C.ph===2?OGRN(F_,"ph===2?#:kMin-"):km-OGRN(F_,"kMin-#;");return [
+   OGRRow("Kaba yem payı","alt",km,kh,V(function(){return m.kaba}),{d:0}),
+   OGRRow("Fiziksel etkin lif (peNDF)","alt",P.fn+OGRN(F_,"P.fn+#)"),P.fn,V(function(){return m.pendf}),{d:1}),
+   OGRRow("Nişasta","ust",P.sta[1],OGRN(F_,"if(sta>#)"),V(function(){return m.sta}),{d:0}),
+   OGRRow("Rumende yıkılan nişasta","ust",OGRN(F_,"else if(rfs>#)"),OGRN(F_,"if(rfs>#)"),V(function(){return r.rfs}),{d:0}),
+   OGRRow("Buğday/arpa (KM'de)","ust",null,OGRN(F_,"if(wb>#)add(A"),V(function(){return r.wb}),{d:0}),
+   OGRRow("Ham yağ","ust",null,OGRN(F_,"if(m.ee>#)"),V(function(){return m.ee}),{d:1}),
+   OGRRow("Besideki gün","ust",null,OGRN(F_,"dof>#)add"),V(function(){return r.dof}),{u:" gün",d:0,na:"girilmedi"})]},
+  neden:["Kaba yemden kesife çok hızlı geçiş; rumen mikropları alışamaz.","Hızlı yıkılan tahıl (buğday, arpa) ve ince öğütme; az etkili lif.","Düzensiz yemleme: aç kalan hayvan sonra tek seferde çok yer."],
+  bel:["Yem tüketimi günden güne dalgalanır.","Gevşek, köpüklü, tane içeren dışkı.","Topallık; kesimde karaciğerde apse."],
+  yap:["Kaba yem: başlangıçta ≈ %40, geliştirmede en az %15, bitişte %8–12 (Holstein ve sıcakta üst uç); kıyılmış saman/kuru ot.","Kesife geçişi en az 4 adımda, 21–28 günde yapın.","Buğday/arpayı tahılın en çok %40'ı kadar kullanın, kaba kırın, mısırla karıştırın.","Yemi her gün aynı saatte verin, yemlik boş kalmasın. İyonofor (monensin) kullanımı veteriner reçetesiyle."],
+  vet:"Yem yemeyen, ishalli, topal ya da yatan hayvanda veteriner; antibiyotik kullanımı yalnız veteriner kararıyla.",kay:function(){return RKSRCB.bacid}},
+ bloat:{ad:"Şişme (timpani)",ne:"Rumende gazın dışarı atılamayıp birikmesidir. Baklagilde (yonca) ve çok ince öğütülmüş kesifte gaz köpük içinde kalır; sol karın şişer, hayvan nefes alamaz hâle gelebilir.",
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},V=OGRG,F_="besiRisk";return [
+   OGRRow("Baklagil (yonca/fiğ) payı","ust",OGRN(F_,"else if(leg>#)"),OGRN(F_,"if(leg>#)"),V(function(){return r.leg}),{d:0}),
+   OGRRow("Kaba yem payı (kesifli rasyonda)","alt",null,OGRN(F_,"if(kp<#&&sta>"),V(function(){return m.kaba}),{d:0,nt:"nişasta %"+OGRF(OGRN(F_,"&&sta>#)add(BL,2"),0)+" üstündeyse"}),
+   OGRRow("İnce öğütülmüş buğday/arpa","ust",null,OGRN(F_,"if(wb>#)add(BL"),V(function(){return r.wb}),{d:0})]},
+  neden:["Taze, ıslak yonca köpük yapan protein içerir.","İnce öğütülmüş tahıl ve az kaba yem 'besi şişmesi' yapar."],
+  bel:["Sol karın (açlık çukuru) davul gibi şişer.","Hayvan huzursuz, nefes darlığı, ağzı açık soluma; ağır vakada yere yatar."],
+  yap:["Baklagil payını KM'nin %50'sinin altında tutun; ıslak/taze yoncayı samanla seyreltin.","Tahılı ince öğütmeyin; kaba yem en az %10–15.","Şişmede hayvanı yürütün."],
+  vet:"Hızla şişen, nefes alamayan hayvan ACİL: hemen veteriner (sonda/trokar veteriner işidir).",kay:function(){return RKSRCB.bloat}},
+ uro:{ad:"İdrar taşı",ne:"İdrarda mineral kristallerinin taş oluşturup idrar yolunu tıkamasıdır. Erkek hayvanda üretra dar ve kıvrımlı olduğu için tıkanma sık ve tehlikelidir.",
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},V=OGRG,F_="besiRisk";return [
+   OGRRow("Ca:P oranı","alt",OGRN(F_,"else if(cpr<#)"),OGRN(F_,"if(cpr<#)"),V(function(){return r.cpr}),{u:"",d:1}),
+   OGRRow("Fosfor","ust",REF.beefP.dikkat,REF.beefP.ust,V(function(){return m.ph})),
+   OGRRow("Magnezyum","ust",null,OGRN(F_,"if(m.mg>#)"),V(function(){return m.mg})),
+   OGRRow("Tuz eşdeğeri","alt",OGRN(F_,"else if(salt<#)"),OGRN(F_,"if(salt<#)"),V(function(){return m.na/OGRN(F_,"m.na/#;")}))]},
+  neden:["Fosfor fazlası (kepek, DDGS, mısır gluteni) ve düşük Ca:P fosfat (struvit) taşı yapar.","Az su içme ve sıcakta su kaybı idrarı koyulaştırır.","Erkek hayvanda dar üretra."],
+  bel:["Sık sık ıkınma, damla damla veya hiç idrar yapamama; kuyruk sallama.","Penis ucundaki kıllarda kum gibi kristaller.","Karnın şişmesi (mesane yırtılırsa), iştahsızlık."],
+  yap:["Ca:P oranını en az 2:1'e getirin (kireç taşı); fosforu ihtiyaca indirin, kepek ve DDGS'yi sınırlayın.","Tuz: rasyonun %0,5–1'i; temiz, ılık su her zaman.","Amonyum klorür (idrarı asitleştirir) için danışmanınıza sorun."],
+  vet:"İdrar yapamayan erkek hayvan ACİL: saatler içinde mesane yırtılabilir; hemen veteriner.",kay:function(){return RKSRCB.uro}},
+ pem:{ad:"Beyin yumuşaması (PEM) – kükürt",ne:"Yem ve sudan gelen kükürt fazlası rumende zehirli gaza (hidrojen sülfür) dönüşür ve beyinde hasar yapar (polioensefalomalasi).",
+  rows:function(C){var r=C.r||{},b=C.b||{},V=OGRG,F_="besiRisk";return [
+   OGRRow("Toplam kükürt (yem + su)","ust",V(function(){return r.sMax}),V(function(){return r.sMax+OGRN(F_,"sTot>sMax+#)")}),V(function(){return r.sTot}),{nt:"üst sınır kaba yem payına göre değişir"}),
+   OGRRow("İçme suyunda sülfat","ust",null,OGRN(F_,"sw>#)add(PE"),b.so4>0?+b.so4:null,{u:" mg/L",d:0,na:"girilmedi"}),
+   OGRRow("Kükürtlü yan ürün (DDGS, gluten, melas…)","ust",null,OGRN(F_,"dd>#)add(PE"),C.dd,{d:0})]},
+  neden:["DDGS, mısır gluteni, melas/vinas, bira posası kükürtçe zengindir.","Sülfatlı içme suyu toplam kükürdü artırır; yüksek kesifli rasyonda sınır daha düşüktür."],
+  bel:["Körlük, baş bastırma, yıldız bakışı (başı yukarı kaldırma).","Titreme, sendeleme, yere yatıp kasılma."],
+  yap:["Toplam kükürdü kesifli rasyonda %0,3, kaba ağırlıklıda %0,5 altında tutun.","DDGS, mısır gluteni, melas ve bira posası payını azaltın; içme suyunun sülfatını ölçtürün.","Yüksek kükürtte bakırı 15–20 mg/kg KM'ye çıkarın."],
+  vet:"Belirti görülürse hemen veteriner: tiamin (B1) tedavisi veteriner işidir.",kay:function(){return RKSRCB.pem}},
+ heat:{ad:"Sıcak stresi",ne:"Sıcaklık ve nemin birlikte (THI) hayvanın vücut ısısını atma gücünü aşmasıdır; yem tüketimi ve artış düşer, ağır durumda ölüm olur.",
+  rows:function(C){var r=C.r||{},F_="besiRisk";return [
+   OGRRow("THI (sıcaklık-nem indeksi)","ust",OGRN(F_,"else if(thi>=#)add(H,2"),OGRN(F_,"else if(thi>=#)add(H,4"),r.thi>0?r.thi:null,{u:"",d:0,eq:true,na:"sıcaklık girilmedi",nt:"Acil: ≥ "+OGRF(OGRN(F_,"if(thi>=#)add(H,6"),0)})]},
+  neden:["Yüksek sıcaklık ve nem; gece serinliği yoksa hayvan ısısını atamaz.","Holstein ve siyah renkli hayvanlar daha duyarlıdır."],
+  bel:["Ağız açık, hızlı soluma, salya; gölgede ve su başında toplanma.","Yem tüketimi düşer; ağır durumda yere yatma."],
+  yap:function(){return (window.RKACTB&&RKACTB.heat)||[]},vet:"Yatan, soluk alamayan hayvanı hemen serinletin ve veteriner çağırın.",kay:function(){return RKSRCB.heat}},
+ kacid:{ad:"Asidoz (küçükbaş)",ne:"Rumende asit birikmesidir. Kuzu besisinde kesif yemin hızlı artırılmasıyla sık görülür.",
+  rows:function(C){var m=C.m||{},P=C.P||{sta:[],kb:[],me:[]},V=OGRG,F_="renderCmpK";return [
+   OGRRow("Nişasta","ust",P.sta[1],P.sta[1]+OGRN(F_,"P.sta[1]+#)"),V(function(){return m.sta}),{d:0}),
+   OGRRow("Kaba yem payı","alt",null,P.kb[0],V(function(){return m.kaba}),{d:0}),
+   OGRRow("Kaba yem NDF","alt",null,P.fn,V(function(){return m.fn}),{d:1}),
+   OGRRow("Enerji yoğunluğu (ME)","ust",null,P.me[1],V(function(){return m.me}),{u:" Mcal/kg"}),
+   OGRRow("Kükürt","ust",null,OGRN(F_,"if(m.s>#){a+=1"),V(function(){return m.s}))]},
+  neden:["Kesif yemin birden artırılması; ince öğütülmüş tahıl.","Az kaba yem; yüksek kükürtlü yem (melas, DDGS) beyin yumuşamasına da zemin hazırlar."],
+  bel:["İştahsızlık, ishal, karın şişkinliği, halsizlik.","Topallık; ağır vakada yatma."],
+  yap:["Kaba yemi dönem alt sınırının üstüne çıkarın; tahılı kaba kırın veya bütün verin.","Kesif yemi 15–20 günde kademeli artırın (300 g ile başlayıp 3 günde 200 g artırma); nişasta+şeker %35'i aşmasın."],
+  vet:"Yem yemeyen, ishalli, yatan hayvanda veteriner.",kay:"Teagasc; UC Davis; NRC 2007."},
+ entero:{ad:"Enterotoksemi",ne:"'Aşırı yeme hastalığı': bol kesif yiyen kuzunun bağırsağında Clostridium perfringens tip D çoğalır, zehir salgılar; ani ölüme yol açar.",
+  rows:function(C){var m=C.m||{},V=OGRG,F_="renderCmpK";return [
+   OGRRow("Kesif yem payı","ust",OGRN(F_,"else if(ks>#)"),OGRN(F_,"if(ks>#)"),V(function(){return 100-m.kaba}),{d:0}),
+   OGRRow("Nişasta","ust",null,OGRN(F_,"if(m.sta>#){en"),V(function(){return m.sta}),{d:0})]},
+  neden:["Ani ve bol kesif (nişasta) bağırsağa sindirilmeden geçer, mikrop çoğalır.","Aşısız sürü; yemlik boş kalıp birden doldurulması."],
+  bel:["En iyi gelişen, iri kuzu ani ölü bulunur.","Kıvranma, sinirsel belirtiler, bazen ishal."],
+  yap:["Kesif yeme başlamadan önce C. perfringens C–D (+ tetanoz) aşısını 2 doz (2–6 hafta ara) uygulayın.","Yem değişimini kademeli yapın; yemliği boş bırakıp doldurmayın; uzun kıyımlı kaba yem sürekli önde olsun."],
+  vet:"Ani ölümde ölüm nedenini veteriner/laboratuvarda doğrulatın; aşı programını veterinerle planlayın.",kay:"NRC 2007; Merck Veterinary Manual."},
+ kuro:{ad:"İdrar taşı (küçükbaş)",ne:"İdrarda mineral kristallerinin taş oluşturup idrar yolunu tıkamasıdır; erkek kuzu ve toklularda sık ve tehlikelidir.",
+  rows:function(C){var m=C.m||{},V=OGRG,F_="renderCmpK";return [
+   OGRRow("Ca:P oranı","alt",C.KZ?OGRN(F_,"cpr<#&&KZ"):OGRN(F_,"else if(cpr<#){u+=1"),OGRN(F_,"if(cpr<#){u+=3"),C.cpr,{u:"",d:1}),
+   OGRRow("Fosfor","ust",null,OGRN(F_,"if(m.ph>#){u"),V(function(){return m.ph}))]},
+  neden:["Tahıl ve kepekte fosfor fazla, kalsiyum azdır; Ca:P düşer.","Az su, erkek hayvanda dar idrar yolu."],
+  bel:["Ikınma, damla damla idrar, kuyruk sallama.","Penis ucunda kum; karın şişkinliği, iştahsızlık."],
+  yap:["Ca:P oranını 2:1'e getirin (kireç taşı); buğday ve kepek payını sınırlayın.","Tuz %0,5–1; su sürekli temiz ve bol.","Amonyum klorür için danışmanınıza sorun."],
+  vet:"İdrar yapamayan erkek kuzu ACİL: hemen veteriner.",kay:"NRC 2007; OSU; NMSU."},
+ kcu:{ad:"Bakır zehirlenmesi",ne:"Koyun bakırı atamaz, karaciğerde biriktirir; birikim haftalarca sessiz sürer, sonra birden kana karışıp kan hücrelerini parçalar (hemoliz), ölüm olur.",
+  rows:function(C){var m=C.m||{},V=OGRG;return [
+   OGRRow("Rasyon bakırı","ust",REF.sheepCu.pratik,REF.sheepCu.yasal,V(function(){return m.cu}),{u:" mg/kg",d:1,nt:"pratik üst sınır "+REF.sheepCu.ust}),
+   OGRRow("Sığır yemi / sığır premiksi","ust",null,0,C.cf,{u:" yem",d:0,th:["Normal: hiç yok","Risk: var"]})]},
+  neden:["Sığır yemi ve sığır premiksinde bakır koyun için fazladır.","Molibden düşükse az bakır bile birikir."],
+  bel:["Ani halsizlik, koyu (kahverengi) idrar, göz akı ve derinin sararması.","Birkaç gün içinde ölüm."],
+  yap:["Sığır yemini ve sığır premiksini koyuna vermeyin; koyuna özel yem ve mineral kullanın.","Premiks bakırını mutlaka girin."],
+  vet:"Sarılık ve koyu idrar görülürse hemen veteriner.",kay:function(){return REF.sheepCu.src}},
+ tox:{ad:"Gebelik toksemisi",ne:"Gebeliğin son haftalarında (özellikle ikiz/üçüz taşıyan) koyunun enerji ihtiyacı karşılanmayınca yağ eritmesi ve kanda keton birikmesidir.",
+  rows:function(C){var m=C.m||{},k=C.k||{},P=C.P||{me:[]},V=OGRG,F_="renderCmpK";return [
+   OGRRow("Enerji dengesi","alt",null,-OGRN(F_,"if(g.bal<-#){tx"),V(function(){return C.g.bal}),{u:" Mcal/gün"}),
+   OGRRow("Kondisyon","ara",OGRN(F_,"else if(k.bcs<=#){tx"),OGRN(F_,"if(k.bcs>=#){tx"),k.bcs>0?+k.bcs:null,{u:"",d:1,eq:true}),
+   OGRRow("Enerji yoğunluğu (ME)","alt",null,P.me[0],V(function(){return m.me}),{u:" Mcal/kg"}),
+   OGRRow("Kuzu sayısı","ust",null,OGRN(F_,"if(k.nl>=#){tx")-1,k.nl>0?+k.nl:null,{u:"",d:0,th:["Tek kuzu: daha düşük risk","İkiz ve üstü: ihtiyaç %50–80 artar"]})]},
+  neden:["Yavrular son 6 haftada hızla büyür; rumen sıkışır, koyun yeterince yiyemez.","Yağlı ya da çok zayıf koyun; düşük enerjili (saman ağırlıklı) rasyon."],
+  bel:["Sürüden ayrılma, yem yememe, sendeleme, körlük.","Diş gıcırdatma, titreme; yere yatma."],
+  yap:["Son 6 haftada kesif yemi kademeli 300–700 g/güne çıkarın (ikiz/üçüz için üst sınır).","Kaliteli kuru ot verin, saman payını düşürün; yemlik boyu 40 cm/koyun."],
+  vet:"Belirti gösteren koyunda hemen veteriner; tedavi veteriner işidir.",kay:"NRC 2007; Cannas 2004."},
+ khc:{ad:"Hipokalsemi (doğum öncesi)",ne:"Doğum öncesi ve sonrasında kandaki kalsiyumun düşmesidir; koyun titrer, yatar.",
+  rows:function(C){var m=C.m||{},P=C.P||{ca:[]},V=OGRG;return [
+   OGRRow("Kalsiyum","ara",P.ca[0],OGRN("renderCmpK","if(m.ca>#){hc"),V(function(){return m.ca}))]},
+  neden:["Rasyonda kalsiyum az; ya da çok yüksek kalsiyum doğumda düzenlemeyi zorlaştırır.","Son gebelikte yavru iskeleti kalsiyumu hızla çeker."],
+  bel:["Titreme, sendeleme, yatma; kabızlık."],
+  yap:["Rasyon kalsiyumunu %0,4–0,9 aralığında tutun; yoncayı tamamen kesmeyin; koyuna özel mineral premiks."],vet:"Yatan koyunda hemen veteriner.",kay:"NRC 2007."},
+ kmg:{ad:"Enerji açığı ve kuzu büyümesi",ne:"Emziren koyunun süt için gereken enerjiyi alamamasıdır; süt düşer, kuzu yavaş büyür, koyun zayıflar.",
+  rows:function(C){var m=C.m||{},P=C.P||{me:[]},R=C.R||{},V=OGRG,F_="renderCmpK";return [
+   OGRRow("Enerji dengesi","alt",null,-OGRN(F_,"if(g.bal<-#){mg"),V(function(){return C.g.bal}),{u:" Mcal/gün"}),
+   OGRRow("Enerji yoğunluğu (ME)","alt",null,P.me[0],V(function(){return m.me}),{u:" Mcal/kg"}),
+   OGRRow("Ham protein","alt",null,V(function(){return R.cp-OGRN(F_,"if(m.cp<R.cp-#){mg")}),V(function(){return m.cp}),{d:1})]},
+  neden:["İlk 8 haftada süt verimi en yüksektir; ikiz emzirende ihtiyaç daha büyüktür.","Düşük kaliteli kaba yem tüketimi sınırlar."],
+  bel:["Kuzular aç, sürekli meme arar; artış düşük.","Koyun hızla zayıflar."],
+  yap:["Kesif yemi kuzu sayısına göre 500–1000 g/güne çıkarın; kaliteli kaba yem verin.","Kondisyon kaybı 0,5 puanı geçmesin."],vet:"Memede sertlik, kızarıklık (mastitis) varsa veteriner.",kay:"NRC 2007."},
+ khc2:{ad:"Hipokalsemi / mineral",ne:"Laktasyonda sütle çok kalsiyum ve fosfor çıkar; rasyon karşılamazsa kan kalsiyumu düşer, verim azalır.",
+  rows:function(C){var m=C.m||{},P=C.P||{ca:[],p:[]},V=OGRG;return [
+   OGRRow("Kalsiyum","alt",null,P.ca[0],V(function(){return m.ca})),
+   OGRRow("Fosfor","alt",null,P.p[0],V(function(){return m.ph}))]},
+  neden:["Mineralsiz ya da yanlış premiks; kalsiyumu düşük kaba yem."],bel:["Titreme, halsizlik, süt düşüşü."],
+  yap:["Laktasyon rasyonunda Ca %0,4–0,9, P %0,27–0,45; koyuna özel mineral premiks kullanın."],vet:"Yatan koyunda hemen veteriner.",kay:"NRC 2007."},
+ kcz:{ad:"Kondisyon ve döl verimi",ne:"Koyunun koç katımına uygun kondisyonda (ne zayıf ne yağlı) girmesidir; kondisyon ikiz oranını ve gebe kalmayı belirler.",
+  rows:function(C){var k=C.k||{},V=OGRG,F_="renderCmpK";return [
+   OGRRow("Enerji dengesi","ara",-OGRN(F_,"if(g.bal<-#){cz"),OGRN(F_,"if(g.bal>#){cz"),V(function(){return C.g.bal}),{u:" Mcal/gün"}),
+   OGRRow("Kondisyon","alt",null,OGRN(F_,"if(k.bcs<=#){cz"),k.bcs>0?+k.bcs:null,{u:"",d:1,eq:true,nt:"koç katımı öncesi 2,5–3,5"})]},
+  neden:["Enerji açığı kondisyon kaybettirir; fazlası yağlandırır, döl verimi düşer."],bel:["Zayıf koyunda kızgınlık gecikir, tek kuzu; yağlı koyunda güç doğum."],
+  yap:["Koç katımından 3 hafta önce başlayıp 3 hafta sonrasına kadar flushing (günlük 250–500 g tahıl veya kaliteli mera).","Kondisyonu 3–3,5'te tutun."],vet:"Sürüde düşük gebelik oranında veteriner muayenesi.",kay:"NRC 2007."},
+ cold:{ad:"Soğuk / ısı stresi",ne:"Buzağı soğukta vücut ısısını korumak için enerji harcar; bu enerji büyümeden gider. Sıcakta su kaybı ve süt bozulması sorun olur.",
+  rows:function(C){var c=C.c||{},R=C.R||{},F_="renderCmpC";return [
+   OGRRow("Ahır sıcaklığı (soğuk)","alt",null,R.lct,c.temp!==undefined&&c.temp!==""?+c.temp:null,{u:" °C",d:0,nt:"alt kritik sıcaklık: 3 haftadan küçükte 15 °C, büyükte 5 °C"}),
+   OGRRow("Ahır sıcaklığı (sıcak)","ust",null,OGRN(F_,"if(c.temp>=#){cs"),c.temp!==undefined&&c.temp!==""?+c.temp:null,{u:" °C",d:0,eq:true})]},
+  neden:["Alt kritik sıcaklığın altında her derece için enerji ihtiyacı artar.","Islak altlık, cereyan; yeni doğanın yağ deposu azdır."],
+  bel:["Titreme, tüylerin kabarması, kambur duruş.","Büyüme durur; ishal ve zatürre sıklaşır."],
+  yap:["Soğukta süt miktarını veya ikame yoğunluğunu artırın (her 5 °C için yaklaşık +50 g toz), üçüncü öğün ekleyin.","Ilık su, kuru ve derin altlık, buzağı yeleği; sıcakta gölge, taze su, sütü serin saatlerde verin."],
+  vet:"Halsiz, emmeyen, ateşli ya da hızlı soluyan buzağıda veteriner.",kay:"NASEM 2021."},
+ abo:{ad:"Abomazum şişmesi / sindirim bozukluğu",ne:"Bir öğünde fazla, soğuk ya da düzensiz verilen sütün şirdende (abomazum) birikip gaz yapmasıdır; ishal ve şişkinlik görülür.",
+  rows:function(C){var c=C.c||{},F_="renderCmpC",pm=c.meals>0?C.lq/c.meals:null;return [
+   OGRRow("Öğün başına süt","ust",OGRN(F_,"else if(perMeal>#&&c.age"),OGRN(F_,"if(perMeal>#){ab"),C.W?null:pm,{u:" L",d:1,na:"sütten kesilmiş",nt:"dikkat sınırı 2 haftadan küçük buzağı için"}),
+   OGRRow("Günlük öğün sayısı","alt",null,OGRN(F_,"if(c.meals<#){ab"),C.W?null:+c.meals,{u:"",d:0,na:"sütten kesilmiş"}),
+   OGRRow("Günlük süt / canlı ağırlık (2 öğünde)","ust",null,OGRN(F_,"lq>#*c.bw&&c.meals")*100,C.W||!(c.bw>0)?null:C.lq/c.bw*100,{d:0,na:"sütten kesilmiş"})]},
+  neden:["Öğün başına 4 L'den fazla süt şirdeni zorlar.","İkame tozunun yanlış oranı, değişen sıcaklık, düzensiz öğün saati; kirli ekipman."],
+  bel:["Sağ karında şişkinlik, çalkantı sesi; kolik (karnına tekme).","İshal, emmeme, halsizlik."],
+  yap:["Öğün başına en çok 3–4 L; ikame sabit oranda (%12,5–15), 39–40 °C ve aynı saatlerde.","Emzikle yavaş içirin; ekipmanı temiz tutun.","İshalde sütü kesmeyin; elektroliti sütten 2–4 saat sonra ayrı verin."],
+  vet:"Şişkin, emmeyen, gözü çökmüş (susuz) buzağıda hemen veteriner.",kay:"NASEM 2021; Merck Veterinary Manual."},
+ wacid:{ad:"Sütten kesim asidozu",ne:"Sütten kesilen buzağının rumeni katı yeme yeni alışırken, nişastası yüksek ve ince öğütülmüş yemle asitleşmesidir.",
+  rows:function(C){var m=C.m||{},V=OGRG,F_="renderCmpC";return [
+   OGRRow("Katı yem nişastası (kesilmiş)","ust",null,OGRN(F_,"if(m.ssta>#&&hiS)"),V(function(){return m.sdm>0&&C.W?m.ssta:null}),{d:0,na:C.W?"katı yem yok":"sütten kesimde değerlendirilir"}),
+   OGRRow("Kaba yem, katı içinde (kesilmiş)","alt",null,OGRN(F_,"if(m.skb<#&&hiS)"),V(function(){return m.sdm>0&&C.W?m.skb:null}),{d:0,na:C.W?"katı yem yok":"sütten kesimde değerlendirilir"}),
+   OGRRow("Katı yem NDF","alt",null,OGRN(F_,"if(m.sndf<#){ac"),V(function(){return m.sdm>0?m.sndf:null}),{d:1,na:"katı yem yok"})]},
+  neden:["Arpa ve buğday rumen pH'ını mısır ve yulaftan daha hızlı düşürür.","Hiç kuru ot verilmemesi; sütün bir günde kesilmesi."],
+  bel:["Yem yemede dalgalanma, gevşek dışkı.","Kıl yeme, yalanma, büyümede duraklama."],
+  yap:["Başlangıç yemi kaba öğütülmüş veya tekstürlü olsun; nişasta %35'i aşmasın.","Kesilmiş buzağıya %5–10 kuru ot verin; sütü son 1–2 haftada kademeli azaltın."],vet:"İshal ve iştahsızlık sürerse veteriner.",kay:"NASEM 2021; Penn State."},
+ cgr:{ad:"Yetersiz büyüme / bağışıklık",ne:"Buzağının hedef hızda büyümemesi ve hastalığa açık hâle gelmesidir; ilk 2 ayda hedef, doğum ağırlığını iki katına çıkarmaktır.",
+  rows:function(C){var c=C.c||{},m=C.m||{},R=C.R||{},F_="renderCmpC";return [
+   OGRRow("Artış / hedef","alt",null,OGRN(F_,"if(adg<c.adg*#){gr")*100,c.adg>0&&C.adg!==undefined?C.adg/c.adg*100:null,{d:0}),
+   OGRRow("Süt / canlı ağırlık","alt",null,OGRN(F_,"if(!W&&lq<#*c.bw&&c.age<42&&sd<0.5){gr")*100,C.W||!(c.bw>0)?null:C.lq/c.bw*100,{d:0,na:"sütten kesilmiş",nt:"büyüme için %15–20"}),
+   OGRRow("Sıvı (süt) KM","alt",null,R.minLq,C.W?null:OGRG(function(){return m.lqd||0}),{u:" kg",na:"sütten kesilmiş",nt:"doğum ağırlığının %1,5'i"})]},
+  neden:["Az süt, geç başlanan başlangıç yemi, yetersiz ağız sütü.","Soğuk, ishal ve koksidiyoz büyümeyi durdurur."],
+  bel:["Doğum ağırlığının iki katına 56–60 günde ulaşamama.","Kaba tüy, ishal, öksürük."],
+  yap:["Süt miktarını canlı ağırlığın %15–20'sine çıkarın; başlangıç yemi ve suyu ilk haftadan önde tutun.","Ağız sütü: doğumdan sonra ilk 6 saatte 4 L."],
+  vet:"3 haftadan sonra kanlı ishal (koksidiyoz) için koruyucu programı veterinere danışın.",kay:"NASEM 2021; NAHMS 2014."},
+ yacid:{ad:"Asidoz (kesif yem)",ne:"Kesif yemin kendisinin rumeni asitleştirme gücüdür; hızlı yıkılan tahıl ve tampon eksikliği riski artırır. Asıl riski kaba yemle birlikte toplam rasyon belirler.",
+  rows:function(C){var o=C.o||{},t=C.th||{},F_="yRiskEval";return [
+   OGRRow("Rumende yıkılan nişasta","ust",t.RF?t.RF[0]:NaN,t.RF?t.RF[1]:NaN,OGRG(function(){return o.rfs}),{d:0}),
+   OGRRow("Buğday/arpa payı","ust",t.WB?t.WB[0]:NaN,t.WB?t.WB[1]:NaN,OGRG(function(){return o.wb}),{d:0}),
+   OGRRow("Tampon (sodyum bikarbonat)","alt",null,OGRN(F_,"o.bik<#)"),t.milk&&o.sta>OGRN(F_,"o.sta>#&&o.bik")?OGRG(function(){return o.bik}):null,{na:"gerekmiyor (sağmal değil veya nişasta düşük)",nt:"sağmal yemde, nişasta %"+OGRF(OGRN(F_,"o.sta>#&&o.bik"),0)+" üstündeyse"})]},
+  neden:["Buğday, arpa, tritikale rumende hızla yıkılır.","Tamponsuz sağmal kesif yemi; tek öğünde çok kesif."],bel:["Süt yağı düşer, dışkı gevşer, topallık artar."],
+  yap:function(){return (window.YACT&&YACT.yacid)||[]},vet:"Sürüde topallık ve ishal yaygınsa veteriner.",kay:function(){return YSRC.yacid}},
+ ynpn:{ad:"Üre (NPN) zehirlenmesi",ne:"Üre rumende hızla amonyağa döner; nişasta yetersizse ya da fazla verilirse amonyak kana geçer, zehirlenme olur.",
+  rows:function(C){var o=C.o||{},F_="yRiskEval";return [
+   OGRRow("Üre (kesif yemde)","ust",OGRN(F_,"else if(o.urea>#)add('ynpn',2"),OGRN(F_,"else if(o.urea>#)add('ynpn',4"),OGRG(function(){return o.urea}),{d:1,nt:"buzağı ve kuzu yeminde yasak"}),
+   OGRRow("Nişasta (üre varsa)","alt",null,OGRN(F_,"o.urea>0&&o.sta<#)"),OGRG(function(){return o.urea>0?o.sta:null}),{d:0,na:"üre yok"})]},
+  neden:["Fazla, homojen karışmamış ya da alıştırmadan verilen üre.","Az nişasta: amonyak bakteri proteinine dönüşemez."],
+  bel:["Yemden 20–60 dk sonra titreme, salya, sendeleme, karın ağrısı.","Şişme, kasılma; hızlı ölüm."],
+  yap:function(){return ((window.YACT&&YACT.ynpn)||[]).filter(function(t){return !/sirke/i.test(t)})},vet:"Belirti görülürse hemen veteriner.",kay:function(){return YSRC.ynpn}},
+ ygos:{ad:"Gossipol (pamuk küspesi)",ne:"Pamuk küspesi ve tohumunda bulunan gossipol zehirli bir maddedir; genç hayvanda kalbe, erkekte sperme zarar verir.",
+  rows:function(C){var o=C.o||{},t=C.th||{},F_="yRiskEval";return [
+   OGRRow("Serbest gossipol (tahmini)","ust",t.GL*OGRN(F_,"fg>GL*#)"),t.GL,OGRG(function(){return o.fg}),{u:" mg/kg",d:0}),
+   OGRRow("Pamuk küspesi (sağmal kesifte)","ust",null,OGRN(F_,"milk&&o.cot>#)"),OGRG(function(){return o.cot}),{d:0})]},
+  neden:["Yüksek pamuk küspesi/tohumu payı; analizsiz parti.","Rumeni gelişmemiş genç hayvan gossipolü bağlayamaz."],
+  bel:["Genç hayvanda solunum güçlüğü, ani ölüm (kalp).","Damızlık erkekte döl veriminde düşme."],
+  yap:function(){return (window.YACT&&YACT.ygos)||[]},vet:"Ani ölüm veya solunum güçlüğünde veteriner.",kay:function(){return YSRC.ygos}},
+ yuro:{ad:"İdrar taşı (erkek hayvan)",ne:"Erkek besi hayvanında yemdeki fosfor fazlası ve düşük Ca:P oranı idrar yolunda taş yapar.",
+  rows:function(C){var o=C.o||{},F_="yRiskEval";return [
+   OGRRow("Ca:P oranı","alt",OGRN(F_,"else if(o.cpr<#)add('yuro'"),OGRN(F_,"if(o.cpr<#)add('yuro',3"),OGRG(function(){return o.cpr}),{u:"",d:1}),
+   OGRRow("Fosfor","ust",null,OGRN(F_,"if(o.ph>#)add('yuro'"),OGRG(function(){return o.ph})),
+   OGRRow("Tuz eşdeğeri","alt",null,OGRN(F_,"if(o.salt<#)add('yuro'"),OGRG(function(){return o.salt})),
+   OGRRow("Amonyum klorür (erkek kuzu)","alt",null,OGRN(F_,"sheep&&o.nh4<#)"),C.sheep?OGRG(function(){return o.nh4}):null,{na:"kuzu yemi değil"})]},
+  neden:["Kepek, DDGS, gluten fazlası; az kireç taşı; az tuz ve su."],bel:["Ikınma, damla damla idrar, kuyruk sallama."],
+  yap:function(){return (window.YACT&&YACT.yuro)||[]},vet:"İdrar yapamayan erkek hayvan ACİL: hemen veteriner.",kay:function(){return YSRC.yuro}},
+ ymyco:{ad:"Küf ve mikotoksin (aflatoksin)",ne:"Nemli depolanan mısır, pamuk küspesi, DDGS gibi hammaddelerde küf mantarlarının ürettiği zehirlerdir; aflatoksin süte geçer (M1).",
+  rows:function(C){var o=C.o||{},t=C.th||{},F_="yRiskEval";return [
+   OGRRow("Aflatoksin riskli hammadde payı","ust",t.MY?t.MY[0]:NaN,t.MY?t.MY[1]:NaN,OGRG(function(){return o.myco}),{d:0}),
+   OGRRow("Nem","ust",100-OGRN(F_,"else if(o.dmPct<#)"),100-OGRN(F_,"if(o.dmPct<#)add('ymyco',2"),OGRG(function(){return 100-o.dmPct}),{d:1}),
+   OGRRow("Aflatoksin B1 (analiz)","ust",null,null,null,{na:"analizle ölçülür",th:["Sağmal hayvan, buzağı, kuzu yemi: en çok 5 µg/kg (yasal)","Diğer karma yem: 10–20 µg/kg","Yüksek verimli sağmal inek yeminde ≤ 2 µg/kg hedeflenir"]})]},
+  neden:["%14 üstü nem, sıcak ve havasız depo; hasarlı tane."],bel:["Yem tüketimi ve verim düşer, bağışıklık zayıflar; sütte M1 sınırı aşılabilir.","Küf kokusu, topaklanma, ısınmış yem."],
+  yap:function(){return (window.YACT&&YACT.ymyco)||[]},vet:"Sürüde açıklanamayan verim düşüşü ve hastalıkta veteriner; şüpheli partiyi analiz ettirin.",kay:function(){return YSRC.ymyco}},
+ ymin:{ad:"Yasal sınırlar ve karışım homojenliği",ne:"Bakır, selenyum, çinko gibi iz minerallerin yasal üst sınırları vardır; çok az katılan katkılar iyi karışmazsa bazı hayvanlar zehirli doz alır.",
+  rows:function(C){var o=C.o||{},F_="yRiskEval";return [
+   OGRRow("Bakır (koyun yemi)","ust",OGRN(F_,"else if(sheep&&o.cu>#)"),OGRN(F_,"if(sheep&&o.cu>#)"),C.sheep?OGRG(function(){return o.cu}):null,{u:" mg/kg",d:0,na:"koyun yemi değil"}),
+   OGRRow("Bakır (sığır yemi)","ust",null,OGRN(F_,"!sheep&&o.cu>#)"),C.sheep?null:OGRG(function(){return o.cu}),{u:" mg/kg",d:0,na:"koyun yemi"}),
+   OGRRow("Selenyum","ust",null,OGRN(F_,"o.se>#)"),OGRG(function(){return o.se}),{u:" mg/kg"}),
+   OGRRow("Çinko","ust",null,OGRN(F_,"o.zn>#)"),OGRG(function(){return o.zn}),{u:" mg/kg",d:0}),
+   OGRRow("Kükürt","ust",null,OGRN(F_,"o.s>#)"),OGRG(function(){return o.s}))]},
+  neden:["Sığır premiksinin koyun yemine katılması; premiks dozunun artırılması.","Partinin %0,5'inden azı katılan katkıların ön karışımsız katılması."],bel:["Koyunda sarılık (bakır); tüy dökülmesi, topallık (selenyum fazlası)."],
+  yap:function(){return (window.YACT&&YACT.ymin)||[]},vet:"Zehirlenme şüphesinde hemen veteriner.",kay:function(){return YSRC.ymin}}
+};
+/* kart adı → anahtar (ekrana göre) */
+var OGRRKM={sut:[[/^Asidoz \(SARA\)/,"acid"],[/^Ketozis \(asetonemi\) ve/,"keto"],[/^Döl tutma/,"fert"]],
+ kuru:[[/^Süt humması/,"humma"],[/^Doğum sonrası ketozis/,"dketo"],[/^Asidoz \((yakın|uzak)/,"dacid"]],
+ duve:[[/^Aşırı besleme/,"ov"],[/^Yetersiz büyüme$/,"ug"],[/^Asidoz \(rumen/,"hacid"]],
+ besi:[[/^Asidoz, karaciğer/,"bacid"],[/^Şişme/,"bloat"],[/^İdrar taşı/,"uro"],[/^Beyin yumuşaması/,"pem"],[/^Sıcak stresi/,"heat"]],
+ koyun:[[/^Asidoz/,"kacid"],[/^Enterotoksemi/,"entero"],[/^Üriner taş/,"kuro"],[/^Bakır zehirlenmesi/,"kcu"],[/^Gebelik toksemisi/,"tox"],[/^Hipokalsemi \(doğum/,"khc"],[/^Enerji açığı ve kuzu/,"kmg"],[/^Hipokalsemi \/ mineral/,"khc2"],[/^Kondisyon ve döl/,"kcz"]],
+ buzagi:[[/^Soğuk/,"cold"],[/^Abomazum/,"abo"],[/^Sütten kesim asidozu/,"wacid"],[/^Yetersiz büyüme \/ bağışıklık/,"cgr"]],
+ yem:[[/^Asidoz \(rumen/,"yacid"],[/^Üre/,"ynpn"],[/^Gossipol/,"ygos"],[/^İdrar taşı/,"yuro"],[/^Küf/,"ymyco"],[/^Yasal sınırlar/,"ymin"]]};
+var OGRRKS={sut:"Sağmal inekte beslenmeden doğan üç büyük sorun birbirine bağlıdır: rumen asitleşmesi (asidoz), enerji açığına bağlı ketozis ve bunların sonucunda döl tutmama. Hepsi aynı rasyondan doğar; birini düzeltirken diğerini bozmamak gerekir.",
+ kuru:"Kuru dönem, doğumdan sonraki sağlığı belirler: doğum öncesi kalsiyum–potasyum dengesi süt hummasını, kondisyon ve enerji doğum sonrası ketozisi, kesif geçişi asidozu belirler.",
+ duve:"Düvede amaç dengeli büyümedir: yavaş büyüme ilk doğumu geciktirir; hızlı büyüme ve yağlanma meme gelişimini bozar; kesifi bol rasyon asidoz yapar.",
+ besi:"Besi sığırında yüksek kesifli rasyon hızlı artış sağlar ama rumeni zorlar: asidoz, karaciğer apsesi ve şişme; mineral dengesizliği idrar taşı; kükürt fazlası beyin yumuşaması; sıcakta ısı stresi.",
+ koyun:"Kuzu besisinde kesif yem (asidoz, enterotoksemi) ve mineral dengesi (idrar taşı, bakır) önemlidir; koyunda gebelik sonu ve laktasyonda enerji açığı ve kalsiyum belirleyicidir. Koyun bakıra sığırdan çok daha duyarlıdır.",
+ buzagi:"Buzağıda süt dönemindeki sorunlar çoğunlukla süt miktarı, öğün düzeni ve ahır sıcaklığından; sütten kesimde ise başlangıç yeminin yapısından kaynaklanır.",
+ yem:"Kesif (karma) yemin kendisinden gelen riskler: hızlı yıkılan tahıl (asidoz), üre, pamuk küspesi gossipolü, erkek hayvanda idrar taşı, küf/aflatoksin ve yasal mineral sınırları."};
+/* ---- çizim: kart kutusu, bölüm özeti ---- */
+function OGRVAL(x){try{return typeof x==="function"?x():x}catch(e){return ""}}
+function OGRLI(a){return (a||[]).map(function(t){return '<li>'+t+'</li>'}).join("")}
+function OGRTAB(rows,grp){var tr=function(x){return '<tr><td>'+x.n+'</td><td>'+x.th.join('<br>')+'</td><td class="'+x.st+'">'+(x.st==="ok"?"✓ ":x.st?"⚠ ":"")+x.v+'</td></tr>'};
+ return '<table class="ogrT"><tr><th>Ölçü</th><th>Program eşiği</th><th>Sizde</th></tr>'+(grp?grp.map(function(g){return '<tr class="ogrG"><td colspan="3">'+g[0]+'</td></tr>'+g[1].map(tr).join("")}).join(""):rows.map(tr).join(""))+'</table>'}
+function OGRCX(sp,cc){cc=cc||{};return cc[sp]||(cc[sp]=OGRCTX(sp))}
+function OGRRKKEY(r){var h3=r.querySelector("h3");if(!h3)return null;var nm=((h3.firstChild&&h3.firstChild.textContent)||"").trim(),sp=OGRSP(r),L=OGRRKM[sp]||[];for(var i=0;i<L.length;i++)if(L[i][0].test(nm))return {k:L[i][1],sp:sp};return null}
+function OGRRKROWS(k,C){try{return OGRRK[k].rows(C)||[]}catch(e){return []}}
+function OGRRKHTML(k,C){var D=OGRRK[k];if(!D)return "";var rows=OGRRKROWS(k,C);
+ return '<details class="dt ogrB ogrK" data-ogr="rk-'+k+'"><summary>Öğretici · '+D.ad+': eşikler ve ne yapmalı</summary>'
+ +'<p class="s"><b>Ne demek:</b> '+D.ne+'</p><p class="s"><b>Kritik değerler</b> (programın bu kartta kullandığı sınırlar; "Sizde" şimdiki rasyondur):</p>'+OGRTAB(rows)
+ +'<p class="s"><b>Neden olur:</b></p><ul class="nt">'+OGRLI(D.neden)+'</ul><p class="s"><b>Nasıl anlaşılır:</b></p><ul class="nt">'+OGRLI(D.bel)+'</ul>'
+ +'<p class="s"><b>Ne yapmalı:</b></p><ul class="nt">'+OGRLI(OGRVAL(D.yap))+'</ul><p class="s"><b>Ne zaman veteriner:</b> '+D.vet+' '+OGRVET+'</p>'
+ +'<p class="s ogrKy"><b>Kaynak:</b> '+OGRVAL(D.kay)+'</p></details>'}
+function OGRRKCARD(r,cc){var K=OGRRKKEY(r);if(!K)return "";return OGRRKHTML(K.k,OGRCX(K.sp,cc))}
+/* bölüm başı (h2 "… riskleri"): konu özeti + eşikler özet tablosu + kartları okuma notu */
+function OGRRKSEC(h,cc){var sp=OGRSP(h),box=h.parentNode;if(!box||!OGRRKS[sp])return null;var C=OGRCX(sp,cc),seen={},G=[];
+ Array.prototype.forEach.call(box.querySelectorAll(".rk"),function(r){var K=OGRRKKEY(r);if(!K||seen[K.k])return;seen[K.k]=1;var rw=OGRRKROWS(K.k,C).filter(function(x){return x.th.length}).slice(0,3);if(rw.length)G.push([OGRRK[K.k].ad,rw])});
+ return '<details class="dt ogrB" data-ogr="risk" open><summary>Öğretici · Sağlık riskleri: konu özeti ve eşikler</summary><p class="s"><b>Konu:</b> '+OGRRKS[sp]+'</p>'
+ +(G.length?'<p class="s"><b>Eşikler özet tablosu</b> (her riskin ana ölçüleri, programın sınırları):</p>'+OGRTAB(null,G):'')
+ +'<p class="s"><b>Kartlar nasıl okunur:</b> sağdaki etiket risk düzeyidir (Düşük / Orta / Yüksek), maddeler sınırı aşan ölçülerdir; her kartın altındaki "Öğretici · … eşikler ve ne yapmalı" kutusunda konu anlatılır. Bu bir uyarıdır, teşhis değildir.</p></details>'}
+/* ---- rasyon değerlendirme tablosu: satır satır konu anlatımı (değer ve hedef tablonun kendisinden okunur → tek kaynak) ---- */
+var OGRPAR=[
+ [/^KM alımı/,"Hayvanın bir günde yediği kuru madde (yemin suyu çıkınca kalan kısım). Bütün besin maddeleri bu miktarla gelir.","Hayvan ihtiyacını yiyemiyor: enerji ve protein açığı, verim ve kondisyon kaybı.","Verilen yem tahmini tüketimin üstünde: yem artığı ve israf olabilir.","Taze ve lezzetli yem verin, yem masasını boş bırakmayın, sık itin, temiz su sağlayın; sindirimi yüksek kaba yem kullanın.","Artığı tartın; yenmeyen yemi azaltın."],
+ [/^Rasyon KM/,"Karışımın yaş hâlinin yüzde kaçının kuru madde olduğu.","Çok sulu rasyon (bol silaj, yaş posa): tüketim sınırlanır, yem ekşir.","Çok kuru rasyon: hayvan yemi ayıklar.","Kuru ot, saman veya kesif payını artırın; yaş posa/silaj payını azaltın.","TMR'de nemi %45–50'ye getirin (su veya silaj ekleyin)."],
+ [/^Kaba yem NDF/,"Kaba yemden gelen lif (NDF): geviş getirmeyi sağlayan etkili lifin ana kaynağı.","Az geviş, az tükürük: asidoz ve süt yağı düşüklüğü.","İşkembe dolar, tüketim düşer.","Uzun kıyımlı saman, kuru ot veya silaj payını artırın.","Daha kaliteli (erken biçilmiş) kaba yem kullanın."],
+ [/^Kaba yem \(katı|^Kaba \(katı/,"Buzağının katı yemi içindeki kuru ot/saman payı.","Sütten kesimde rumen asitleşir.","Karın büyür, enerji ve protein alımı düşer.","Az miktarda kaliteli kuru ot verin.","Kuru otu sınırlayın, başlangıç yemini öne alın."],
+ [/^Kaba$/,"Rasyon kuru maddesinin yüzde kaçının kaba yemden (silaj, kuru ot, saman) geldiği.","Asidoz, topallık, besi sığırında karaciğer apsesi.","Enerji yetersiz kalabilir; süt veya artış düşer.","Uzun kıyımlı saman veya kuru ot ekleyin.","Kesif payını kademeli artırın."],
+ [/^Kesif$/,"Rasyon kuru maddesinin yüzde kaçının kesif yemden (tahıl, küspe, fabrika yemi) geldiği.","Enerji yetersiz kalabilir.","Asidoz riski.","Kesif payını kademeli artırın.","Kesifi azaltın, kaba yemi artırın."],
+ [/^(HP|Ham protein|İkame yemi HP)/,"Ham protein: yemdeki toplam protein. Kas, süt proteini ve rumen bakterileri için gerekir.","Süt, süt proteini ve büyüme düşer; rumen bakterileri az çalışır, lif sindirimi azalır.","Pahalıdır; fazlası idrarla üre olarak atılır, döl tutma düşebilir (yüksek MUN).","Küspe (soya, ayçiçeği, pamuk), yonca veya protein yemi payını artırın.","Küspe/protein yemi payını azaltın; enerjiyi yeterli tutun."],
+ [/^(ME|Toplam ME)/,"Metabolik enerji: yemin hayvanın kullanabildiği enerjisi. Süt, büyüme ve kondisyonu belirler.","Enerji açığı: süt ve artış düşer, kondisyon kaybı, ketozis ve döl sorunları.","Fazlası yağlanmaya gider; yüksek enerji çoğu zaman yüksek nişasta demektir (asidoz).","Tahıl veya kesif payını kademeli artırın; daha kaliteli kaba yem kullanın.","Kesif yemi azaltın, kaba yemi artırın."],
+ [/^By-pass nişasta/,"Rumende yıkılmadan bağırsağa geçen nişasta; bağırsakta glikoz olarak emilir. Yerleşik bir hedef aralığı yoktur, bilgi amaçlıdır.","—","—","—","—"],
+ [/^Nişasta/,"Tahıllardaki ana enerji kaynağı; rumende asit üretilerek parçalanır.","Enerji ve bakteri proteini sınırlı kalır; süt/artış düşer.","Asidoz, süt yağı düşüklüğü, topallık riski.","Mısır veya arpa payını artırın.","Tahıl payını azaltın; lifli enerji (pancar posası, soya kabuğu, kepek) kullanın; arpa/buğday yerine kırma mısır."],
+ [/^Şeker/,"Melas, pancar posası gibi yemlerdeki şekerler; rumende çok hızlı yıkılır.","Bakteri gelişimi ve lezzet azalabilir.","Hızlı asit yükü; asidoz riski.","Az miktarda melas veya pancar posası ekleyin.","Melas payını azaltın."],
+ [/^Çözünür lif/,"Pektin gibi hızlı yıkılan ama asit yükü düşük lif (pancar posası, soya kabuğu, yonca).","Nişastanın yerini alabilecek güvenli enerji eksik.","Genelde sorun olmaz.","Pancar posası veya soya kabuğu ekleyin.","—"],
+ [/^Sindirilemeyen NDF/,"Lifin rumende hiç sindirilemeyen kısmı (ligninden tahmin); işkembede yer kaplar.","İşkembenin lif yatağı zayıf; asidoz riski.","İşkembe dolar, tüketim sınırlanır.","Lifli kaba yem (saman) ekleyin.","Daha kaliteli, sindirimi yüksek kaba yem kullanın.","Cotanch, Miner Enstitüsü"],
+ [/^Sindirilebilir NDF/,"Lifin rumende sindirilebilen kısmı; enerji kaynağıdır.","Lif enerjisi az.","Genelde sorun olmaz.","Kaliteli kaba yem kullanın.","—"],
+ [/^NDF/,"Nötral deterjan lif: yemdeki toplam lif (hücre duvarı). Rumen sağlığı ve geviş için gerekir; fazlası işkembeyi doldurur.","Az geviş, az tükürük: asidoz ve süt yağı düşüklüğü.","İşkembe dolar, hayvan az yer; enerji alımı düşer.","Kaba yem (saman, kuru ot, silaj) payını artırın.","Daha kaliteli (erken biçilmiş) kaba yem kullanın, kesif payını biraz artırın."],
+ [/^ADF/,"Asit deterjan lif: lifin en zor sindirilen kısmı; arttıkça yemin sindirimi düşer.","Lif yapısı zayıf, rumen sağlığı bozulabilir.","Sindirim ve enerji düşer (geç biçilmiş, saman ağırlıklı rasyon).","Lifli kaba yem ekleyin.","Daha kaliteli kaba yem kullanın."],
+ [/^peNDF/,"Fiziksel etkin lif: lifin geviş getirtecek kadar uzun olan kısmı (NDF × parça boyu katsayısı).","Az geviş: asidoz, süt yağı düşüklüğü.","Tüketim ve enerji alımı düşer.","Uzun kıyımlı kaba yem verin; tahılı kaba kırın.","Kaba yemi daha kısa kıyın.","Mertens 1997"],
+ [/^Metabolik protein/,"Bağırsakta emilen protein: rumen bakterilerinin proteini + rumende yıkılmadan geçen (bypass) protein. Süt proteinini asıl belirleyen budur.","Süt verimi ve süt proteini düşer.","Pahalı protein israfı, azot kaybı.","Bypass proteini yüksek küspe (soya, mısır gluteni, DDGS) ekleyin; enerjiyi artırmak bakteri proteinini artırır.","Küspe payını azaltın.","NASEM 2021 Bölüm 6"],
+ [/^RDP/,"Rumende çözünen protein: rumen bakterilerinin besini.","Bakteri proteini ve lif sindirimi düşer.","Fazla amonyak; kanda ve sütte üre yükselir, döl tutma düşebilir.","Yonca veya çözünür protein kaynağı ekleyin.","Çözünür proteini azaltın, enerjiyi artırın."],
+ [/^RUP/,"Rumende yıkılmadan geçen (bypass) protein; ham proteinin yüzdesi.","Yüksek verimde süt proteini sınırlanır.","Rumen bakterileri için çözünür protein azalabilir.","Soya, mısır gluteni, DDGS gibi bypass payı yüksek küspe.","Yonca veya çözünür protein kaynağı."],
+ [/^Lizin/,"Süt proteini için en sık eksik kalan amino asit (metabolik proteinin yüzdesi).","Süt proteini sınırlanır.","—","Soya küspesi, kanola, korunmuş (bypass) lizin.","—","NRC 2001 Tablo 15-1"],
+ [/^Metiyonin/,"Süt proteini ve karaciğerden yağ taşınması için gerekli amino asit (metabolik proteinin yüzdesi).","Süt proteini sınırlanır; geçiş döneminde karaciğer yağlanması riski artar.","—","Mısır gluteni, korunmuş metiyonin; lizin:metiyonin ≈ 3:1.","—","NRC 2001 Tablo 15-1"],
+ [/^DCAD/,"Rasyonun katyon–anyon farkı ((Na + K) − (Cl + S)); kanın asit–baz dengesini etkiler.","Sağmal inekte tüketim ve süt yağı düşer.","Kuru dönemde (doğum öncesi) süt humması riski.","Sağmalda sodyum bikarbonat veya potasyum karbonat.","Kuru dönemde potasyumu düşük kaba yem (saman, mısır silajı); yonca ve melası sınırlayın.","Iwaniuk ve Erdman 2015"],
+ [/^Ham yağ/,"Yemdeki yağ: yoğun enerji kaynağı.","Enerji yoğunluğu sınırlı.","Lif sindirimi ve süt yağı düşer, tüketim azalır.","Tam yağlı soya veya korunmuş (bypass) yağ.","Yağlı tohum, bitkisel yağ ve DDGS payını azaltın."],
+ [/^Kalsiyum/,"Kemik, süt ve kas çalışması için ana mineral.","Kemik zayıflığı, süt humması, verim düşüşü.","Fosfor ve iz minerallerin emilimini bozar; kuru dönemde süt humması riski.","Kireç taşı ekleyin; yonca kalsiyumca zengindir.","Kireç taşı/mineral payını azaltın; yoncayı sınırlayın."],
+ [/^Fosfor/,"Kemik, enerji kullanımı ve döl verimi için mineral.","İştahsızlık, kemik zayıflığı, döl sorunları.","Erkek hayvanda idrar taşı; boşa para ve çevre kirliliği.","Dikalsiyum fosfat veya kepek ekleyin.","Kepek, DDGS ve fosfat payını azaltın."],
+ [/^Ca:P/,"Kalsiyumun fosfora oranı.","Erkek hayvanda idrar taşı (en az 2:1 önerilir).","Çok yüksekse fosfor emilimi bozulur.","Kireç taşı ekleyin.","Kireç taşını azaltın."],
+ [/^Potasyum/,"Sinir, kas ve su dengesi için mineral; kaba yemlerde boldur.","Tüketim düşer (özellikle sıcakta).","Magnezyum emilimini düşürür; kuru dönemde süt humması.","Yonca veya potasyum karbonat.","Yoncayı azaltın, magnezyumu artırın."],
+ [/^Magnezyum/,"Sinir-kas çalışması ve kalsiyum düzenlemesi için mineral.","Çayır tetanisi ve süt humması riski.","İshal, tüketim düşüşü.","Magnezyum oksit ekleyin.","Magnezyum kaynaklarını azaltın."],
+ [/^Kükürt/,"Bakteri proteini (kükürtlü amino asitler) için gerekli mineral.","Bakteri proteini sentezi sınırlanır.","Beyin yumuşaması (PEM); bakır ve selenyum emilimi düşer.","Danışmanınızla sülfatlı mineral.","DDGS, melas, mısır gluteni payını azaltın."],
+ [/^Sodyum/,"Tuzla gelen mineral; su tüketimi, iştah ve rumen tamponu için gerekir.","Toprak/duvar yalama, iştahsızlık.","Su tüketimini kontrol edin.","Tuz ekleyin.","Tuz ve bikarbonatı azaltın."],
+ [/^Bakır/,"Bağışıklık, tüy rengi ve döl verimi için iz mineral; koyun zehirlenmeye en açık türdür.","Mat/açık renk tüy, ishal, döl sorunları.","Koyunda zehirlenme; sığırda gereksiz birikim.","İz mineral premiksi.","Premiks ve bakır sülfatı azaltın; koyuna sığır premiksi vermeyin."],
+ [/^Çinko/,"Deri, tırnak, bağışıklık ve döl için iz mineral.","Tırnak/ayak sorunları, deri kalınlaşması, bağışıklık düşer.","Bakır emilimini bozar.","Premiksle tamamlayın.","Premiks dozunu kontrol edin."],
+ [/^Selenyum/,"Bağışıklık, kas ve döl için iz mineral (E vitaminiyle birlikte çalışır).","Beyaz kas hastalığı, sonun atılamaması, mastitis.","Zehirlenme (2–5 mg/kg).","Selenyumlu premiks.","Premiksi azaltın."],
+ [/^Süt \/ sulu ikame/,"Buzağının günlük içtiği süt veya sulandırılmış süt ikamesi.","Büyüme ve bağışıklık düşer.","Katı yem alımı gecikebilir; öğün sayısını artırın.","Süt miktarını canlı ağırlığın %15–20'sine çıkarın.","Öğünlere bölün (öğün başına en çok 3–4 L)."],
+ [/^Sıvı KM/,"Süt veya ikamenin kuru maddesi; buzağının sütten aldığı asıl besin.","Büyüme durur, bağışıklık zayıflar.","Genelde sorun olmaz; ikame oranını kontrol edin.","Süt miktarını veya ikame oranını (%12,5–15) artırın.","—"],
+ [/^(Başlangıç yemi KM|Katı yem KM)/,"Buzağının yediği katı yemin kuru maddesi; rumen gelişimini başlatır.","Rumen gelişimi gecikir, sütten kesim zorlaşır.","Yem artığını kontrol edin.","Taze, az miktarda, her gün yenilenen başlangıç yemi; temiz su ilk günden.","—"]];
+var OGRSRC={sut:"NASEM 2021; NRC 2001",kuru:"NASEM 2021; NRC 2001; NDSU; Merck",duve:"NRC 2001; NASEM 2016",besi:"NASEM 2016",koyun:"NRC 2007",buzagi:"NASEM 2021"};
+function OGRPARHTML(tbl,sp){if(!tbl||!tbl.rows)return "";var out=[],h1=tbl.rows[0]&&tbl.rows[0].cells[1],hu=h1&&/% KM/.test(h1.textContent)?"%":"";Array.prototype.forEach.call(tbl.rows,function(tr){var td=tr.cells;if(!td||td.length<4||tr.querySelector("th"))return;
+  var raw=((td[0].firstChild&&td[0].firstChild.textContent)||td[0].textContent).trim(),i=raw.lastIndexOf(", "),lab=i>0?raw.slice(0,i):raw,u=i>0?raw.slice(i+2):hu,E=null;
+  for(var j=0;j<OGRPAR.length;j++)if(OGRPAR[j][0].test(lab)){E=OGRPAR[j];break}if(!E)return;
+  var cur=td[1].textContent.trim(),ref=td[2].textContent.trim(),c=td[3].className,dt=td[3].textContent,dw=/Düşük/.test(dt),hi=/Yüksek/.test(dt),U=function(x){return x==="—"||!x?x:(u==="%"?"%"+x:x+(u&&u!=="%"?" "+u:""))};
+  var mk=c==="ok"?'<span class="ok">✓</span>':c==="no"?'<span class="no">⚠</span>':'',dash=function(t){return t&&t!=="—"};
+  out.push('<details class="ogrP"><summary><b>'+lab+'</b>: sizde '+U(cur)+' '+mk+(ref&&ref!=="—"?' · hedef '+U(ref):'')+'</summary><p class="s"><b>Ne demek:</b> '+E[1]+'</p>'
+   +(dash(E[2])?'<p class="s"><b>Düşükse ne olur:</b> '+E[2]+'</p>':'')+(dash(E[3])?'<p class="s"><b>Yüksekse ne olur:</b> '+E[3]+'</p>':'')
+   +(dw&&dash(E[4])?'<p class="s"><b>Ne yapmalı (sizde düşük):</b> '+E[4]+'</p>':hi&&dash(E[5])?'<p class="s"><b>Ne yapmalı (sizde yüksek):</b> '+E[5]+'</p>':(dash(E[4])||dash(E[5]))?'<p class="s"><b>Ne yapmalı:</b> '+(dash(E[4])?'yükseltmek için: '+E[4]:'')+(dash(E[4])&&dash(E[5])?' · ':'')+(dash(E[5])?'düşürmek için: '+E[5]:'')+'</p>':'')
+   +'<p class="s ogrKy"><b>Kaynak:</b> '+(OGRSRC[sp]||"NASEM")+(E[6]?'; '+E[6]:'')+'</p></details>')});return out.join("")}
+function OGRANALIZ(el){var t=el&&el.previousElementSibling;if(!t||!t.matches||!t.matches("table.c"))return null;var sp=OGRSP(el),rows=OGRPARHTML(t,sp);
+ return '<details class="dt ogrB" data-ogr="analiz" open><summary>Öğretici · Rasyon değerlendirmesi: ölçüler ne demek?</summary><p class="s"><b>Konu:</b> Bu tablo hayvanın bir günde yediği kuru maddedeki besinleri, bu hayvanın ihtiyacıyla karşılaştırır. Enerji ve protein verimi ve büyümeyi; lif ve nişasta dengesi rumen sağlığını; mineraller kemik, bağışıklık ve döl verimini belirler.</p><p class="s"><b>Nasıl okunur:</b> "Çiftlik" sizin rasyonunuz, "Referans" programın bu hayvan için hesapladığı hedef; ✓ uygun, ↓/↑ sapma. Aşağıda her ölçüye dokunun: ne demek, düşük/yüksekse ne olur, ne yapmalı.</p>'+rows+'</details>'}
+function OGRTABLO(t){var sp=OGRSP(t),rows=OGRPARHTML(t,sp);if(!rows)return null;return '<details class="dt ogrB" data-ogr="tablo"><summary>Öğretici · Bu tablodaki ölçüler ne demek?</summary>'+rows+'</details>'}
