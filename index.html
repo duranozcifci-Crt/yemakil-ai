@@ -448,10 +448,10 @@ function renderFeeds(){goneBtn();
  /* V196: aynı ürünün birden çok değer satırı (son analiz / eski analiz / etiket) varsa listede yalnız biri (kullanılan, yoksa en güncel) görünür; diğerleri "göster" ile açılır, aramada bulunur. Veriler ve kayıtlı rasyonlar değişmez. */
  var prim={},nv=0;S.feeds.forEach(function(x,i){if(!x.fam||x.src==="analiz")return;var p=prim[x.fam];if(p===undefined||(!S.feeds[p].on&&x.on))prim[x.fam]=i});
  var sec=function(x,i){return x.fam&&x.src!=="analiz"&&prim[x.fam]!==i&&!x.on&&!OPEN[i]};S.feeds.forEach(function(x,i){if(sec(x,i))nv++});
- var va=$("varAll");if(va){va.hidden=!nv;va.textContent=$("feeds").classList.contains("allv")?"Yalnız güncel değerleri göster":"Aynı ürünün diğer analiz / etiket değerlerini de göster ("+nv+")"}
+ var va=$("varAll");if(va){va.hidden=!nv;va.setAttribute("aria-expanded",$("feeds").classList.contains("allv")?"true":"false");va.textContent=$("feeds").classList.contains("allv")?"Yalnız güncel değerleri göster":"Aynı ürünün diğer analiz / etiket değerlerini de göster ("+nv+")"}
  $("feeds").innerHTML=S.feeds.map(function(x,i){
   var o=OPEN[i],fv=sec(x,i)?' fvar':'';
-  var top='<div class="fr'+(x.on?'':' off')+'"><input type="checkbox" data-i="'+i+'" data-k="on"'+(x.on?' checked':'')+' aria-label="Kullan"><div class="fn"><b>'+esc(x.n)+'</b><span>'+f(x.p)+' TL/kg, KM %'+f(x.dm,0)+(x.fam&&x.src==="analiz"?', çiftlik analizi':'')+'</span></div><button class="ed" data-ed="'+i+'">'+(o?'Bitti':'Düzenle')+'</button></div>';
+  var top='<div class="fr'+(x.on?'':' off')+'"><input type="checkbox" data-i="'+i+'" data-k="on"'+(x.on?' checked':'')+' aria-label="Kullan"><div class="fn"><b>'+esc(x.n)+'</b><span>'+f(x.p)+' TL/kg, KM %'+f(x.dm,0)+(x.fam&&x.src==="analiz"?', çiftlik analizi':'')+'</span></div><button class="ed" data-ed="'+i+'" aria-expanded="'+(o?'true':'false')+'">'+(o?'Bitti':'Düzenle')+'</button></div>';
   if(!o)return '<div class="fi'+fv+'">'+top+'</div>';
   return '<div class="fi">'+top+'<div class="fe"><div class="top"><label>Ad<input type="text" data-i="'+i+'" data-k="n" value="'+esc(x.n)+'"></label><label>TL/kg<input type="number" inputmode="decimal" step="any" data-i="'+i+'" data-k="p" value="'+x.p+'"></label></div>'
   +'<div class="g" style="grid-template-columns:repeat(3,1fr)">'+FL.map(function(a){return '<label>'+a[1]+'<input type="number" inputmode="decimal" step="any" data-i="'+i+'" data-k="'+a[0]+'" value="'+(a[0]==="sta"?staOf(x):x[a[0]])+'"></label>'}).join("")+'</div>'
@@ -704,7 +704,7 @@ function rkRender(r){var b=S.b,m=r.m;
  +rkCard('acid','Asidoz (SARA) ve süt yağı düşüklüğü',r.a,r.A,'Bu bir risk göstergesidir, teşhis değildir. '+(r.a>=2?'Bu risk düzeyinde KM alımı ≈ %'+(r.a>=4?'5–10':'3–5')+' düşebilir. Nişasta yıkılımı ve RUFAL yem adına göre tahmindir; TMR elek analizi yaptırın.':'Nişasta yıkılımı ve RUFAL yem adına göre tahmindir.'))
  +rkCard('keto','Ketozis (asetonemi) ve yağlı karaciğer',r.k,r.K,(b.wk>8?'Ketozis riski esas olarak doğumdan sonraki ilk 8 haftadadır; bu hafta için puan düşürüldü. '+(r.kfloor?'Ancak enerji açığı büyük olduğu için risk en az "Orta" gösteriliyor: bu açık kondisyon kaybı, süt düşüşü ve döl tutma sorunu yapar; rasyonu düzeltin. ':''):b.wk<=3?'İlk 3 haftada bir miktar enerji açığı fizyolojiktir (KM alımı süt veriminden geç artar); amaç açığı küçük tutmak ve kondisyon kaybını 0,5 puanın altında tutmaktır. ':'')+'Bu bir risk göstergesidir, teşhis değildir. Kesin tanı: kan BHB ≥ 1,2 mmol/L subklinik, ≥ 3,0 klinik (3–16. gün, haftada 2 test).')
  +(r.preg?'<div class="rk"><h3>Döl tutma ve kızgınlık<em class="ok">Gebe</em></h3><small>İnek gebe ('+b.dp+'. gün); döl tutma riski değerlendirilmedi. Gebeliğin korunması için enerji dengesini ve kondisyonu izleyin.</small></div>':rkCard('fert','Döl tutma ve kızgınlık (boğaya gelme)',r.d,r.F,'Bu bir risk göstergesidir, teşhis değildir; topallık, doğum sorunları, boğa/tohumlama zamanlaması ayrıca değerlendirilmeli.'))}
-document.addEventListener("click",function(e){var t=e.target;if(!t||!t.dataset||!t.dataset.rf)return;if(window.solveFocus){solveFocus(t.dataset.rf,t)}});
+document.addEventListener("click",function(e){var t=e.target;if(!t||!t.dataset||!t.dataset.rf||!t.closest("#cmp"))return;if(window.solveFocus){solveFocus(t.dataset.rf,t)}});
 /* risk odaklı çözüm: hedefleri sıkılaştır */
 function rkFocus(T,fk){if(!fk||!T||!T.par)return;var P=function(k){return T.par.filter(function(p){return p[0]===k})[0]},b=S.b,R=refSut(),Q=null;try{Q=MPsut(metrics(curItems()))}catch(e){}
  T.extra=T.extra||[];
@@ -1113,6 +1113,8 @@ var RHOLD=null;function parkSol(){var o=$s("solOut"),b=$s("solBtn");if(o&&b&&o.p
 function placeSol(){if(RHOLD===null)return;var o=$s("solOut"),bt=document.querySelector('#cmp [data-rf="'+RHOLD+'"]');if(!o)return;if(!bt){parkSol();return}bt.insertAdjacentElement("afterend",o)}
 window.parkSol=parkSol;var _rc=window.renderCmp;if(_rc)window.renderCmp=function(){parkSol();var r=_rc.apply(this,arguments);placeSol();return r};
 window.solveFocus=function(fk,btn){RFOCUS=fk;FORCE=null;RHOLD=fk;var o=$s("solOut");if(o&&btn&&btn.isConnected)btn.insertAdjacentElement("afterend",o);else placeSol();try{run()}catch(e){o.innerHTML='<div class="err">Hesaplama sırasında hata oluştu.</div>'}if(o&&o.scrollIntoView)o.scrollIntoView({behavior:"smooth",block:"start"})};
+/* V2xx aç-kapa: çözüm sonucu kapatılır (ikinci basış); sonraki basış yeniden hesaplar */
+window.solClose=function(){var o=$s("solOut");RHOLD=null;RFOCUS=null;FORCE=null;if(o)o.innerHTML="";parkSol()};
 $s("solBtn").onclick=function(){var b=this;FORCE=null;RFOCUS=null;RHOLD=null;parkSol();b.textContent="Hesaplanıyor...";setTimeout(function(){try{run()}catch(e){$s("solOut").innerHTML='<div class="err">Hesaplama sırasında hata oluştu.</div>'}b.textContent="Çözüm öner"},30)};
 window.metrics=metrics;window.rupOf=rupOf;window.pfrOf=pfrOf;window.cfrOf=cfrOf;window.stDeg=stDeg;window.carbOf=carbOf;window.CFR=CFR;window.PFR=PFR;window.kpCalc=kpCalc;window.isMin=isMin;window.solve=solve;window.setLock=function(v){LOCKOWN=v};
 })();
@@ -2009,7 +2011,7 @@ function yemSolve(manual){var y=Y_def(),T=Object.assign({tol:y.tol},y.t),B=y.bas
   h+='<details class="dt ogrB" open><summary>Öğretici · Sınırlar neden var?</summary><ul class="nt">'+['<b>Kepek ≤ %25:</b> fosforu yüksek (Ca:P bozulur), hacimli, peletlenmeyi zorlaştırır.','<b>Melas ≤ %5:</b> şeker; fazlası topaklanma, asidoz ve ishal.','<b>DDGS ≤ %15:</b> kükürt (PEM) ve yağ (süt yağı düşer).','<b>Pamuk tohumu küspesi ≤ %15:</b> gossipol, genç hayvanda zehirli.','<b>Üre ≤ %1:</b> amonyak zehirlenmesi; tahılla birlikte ve kademeli. Buzağı ve kuzu yeminde üre ve pamuk tohumu küspesi kullanılmaz (hazır hedef seçildiğinde program bunları %0 yapar).','<b>Kireç taşı ≤ %2,5, DCP ≤ %1,5, tuz %0,7 (sabit):</b> mineral dengesi; fazla Ca diğer mineralleri bağlar.','<b>Yağ toplam ≤ %6–7:</b> rumen mikroplarını bozar.','<b>Buğday ≤ %25 (sağmal) / %30 (besi):</b> gluten yapışkanlığı ve hızlı nişasta (asidoz).','<b>Kuru pancar posası ≤ %15–20:</b> hacimli, nişastayı seyreltir; asidoz riskinde faydalı.','<b>Soya küspesi ≤ %30 (sağmal) / %20 (besi):</b> pahalı; program ihtiyaç kadar kullanır.'].map(function(t){return '<li>'+t+'</li>'}).join("")+'</ul></details>'}
  h+='<p class="s">Karıştırma sırası: önce tahıllar ve küspeler, mineralleri (kireç, DCP, tuz) ve premiksi bir miktar kepekle önceden karıştırıp ekleyin; melas varsa en son. Nişasta ve ME değerleri kütüphane tahminidir; analizle doğrulayın.</p>'
  +'<div class="addrow"><button class="btn" id="ymSave" style="margin:0;flex:1">Formülü kaydet</button><button class="btn l" id="ymLabel" style="margin:0;flex:1">Etiket</button></div><div class="addrow" style="margin-top:6px"><button class="btn l" id="ymLib" style="margin:0;flex:1">Kütüphaneye ekle</button><button class="btn l" id="ymShare" style="margin:0;flex:1">Paylaş</button></div>';
- if(prem>0&&!PX0)h='<p class="s" style="color:var(--wa)"><b>Premiks kütüphanede bulunamadı</b> ('+esc(y.premN||'')+'): ayrılan %'+f(y.prem,1)+' pay için mineral/vitamin katkısı hesaba katılmadı. Premiks adını listeden seçin veya Yemler bölümüne ekleyin.</p>'+h;out.innerHTML=h;
+ if(prem>0&&!PX0)h='<p class="s" style="color:var(--wa)"><b>Premiks kütüphanede bulunamadı</b> ('+esc(y.premN||'')+'): ayrılan %'+f(y.prem,1)+' pay için mineral/vitamin katkısı hesaba katılmadı. Premiks adını listeden seçin veya Yemler bölümüne ekleyin.</p>'+h;out.innerHTML=h;out.setAttribute("data-tgm",manual?"ymManual":"ymCalc");
  var rec={id:Date.now(),name:y.name||('HP %'+T.cp+' / nişasta %'+T.sta),date:new Date().toISOString().slice(0,10),basis:B,batch:y.batch,t:JSON.parse(JSON.stringify(y.t)),tol:y.tol,prem:y.prem,premN:y.premN,ing:JSON.parse(JSON.stringify(y.ing)),grp:y.grp,pre:y.pre||"",items:items.map(function(it){return{n:it.x.n,s:it.s,p:it.x.p||0}}),res:JSON.parse(JSON.stringify(res)),costKg:costKg,ton:0};
  window.yLast=rec;
  $("ymSave").onclick=function(){var nm=prompt("Formül adı:",rec.name);if(!nm)return;rec.name=nm;y.name=nm;y.saved=y.saved||[];var ex=y.saved.filter(function(r){return r.name===nm})[0];if(ex){rec.id=ex.id;rec.ton=ex.ton||0;y.saved[y.saved.indexOf(ex)]=rec}else y.saved.unshift(rec);save();renderYem();$("ymPlan").scrollIntoView({behavior:"smooth"})};
@@ -2165,7 +2167,7 @@ function lblBanner(){var B=window._lblBan,el=document.getElementById("cmp");if(!
  el.insertBefore(d,el.firstChild);
  document.getElementById("lblBanX").onclick=function(){window._lblBan=null;d.remove()};
  document.getElementById("lblBanUndo").onclick=function(){S.rat[B.an]=B.prev;window._lblBan=null;loadRat(B.an);save();renderFarm();renderCmp()};
- document.getElementById("lblBanSol").onclick=function(){var sb=document.getElementById("solBtn");if(sb){sb.click();setTimeout(function(){var so=document.getElementById("solOut");if(so&&so.scrollIntoView)so.scrollIntoView({behavior:"smooth",block:"start"})},400)}}}
+ document.getElementById("lblBanSol").onclick=function(){var sb=document.getElementById("solBtn");if(sb){if(window.solClose)solClose();sb.click();setTimeout(function(){var so=document.getElementById("solOut");if(so&&so.scrollIntoView)so.scrollIntoView({behavior:"smooth",block:"start"})},400)}}}
 function ratMet(an){var r=(S.rat||{})[an];if(!r)return null;var it=[];Object.keys(r).forEach(function(n){var u=r[n],x=S.feeds.filter(function(y){return y.n===n})[0];if(x&&u&&u.on&&u.kg>0&&x.dm>0&&!/^Premiks \(etiket\)/.test(x.n))it.push({x:x,d:u.kg*x.dm/100})});it.su=suOf(r);return it.length?metrics(it):null}
 function lbTotal(L,an,dose,warn){ /* premiks + temel rasyon = toplam (mg/kg KM); ihtiyaç ve yasal üst sınır (tam yem %12 nem → KM: ÷0,88) */
  var rm=ratMet(an),DM0={sut:22,besi:9,koyun:2,buzagi:2.5},dmi=L.dmi>0?+L.dmi:(rm&&rm.dm_>0?rm.dm_:DM0[an]),src=L.dmi>0?"girilen":rm?"rasyon":"tipik";
@@ -2610,6 +2612,53 @@ wire();try{renderCmp()}catch(e){}
 if(LOADWARN)banner(LOADWARN);
 if(DENEME){var dv=document.createElement("div");dv.id="denemeBan";dv.style.cssText="background:#7a2e8e;color:#fff;padding:8px 12px;font-size:13px;text-align:center";dv.innerHTML='<b>DENEME SÜRÜMÜ</b> — verileriniz asıl sürümden ayrı tutulur. <button class="ed" id="dnCopy" style="min-height:0;padding:0 6px;color:#fff;border-color:#fff">Asıl sürümdeki verileri buraya kopyala</button> <a href="../" style="color:#fff">Asıl sürüme dön</a>';document.body.insertBefore(dv,document.body.firstChild);
  document.getElementById("dnCopy").onclick=function(){var v=null;try{v=localStorage.getItem("rasyon-v1")}catch(e){}if(!v){alert("Asıl sürümde kayıtlı veri bulunamadı.");return}if(!confirm("Deneme sürümündeki veriler, asıl sürümdeki verilerin kopyasıyla değiştirilecek (asıl verileriniz değişmez). Devam edilsin mi?"))return;try{localStorage.setItem(KEY,v)}catch(e){}location.reload()}}
+})();
+</script>
+<script>
+/* Aç-kapa düğmeleri (kullanıcı isteği 2026-11-16): bir bölümü açan ya da sonuç gösteren düğmeye ikinci basış onu kapatır.
+   Kural: içerik açıksa → kapat; kapalıysa → (hesaplayan düğmede yeniden hesaplayıp) aç. Etiket ve aria-expanded durumu gösterir.
+   Sekmeler, alt menü, Kaydet/Sil/Paylaş/Yükle/Uygula gibi iş yapan düğmeler ve yeni sekmede açılan raporlar bu kuralın dışında. */
+(function(){
+var HS="Hesaplanıyor...";
+function g(i){return document.getElementById(i)}
+function full(o){return !!(o&&o.isConnected&&!o.hidden&&(o.children.length>0||/\S/.test(o.textContent)))}
+function nx(b,id){var n=b.nextElementSibling;return n&&n.id===id?n:null}
+function solOpen(b){return full(nx(b,"solOut"))}
+function solShut(){if(window.solClose)window.solClose()}
+var T=[
+ {q:"#solBtn",off:"Çözümü kapat",open:solOpen,close:solShut},
+ {q:"#cmp [data-rf]",off:"Çözümü kapat",open:solOpen,close:solShut},
+ {q:"#calc",off:"Sonucu kapat",out:"out"},
+ {q:"#ymManual",off:"Sonucu kapat",out:"ymOut",own:1},
+ {q:"#ymCalc",off:"Sonucu kapat",out:"ymOut",own:1},
+ {q:"#mkGo",off:"Reçeteyi kapat",out:"mkOut"},
+ {q:"#lbGo",off:"Sonucu kapat",out:"lbOut"},
+ {q:"#flGo",off:"Sonucu kapat",out:"flOut"},
+ {q:"#flCmpGo",off:"Karşılaştırmayı kapat",out:"flCmpOut"},
+ {q:"#flCmpAi",off:"Yorumu kapat",out:"flCmpAiOut"},
+ {q:"#fsCmp",off:"Karşılaştırmayı kapat",out:"fsOut"},
+ {q:"[data-hzo]",off:"Kartı kapat",open:function(b){var d=g("hz_"+b.dataset.hzo);return !!(d&&d.open)},close:function(b){var d=g("hz_"+b.dataset.hzo);if(d)d.open=false}},
+ {q:"#open",off:"Listeyi kapat",open:function(){var s=g("sheet");return !!(s&&!s.hidden)},close:function(){var c=g("close");if(c)c.click()}}
+];
+function find(b){for(var i=0;i<T.length;i++)if(b.matches(T[i].q))return T[i];return null}
+function isOpen(t,b){if(t.open)return t.open(b);var o=g(t.out);return full(o)&&(!t.own||o.getAttribute("data-tgm")===b.id)}
+function shut(t,b){if(t.close)return t.close(b);var o=g(t.out);if(o){o.innerHTML="";o.removeAttribute("data-tgm")}}
+var busy=0;
+function sync(){if(busy)return;busy=1;try{T.forEach(function(t){[].forEach.call(document.querySelectorAll(t.q),function(b){var o=isOpen(t,b),tx=b.textContent;
+  if(!b.hasAttribute("data-tgl")&&tx!==HS&&tx!==t.off)b.setAttribute("data-tgl",tx);
+  var want=o?t.off:b.getAttribute("data-tgl");if(tx!==HS&&want&&tx!==want)b.textContent=want;
+  var ae=o?"true":"false";if(b.getAttribute("aria-expanded")!==ae)b.setAttribute("aria-expanded",ae)})})}catch(e){}finally{busy=0}}
+var pend=0;function later(){if(pend)return;pend=1;setTimeout(function(){pend=0;sync()},0)}
+window.tgSync=sync;
+/* kapanınca düğme ekran dışında kaldıysa (içerik uzundu) düğmeye geri dön */
+function keep(b){if(!b||!b.isConnected)return;var r=b.getBoundingClientRect();if(r.top<0||r.bottom>window.innerHeight){try{b.scrollIntoView({block:"center"})}catch(e){}}}
+document.addEventListener("click",function(e){var b=e.target&&e.target.closest?e.target.closest("button"):null;if(!b||b.disabled)return;var t=find(b);if(!t)return;
+ if(b.textContent===HS){e.preventDefault();e.stopImmediatePropagation();return} /* hesap sürerken ikinci dokunuş yok sayılır */
+ if(isOpen(t,b)){e.preventDefault();e.stopImmediatePropagation();shut(t,b);sync();keep(b);return}
+ if(t.own){var o=g(t.out);if(o)o.setAttribute("data-tgm",b.id)}
+ later()},true);
+try{new MutationObserver(later).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["open","hidden"]})}catch(e){}
+sync();
 })();
 </script>
 </body></html>
