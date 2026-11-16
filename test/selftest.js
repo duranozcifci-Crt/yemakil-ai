@@ -217,7 +217,7 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  const solIt=await E(()=>JSON.stringify(window._mmStore.sol.items));await p.click('#mmToMkSol');await p.waitForTimeout(600);
  ok('Öneri katkı planı Premiks sekmesine aktarılıyor (öneri rasyonunun eksikleri)',await E(s=>S.type==="mikro"&&JSON.stringify(S.mk.rx.items)===s,solIt));
  await E(()=>{S.mk.rx=null;save();document.querySelector('#seg button[data-t="sut"]').click()});await p.waitForTimeout(300);
- const cmx=await E(()=>{S.feeds.forEach(x=>{x.on=false;x.kg=0});[["Kuru yonca",6],["Buğday samanı",4],["Arpa",14],["Soya küspesi",24]].forEach(([n,pr])=>{var x=S.feeds.filter(y=>y.n.indexOf(n)===0)[0];x.on=true;x.p=pr});var r={};[true,false].forEach(o=>{document.getElementById('calcOwn').checked=o;document.getElementById('calc').click();r[o]=document.getElementById('out').textContent});return r});
+ const cmx=await E(()=>{S.feeds.forEach(x=>{x.on=false;x.kg=0});[["Kuru yonca",6],["Buğday samanı",4],["Arpa",14],["Soya küspesi",24]].forEach(([n,pr])=>{var x=S.feeds.filter(y=>y.n.indexOf(n)===0)[0];x.on=true;x.p=pr});var r={};[true,false].forEach(o=>{document.getElementById('calcOwn').checked=o;document.getElementById('out').innerHTML='';document.getElementById('calc').click();r[o]=document.getElementById('out').textContent});return r});
  ok('Sıfırdan karışım fabrika yemlerimizi öncelikli dahil ediyor; kutu kapalıyken etmiyor',/bizim/.test(cmx.true)&&/Fabrika yemlerimiz karışımın/.test(cmx.true)&&!/bizim/.test(cmx.false),cmx.true.slice(0,140));
  const cz=await E(()=>{S.type="buzagi";save();renderSeg();showPanels();var it=curItems(),m=metrics(it);m.lqd=m.lqd||1;var rows=xTable(m,1).map(r=>r[0]);S.type="sut";save();renderSeg();showPanels();return rows});
  ok('Sütle beslenen buzağıda ek tabloda süt yağını içeren "Ham yağ" satırı yok',!cz.includes("Ham yağ, %"),cz.join(','));
@@ -721,6 +721,73 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
    await q.evaluate(s=>{S=JSON.parse(s);if(S.ym)ogrBind(S.ym);renderSeg();showPanels();renderFarm();renderCmp()},sv);}
   ok('Öğretici mod testlerinde JS hatası yok',!qe.length,qe.slice(0,3).join(' | '));
   await ctx.close();}
+ /* Aç-kapa düğmeleri (2026-11-16): ikinci basış açılan bölümü/sonucu kapatır; etiket ve aria-expanded durumu gösterir; kapandıktan sonra basış yeniden hesaplar */
+ {const sv=await E(()=>JSON.stringify(S));const st=s=>E(id=>{var b=typeof id==='string'&&id[0]!=='#'&&id[0]!=='['?document.getElementById(id):document.querySelector(id);return b?{t:b.textContent,a:b.getAttribute('aria-expanded')}:null},s);
+  const outLen=id=>E(i=>{var o=document.getElementById(i);return o?o.innerHTML.length:-1},id);
+  const clk=async(sel,w)=>{await E(s=>{var b=s[0]==='#'||s[0]==='['?document.querySelector(s):document.getElementById(s);if(b)b.click()},sel);await p.waitForTimeout(w||150)};
+  await E(()=>{document.querySelector('#seg button[data-t="sut"]').click()});await p.waitForTimeout(200);
+  await E(()=>{S.feeds.forEach(x=>{x.on=false;x.kg=0});[["Mısır silajı",30],["Kuru yonca",4],["Arpa",6],["Soya küspesi",2]].forEach(([n,kg])=>{var x=S.feeds.filter(y=>y.n.indexOf(n)===0)[0];if(x){x.on=true;x.kg=kg}});save();renderFarm();renderCmp();solClose()});
+  /* 1. Çözüm öner */
+  const s0=await st('solBtn');await p.click('#solBtn');await p.waitForFunction(()=>document.getElementById('solOut').innerText.length>50&&document.getElementById('solBtn').textContent!=='Hesaplanıyor...',null,{timeout:15000}).catch(()=>{});await p.waitForTimeout(100);
+  const s1=await st('solBtn'),o1=await outLen('solOut');await p.click('#solBtn');await p.waitForTimeout(150);const s2=await st('solBtn'),o2=await outLen('solOut');
+  await p.click('#solBtn');await p.waitForFunction(()=>document.getElementById('solOut').innerText.length>50,null,{timeout:15000}).catch(()=>{});const o3=await outLen('solOut');
+  ok('Aç-kapa: "Çözüm öner" ikinci basışta sonucu kapatır (Çözümü kapat ↔ Çözüm öner, aria-expanded); üçüncü basış yeniden hesaplar',s0.t==='Çözüm öner'&&s0.a==='false'&&s1.t==='Çözümü kapat'&&s1.a==='true'&&o1>50&&s2.t==='Çözüm öner'&&s2.a==='false'&&o2===0&&o3>50,JSON.stringify([s0,s1,o1,s2,o2,o3]));
+  /* kapanınca düğme ekranda kalır */
+  const kp=await E(()=>{var o=document.getElementById('solOut'),b=document.getElementById('solBtn');var r=o.getBoundingClientRect();window.scrollTo(0,window.pageYOffset+r.bottom-200);b.click();var q=b.getBoundingClientRect();return {top:q.top,bot:q.bottom,h:window.innerHeight,len:o.innerHTML.length}});
+  ok('Aç-kapa: uzun sonuç kapanınca sayfa düğmeye geri döner (düğme ekranda)',kp.len===0&&kp.top>=0&&kp.bot<=kp.h,JSON.stringify(kp));
+  /* 2. Bu riske göre çözüm öner */
+  const rk=await E(()=>{var b=document.querySelector('#cmp [data-rf]');return b?b.dataset.rf:null});
+  if(rk){const sel='#cmp [data-rf="'+rk+'"]';const r0=await st(sel);await p.click(sel);await p.waitForTimeout(2500);const r1=await st(sel),u1=await E(s=>{var o=document.getElementById('solOut');return o.previousElementSibling===document.querySelector(s)&&o.innerText.length>50},sel);
+   await p.click(sel);await p.waitForTimeout(200);const r2=await st(sel),u2=await E(()=>({len:document.getElementById('solOut').innerHTML.length,back:document.getElementById('solOut').previousElementSibling===document.getElementById('solBtn')}));
+   await p.click(sel);await p.waitForTimeout(2500);const u3=await E(()=>document.getElementById('solOut').innerText.length);
+   ok('Aç-kapa: "Bu riske göre çözüm öner" ikinci basışta kapanır, üçüncüde yeniden hesaplar',r0.a==='false'&&r1.t==='Çözümü kapat'&&r1.a==='true'&&u1&&r2.t===r0.t&&r2.a==='false'&&u2.len===0&&u2.back&&u3>50,JSON.stringify([r0,r1,u1,r2,u2,u3]));}
+  else ok('Aç-kapa: risk çözüm düğmesi bulunabildi',false,'yok');
+  await E(()=>solClose());
+  /* 3. Sıfırdan en ucuz karışım: Karışımı hesapla */
+  await clk('calc',200);const c1=await st('calc'),cl1=await outLen('out');await clk('calc',200);const c2=await st('calc'),cl2=await outLen('out');await clk('calc',200);const cl3=await outLen('out');
+  ok('Aç-kapa: "Karışımı hesapla" sonucu ikinci basışta kapanır, üçüncüde yeniden hesaplanır',c1.t==='Sonucu kapat'&&c1.a==='true'&&cl1>50&&c2.t==='Karışımı hesapla'&&c2.a==='false'&&cl2===0&&cl3>50,JSON.stringify([c1,cl1,c2,cl2,cl3]));
+  await clk('calc',100);
+  /* 4. Hastalık rehberi: Kartı aç ↔ Kartı kapat */
+  const hz=await E(()=>{var r=document.getElementById('hzRes');if(!r)return null;var L=HZ[r.dataset.sp]||[];var d=L[0];if(!d)return null;Object.keys(HZSEL).forEach(k=>delete HZSEL[k]);Object.keys(d.sg).forEach(k=>HZSEL[k]=true);r.innerHTML=hzResHTML(r.dataset.sp);var c=document.getElementById('hz_'+d.k);if(c)c.open=false;return d.k});
+  if(hz){const sel='[data-hzo="'+hz+'"]';await p.waitForTimeout(50);const h0=await st(sel);await clk(sel,100);const h1=await st(sel),d1=await E(k=>document.getElementById('hz_'+k).open,hz);await clk(sel,100);const h2=await st(sel),d2=await E(k=>document.getElementById('hz_'+k).open,hz);
+   ok('Aç-kapa: hastalık rehberinde "Kartı aç" ikinci basışta kartı kapatır (Kartı kapat ↔ Kartı aç)',h0.t==='Kartı aç'&&h0.a==='false'&&d1&&h1.t==='Kartı kapat'&&h1.a==='true'&&!d2&&h2.t==='Kartı aç'&&h2.a==='false',JSON.stringify([h0,h1,d1,h2,d2]));
+   await E(()=>{Object.keys(HZSEL).forEach(k=>delete HZSEL[k]);var r=document.getElementById('hzRes');if(r)r.innerHTML=hzResHTML(r.dataset.sp)})}
+  else ok('Aç-kapa: hastalık rehberi bulunabildi',false,'yok');
+  /* 5. + Hammadde ekle (tam ekran liste) */
+  await clk('open',100);const op1=await E(()=>({h:document.getElementById('sheet').hidden,a:document.getElementById('open').getAttribute('aria-expanded')}));await clk('open',100);const op2=await E(()=>({h:document.getElementById('sheet').hidden,a:document.getElementById('open').getAttribute('aria-expanded'),ov:document.body.style.overflow,t:document.getElementById('open').textContent}));
+  ok('Aç-kapa: "+ Hammadde ekle" listesi ikinci basışta kapanır (aria-expanded)',!op1.h&&op1.a==='true'&&op2.h&&op2.a==='false'&&op2.ov===''&&op2.t==='+ Hammadde ekle',JSON.stringify([op1,op2]));
+  /* 6. Hammadde Düzenle ↔ Bitti ve "diğer değerleri de göster" aria-expanded taşır */
+  ok('Aç-kapa: hammadde "Düzenle/Bitti" ve "diğer değerleri göster" düğmelerinde aria-expanded var',/data-ed="'\+i\+'" aria-expanded=/.test(html)&&/va\.setAttribute\("aria-expanded"/.test(html));
+  ok('Hammadde listesindeki "Referansa dön" (data-rf) risk çözümünü tetiklemez (yalnız #cmp içindeki risk düğmeleri)',/t\.dataset\.rf\|\|!t\.closest\("#cmp"\)\)return/.test(html));
+  /* 7. Çiftlik yemi: Yemi değerlendir / Asistan düzeltsin — aynı sonuç alanı, sahibine göre */
+  await E(()=>{document.querySelector('#seg button[data-t="yem"]').click()});await p.waitForTimeout(300);
+  const ymw=()=>p.waitForFunction(()=>{var o=document.getElementById('ymOut');return o&&o.innerHTML.length>50&&!/Hesaplanıyor/.test(document.getElementById('ymManual').textContent+document.getElementById('ymCalc').textContent)},null,{timeout:15000}).catch(()=>{});
+  await E(()=>{var o=document.getElementById('ymOut');o.innerHTML='';o.removeAttribute('data-tgm')});
+  await clk('ymManual',50);await ymw();await p.waitForTimeout(80);const y1=[await st('ymManual'),await st('ymCalc')];
+  await clk('ymCalc',50);await ymw();await p.waitForTimeout(80);const y2=[await st('ymManual'),await st('ymCalc'),await E(()=>/Asistanın düzelttiği/.test(document.getElementById('ymOut').textContent))];
+  await clk('ymCalc',100);const y3=[await st('ymCalc'),await outLen('ymOut')];
+  await clk('ymCalc',50);await ymw();const y4=await outLen('ymOut');await clk('ymCalc',100);
+  ok('Aç-kapa: çiftlik yemi "Yemi değerlendir" / "Asistan düzeltsin": sonuç açıkken diğer düğme yeniden hesaplar, aynı düğme kapatır',y1[0].t==='Sonucu kapat'&&y1[0].a==='true'&&y1[1].a==='false'&&y2[0].t==='Yemi değerlendir'&&y2[1].t==='Sonucu kapat'&&y2[2]&&y3[0].t==='Asistan düzeltsin (en ucuz karışım)'&&y3[0].a==='false'&&y3[1]===0&&y4>50,JSON.stringify([y1,y2,y3,y4]));
+  /* 8. Premiks: Katkı reçetesini hazırla; etiket ve yem etiketi değerlendir */
+  await E(()=>{document.querySelector('#seg button[data-t="mikro"]').click()});await p.waitForTimeout(300);
+  const pairs=[['mkGo','mkOut','Reçeteyi kapat'],['lbGo','lbOut','Sonucu kapat'],['flGo','flOut','Sonucu kapat']];const pr=[];
+  for(const [bid,oid,off] of pairs){await E(o=>{var e=document.getElementById(o);if(e)e.innerHTML=''},oid);const a0=await st(bid);if(!a0){pr.push(bid+':yok');continue}await clk(bid,250);const a1=await st(bid),l1=await outLen(oid);await clk(bid,150);const a2=await st(bid),l2=await outLen(oid);await clk(bid,250);const l3=await outLen(oid);
+   if(!(a1.t===off&&a1.a==='true'&&l1>0&&a2.t===a0.t&&a2.a==='false'&&l2===0&&l3>0))pr.push(bid+':'+JSON.stringify([a0,a1,l1,a2,l2,l3]));await clk(bid,100)}
+  ok('Aç-kapa: Premiks "Katkı reçetesini hazırla", "Etiketi değerlendir", "Yemi değerlendir" ikinci basışta kapanır, üçüncüde yeniden hesaplar',!pr.length,pr.join(' | '));
+  /* 9. Etiket karşılaştırması, YZ yorumu (API çağrılmaz: yalnız açık yorum kapatılır), çiftlik–öneri karşılaştırması */
+  const cmpT=await E(()=>{var r={},L=FL_def(),A0=AI_def(),sv0=JSON.stringify(L.saved),k0=A0.key,pr0=window.prompt;L.saved=[];L.name="A yem";L.t="sut19";L.price=14;L.v={hp:19,hy:3.83,hs:7.47,kul:6.92};save();feedLabelEval();window.prompt=function(){return "A yem"};document.getElementById('flSave').click();L.name="B yem";L.price=11.5;L.v={hp:19,hy:2.5,hs:12,kul:9.5};save();feedLabelEval();window.prompt=function(){return "B yem"};document.getElementById('flSave').click();A0.key="test";renderFlSaved();
+    var g=document.getElementById('flCmpGo'),o=document.getElementById('flCmpOut'),sa=document.getElementById('flCmpA'),sb=document.getElementById('flCmpB');if(sa&&sb){sa.value='1';sb.value='0'}
+    if(g&&o){var st=function(){tgSync();return [g.textContent,g.getAttribute('aria-expanded')]};r.c0=st();g.click();r.c1=st().concat(o.innerHTML.length);g.click();r.c2=st().concat(o.innerHTML.length);g.click();r.c3=o.innerHTML.length;
+     var ai=document.getElementById('flCmpAi'),ao=document.getElementById('flCmpAiOut');if(ai&&ao){ao.innerHTML='<p>x</p>';tgSync();r.a1=[ai.textContent,ai.getAttribute('aria-expanded')];ai.click();r.a2=[ai.textContent,ai.getAttribute('aria-expanded'),ao.innerHTML.length,o.innerHTML.length>0]}}
+    L.saved=JSON.parse(sv0);A0.key=k0;window.prompt=pr0;save();renderFlSaved();return r});
+  ok('Aç-kapa: etiket "Karşılaştır" ↔ "Karşılaştırmayı kapat" ve açık YZ yorumu ikinci basışta kapanır (karşılaştırma yerinde kalır)',cmpT.c0&&cmpT.c0[0]==='Karşılaştır'&&cmpT.c1[0]==='Karşılaştırmayı kapat'&&cmpT.c1[1]==='true'&&cmpT.c1[2]>50&&cmpT.c2[0]==='Karşılaştır'&&cmpT.c2[2]===0&&cmpT.c3>50&&cmpT.a1&&cmpT.a1[0]==='Yorumu kapat'&&cmpT.a2[1]==='false'&&cmpT.a2[2]===0&&cmpT.a2[3],JSON.stringify(cmpT));
+  await E(()=>{document.querySelector('#seg button[data-t="sut"]').click()});await p.waitForTimeout(200);
+  const fsT=await E(()=>{var f0=S.fsnap;S.fsnap=S.fsnap||{};S.fsnap[S.type]={farm:snapCur(),prop:snapCur(),date:"test"};renderFarm();renderCmp();var b=document.getElementById('fsCmp'),o=document.getElementById('fsOut'),r={};if(b&&o){b.click();tgSync();r.t1=[b.textContent,b.getAttribute('aria-expanded'),o.innerHTML.length];b.click();r.t2=[b.textContent,b.getAttribute('aria-expanded'),o.innerHTML.length]}S.fsnap=f0;save();renderFarm();renderCmp();return r});
+  ok('Aç-kapa: çiftlik rasyonu–öneri "Karşılaştır" ikinci basışta kapanır',fsT.t1&&fsT.t1[0]==='Karşılaştırmayı kapat'&&fsT.t1[1]==='true'&&fsT.t1[2]>50&&fsT.t2[0]==='Karşılaştır'&&fsT.t2[1]==='false'&&fsT.t2[2]===0,JSON.stringify(fsT));
+  ok('Aç-kapa: kod tüm hedef düğmeleri kapsıyor',['#solBtn','#cmp [data-rf]','#calc','#ymManual','#ymCalc','#mkGo','#lbGo','#flGo','#flCmpGo','#flCmpAi','#fsCmp','[data-hzo]','#open'].every(q=>html.indexOf('{q:"'+q+'"')>=0));
+  /* etiket banner'ı "Çözüm öner" her zaman yeni çözüm üretir (kapatmaz) */
+  ok('Etiket bildirimi "Çözüm öner" açık eski sonucu kapatmak yerine yeniden çözer',/lblBanSol"\)\.onclick=function\(\)\{var sb=document\.getElementById\("solBtn"\);if\(sb\)\{if\(window\.solClose\)solClose\(\);sb\.click\(\)/.test(html));
+  await E(s=>{S=JSON.parse(s);save();renderSeg();showPanels();renderFarm();renderCmp();if(window.solClose)solClose()},sv);await E(()=>{document.querySelector('#seg button[data-t="'+S.type+'"]').click()});await p.waitForTimeout(200);}
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
  /* Bozuk kayıt: uygulama varsayılanlarla açılıyor */
  for(const bad of ['{"type":"sut","t":{},"feeds":[null]}','{"feeds":{"a":1},"t":{}}']){const q=await b.newPage({viewport:{width:390,height:844}});const qe=[];q.on('pageerror',e=>qe.push(e.message));await q.goto('file://'+path.resolve(FILE));await q.evaluate(v=>localStorage.setItem(KEY,v),bad);await q.reload();await q.waitForTimeout(500);const nb=await q.evaluate(()=>document.querySelectorAll('#seg button').length);ok('Bozuk kayıtla açılış hatasız: '+bad.slice(0,30),!qe.length&&nb>0,qe.join('|')+' seg='+nb);await q.evaluate(()=>localStorage.clear());await q.close()}
