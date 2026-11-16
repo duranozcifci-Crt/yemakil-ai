@@ -283,11 +283,12 @@ function fpDikkatSerit(A){var I=A.dikkat.filter(function(x){return x.alt!=='dosy
    Yalnız açıklama ekler: "Öğretici · …" katlanır kutular ve uyarıların yanında tek satır "neden → ne yapmalı". Hiçbir hesaba dokunmaz. */
 var OGK="yemakil-ogretici",OG=null;
 function ogOku(){try{var v=localStorage.getItem(OGK);if(v==="1")return true;if(v==="0")return false;return !localStorage.getItem("fiyat-v1")}catch(e){return false}}
-function ogAcik(){if(OG===null)OG=ogOku();return OG}
+OG=false;/* V-fiyat 2026-11-16: kullanıcı isteği — Fiyatlar programında öğretici açıklamalar kaldırıldı (Sipariş V199 ile aynı) */
+function ogAcik(){return false}
 window.ogAcik=ogAcik;
-window.ogSet=function(v){OG=!!v;try{localStorage.setItem(OGK,OG?"1":"0")}catch(e){}ogBar();fpRender()};
+window.ogSet=function(v){OG=false;try{localStorage.setItem(OGK,OG?"1":"0")}catch(e){}ogBar();fpRender()};
 window._ogAc=window._ogAc||{};window.ogAc=function(el){window._ogAc[el.getAttribute('data-og')]=el.open};
-function ogBar(){var el=typeof document!=='undefined'&&document.getElementById("ogBar");if(!el)return;var on=ogAcik();el.className="ogbar";
+function ogBar(){var el=typeof document!=='undefined'&&document.getElementById("ogBar");if(!el)return;el.innerHTML="";el.className="";return;var on=ogAcik();el.className="ogbar";
  el.innerHTML='<label title="Her bölümde kısa açıklamalar gösterir"><input type="checkbox" id="ogT"'+(on?' checked':'')+' onchange="ogSet(this.checked)">🎓 Öğretici mod</label>'}
 window.ogBar=ogBar;
 function og(k,bas,ic){if(!ogAcik())return '';return '<details class="og" data-og="'+k+'" ontoggle="ogAc(this)"'+(window._ogAc[k]?' open':'')+'><summary>🎓 Öğretici · '+bas+'</summary>'+ic+'</details>'}
