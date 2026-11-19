@@ -2,11 +2,13 @@
   "_aciklama": [
     "Sabah fiyat bildirimi için kullanıcının fiyat sınırları (tools/gunluk_ozet.mjs okur). Fiyatlar TL/ton.",
     "Her uyarı bir satır: {\"urun\": \"Arpa\", \"borsa\": \"en ucuz\", \"alt\": 15000, \"ust\": null, \"not\": \"alım fırsatı\"}",
-    "urun: hammadde adı (Mısır, Arpa, Yemlik buğday, Soya fasulyesi, Soya küspesi, DDGS, Mısır gluten yemi (feed), Mısır gluteni (meal), Ayçiçeği küspesi, Çiğit (pamuk tohumu), Buğday kepeği).",
-    "borsa: \"en ucuz\" (güncel borsaların en ucuzu), bir borsa adı (\"Konya\", \"Polatlı\", \"Gaziantep\", \"Gaziantep kırık\", \"Adana\") ya da \"ithal\" (tahmini Mersin teslim; gümrük ve KDV hariç).",
-    "alt: fiyat bu rakama eşit ya da altındaysa uyarır; ust: eşit ya da üstündeyse uyarır. Kullanılmayanı null bırakın. not: isteğe bağlı, bildirimde yazılır.",
+    "urun: hammaddenin TAM adı (Mısır, Arpa, Yemlik buğday, Soya fasulyesi, Soya küspesi, DDGS, Mısır gluten yemi (feed), Mısır gluteni (meal), Ayçiçeği küspesi, Pamuk tohumu küspesi, Çiğit (pamuk tohumu), Buğday kepeği). İki hammaddeye uyan kısa ad (\"Soya\", \"Gluten\", \"Buğday\", \"Pamuk\") kabul edilmez; bildirimde \"çalışmayan satır\" diye yazılır.",
+    "borsa: \"en ucuz\" (güncel borsaların en ucuzu), bir borsa adı (\"Konya\", \"Polatlı\", \"Gaziantep\", \"Gaziantep kırık\", \"Adana\") ya da \"ithal\" (tahmini Mersin teslim; gümrük ve KDV hariç). Hammaddenin o borsada fiyatı yoksa (örnek: Buğday kepeği – Konya) ya da ithal (FOB) kaynağı yoksa satır çalışmaz ve bildirimde yazılır.",
+    "alt: fiyat bu rakama eşit ya da altındaysa uyarır; ust: eşit ya da üstündeyse uyarır. Kullanılmayanı null bırakın. Rakam sayı olarak yazılır (15500); tırnak içinde \"15.500\" ya da \"15500\" de 15.500 TL/ton okunur. not: isteğe bağlı, bildirimde yazılır.",
     "yuzde_esik: fiyat bir öncekine göre bu yüzdeden ÇOK artar ya da düşerse (borsada bir önceki işlem günü, dünyada bir önceki yayımlanan fiyat) bildirimde uyarı çıkar; varsayılan 2.",
-    "Sınır aşık kaldığı sürece her sabah bildirimde görünür; istenmediğinde satırı silin."
+    "bildirim (isteğe bağlı): sabah bildiriminin günleri ve saati, Türkiye saatiyle; yazılmazsa {\"gunler\": [2,3,4,5,6], \"saat\": \"08:06\"} (Salı–Cumartesi; 0 = Pazar). Fiyat hareketi uyarıları bir önceki bildirimden beri ilk kez görülen fiyatlara bakar; bildirim takvimi değişirse burası da değiştirilir.",
+    "Sınır aşık kaldığı sürece her sabah bildirimde görünür; istenmediğinde satırı silin.",
+    "Bu dosya bozulursa (virgül, tırnak hatası) bildirimde \"uyarilar.json bozuk, okunamadı\" satırı çıkar; sınırlar o gün denetlenmez."
   ],
   "yuzde_esik": 2,
   "uyarilar": []

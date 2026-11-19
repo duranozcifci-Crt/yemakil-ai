@@ -1,9 +1,22 @@
 name: Fiyat panosu
 on:
   schedule:
-    - cron: "17 22 * * 1-5"
-    # motorin (nakliye hesabı) hafta sonu da değişebilir: her sabah 07:17 (TR) bir kez daha
-    - cron: "17 4 * * *"
+    # GitHub zamanlanmış işleri saatinde başlatmıyor (18.11.2026 kontrolü: 3,5–9 saat gecikme). Sabah bildirimi 08:06 (TR) = 05:06 UTC'de
+    # gittiği için borsa fiyatları tek bir gece çalıştırmasına bırakılmaz: iş günleri öğleden sonradan sabaha karşıya kadar art arda dener.
+    # Saat başından uzak dakikalar seçildi (saat başları en kalabalık an). Çalıştırmalar birbirini bozmaz: betik veri değişmediyse dosyaya
+    # dokunmaz ("değişiklik yok", kayıt oluşmaz), haftalık kaynakları (FAO, USDA) 6 saatte bir çeker.
+    # Borsa günü (Pzt–Cum) 13:37, 15:23, 17:41, 19:23, 21:41, 23:23 UTC = TR 16:37, 18:23, 20:41, 22:23, 00:41, 02:23
+    - cron: "37 13 * * 1-5"
+    - cron: "23 15 * * 1-5"
+    - cron: "41 17 * * 1-5"
+    - cron: "23 19 * * 1-5"
+    - cron: "41 21 * * 1-5"
+    - cron: "23 23 * * 1-5"
+    # ertesi sabaha karşı (Sal–Cmt) 01:41 UTC = TR 04:41: bildirimden önceki son deneme
+    - cron: "41 1 * * 2-6"
+    # motorin (nakliye hesabı) hafta sonu da değişebilir: her gün sabaha karşı 03:11 UTC (TR 06:11) ve gün içinde 08:47 UTC (TR 11:47; geç gelen Gaziantep bülteni de bununla alınır)
+    - cron: "11 3 * * *"
+    - cron: "47 8 * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -23,8 +36,12 @@ jobs:
       - name: PDF okuyucu (USDA raporu için)
         run: command -v pdftotext || (sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils)
       - name: Fiyatları çek
-        # betik her isteğe 25 sn, yavaş döngülere toplam 7 dk sınır koyar ve o ana kadar çekileni yazar
+        # betik her isteğe 25 sn, her aşamaya (kur/Chicago, dünya fiyatları, borsa, motorin) ayrı süre sınırı koyar; en geç 8. dakikada
+        # o ana kadar çekileni yazıp biter (yanıt vermeyen kaynak atlanır, önceki verisi korunur)
         timeout-minutes: 11
+        env:
+          # elle başlatılan çalıştırma haftalık kaynakları da (6 saat beklemeden) yeniden çeker
+          FIYAT_TAM: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
         run: node tools/fiyat_guncelle.mjs fiyatlar.json
       - name: Kaydet
         run: |

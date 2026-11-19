@@ -137,6 +137,8 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 /* sayfa kapanırken / arka plana geçerken bekleyen yedek hemen alınır (yetişmezse sonraki açılışta fark yakalanır) */
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){if(zam)al("oto")}else{var g=+lsGet(GK)||0;if(g>ACILIS&&!GIRIS())location.reload();else try{uyariCiz()}catch(e){}}});
 window.addEventListener("pagehide",function(){if(zam)al("oto")});
+/* V221 (denetim 20): telefonun Geri tuşu sayfayı bellekten (bfcache) getirirse ve o arada yedekten geri dönüldüyse eski hâl ekranda kalmasın, ilk değişiklikte geri dönüşü ezmesin */
+window.addEventListener("pageshow",function(e){if(e&&e.persisted){var g=+lsGet(GK)||0;if(g>ACILIS&&!GIRIS())location.reload()}});
 /* başka pencerede geri dönüş yapıldıysa açık program yenilenir (eski kayıt üzerine yazmasın) */
 window.addEventListener("storage",function(e){if(e.key===GK&&!GIRIS())location.reload();else if(e.key===DK||KEYS.indexOf(e.key)>=0)haber()});
 

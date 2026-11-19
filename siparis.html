@@ -50,12 +50,61 @@ function oku(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null}ca
 /* Sipariş sayfası: kendi kaydı (siparis-v1); ilk açılışta rasyon programındaki eski sipariş verileri (rasyon-v1 → sip) bir kez kopyalanır. */
 var SP=oku("siparis-v1"),RS=SP?null:oku("rasyon-v1");
 var S={sip:(SP&&SP.sip)||(RS&&RS.sip)||undefined};
-function save(){try{localStorage.setItem("siparis-v1",JSON.stringify({sip:S.sip}))}catch(e){if(!window._qWarn){window._qWarn=1;try{alert("Kayıt yapılamadı: tarayıcı depolama alanı dolu veya kapalı.")}catch(x){}}}}
+/* V221 (denetim 3): Sipariş iki pencerede açıksa (YemAkıl girişinden + kendi simgesinden) biri ötekinin kaydını silmesin.
+   _spHam: bu pencerenin telefondan en son okuduğu / telefona en son yazdığı kayıt metni. _spBaz: o andaki bellekteki hâl (karşılaştırma tabanı).
+   1) Öteki pencere kaydedince (storage olayı; ayrıca pencereye dönünce) bu pencere kaydı telefondan yeniden okur ve ekranı yeniler;
+      o sırada bir kutuya yazılıyorsa yazı bozulmaz, kutudan çıkınca yenilenir.
+   2) Kaydetmeden önce telefondaki kayıt değişmişse (yenileme yetişmedi) üzerine yazılmaz, birleştirilir: sipariş (id) ve cari (ad) bazında —
+      bu pencerede değişen buradan, değişmeyen öteki pencereden alınır; iki yerde de değişen siparişte son değiştirilen geçerli olur. */
+function spHamOku(){try{return localStorage.getItem("siparis-v1")}catch(e){return null}}
+function spCoz(t){try{var o=t?JSON.parse(t):null;return o&&o.sip&&typeof o.sip==="object"&&!Array.isArray(o.sip)?o.sip:null}catch(e){return null}}
+var _spHam=SP?spHamOku():null,_spBaz=JSON.stringify(S.sip||null),_spEsBek=0;
+function spBazAl(){if(spHamOku()===_spHam)_spBaz=JSON.stringify(S.sip||null)}
+function spBirlestir(M,B,T,H){var deg=false,J=JSON.stringify,ob=function(x){return x&&typeof x==="object"&&!Array.isArray(x)};B=ob(B)?B:{};H=ob(H)?H:{};
+ /* sipariş özü: ekranın kendiliğinden eklediği boş alanlar (ty, nk, gon…) fark sayılmaz */
+ var oz=function(o){return J([o.no,o.t,o.mod,o.k,o.ty||{},o.nk||{},o.gon||{},o.fo||{},o.od||"n",o.pk||0,o.gonI||null,o.gonT||null])},
+  sonZ=function(o){var z=String(o.mod||"");Object.keys(o.gon||{}).forEach(function(k){if(String(o.gon[k])>z)z=String(o.gon[k])});return z},
+  dizin=function(L,k){var m={};(Array.isArray(L)?L:[]).forEach(function(x){if(x&&typeof x==="object"&&x[k]!=null)m[x[k]]=x});return m};
+ function liste(ad,k,ozF,sec){var mB=dizin(B[ad],k),mT=dizin(T[ad],k),mH=dizin(H[ad],k),gor={},out=[],yeni=[];
+  (Array.isArray(M[ad])?M[ad]:[]).forEach(function(o){if(!o||typeof o!=="object"||o[k]==null){out.push(o);return}var id=o[k],t=mT[id];gor[id]=1;
+   if(!t){/* ötekinde yok: öteki pencere sildiyse ve ben değiştirmediysem silinmiş kalır */if(mH[id]&&mB[id]&&ozF(o)===ozF(mB[id])){deg=true;return}out.push(o);return}
+   var benDeg=!mB[id]||ozF(o)!==ozF(mB[id]),oDeg=!mH[id]||ozF(t)!==ozF(mH[id]);
+   if(ozF(o)===ozF(t)||!oDeg){out.push(o);return}
+   if(!benDeg||sec(o,t)){out.push(t);deg=true;return}out.push(o)});
+  (Array.isArray(T[ad])?T[ad]:[]).forEach(function(t){if(!t||typeof t!=="object"||t[k]==null||gor[t[k]])return;
+   /* bende yok: ben sildiysem ve öteki değiştirmediyse silinmiş kalır; yoksa öteki pencerede eklenmiştir */if(mB[t[k]]&&mH[t[k]]&&ozF(t)===ozF(mH[t[k]]))return;yeni.push(t);deg=true});
+  M[ad]=ad==="ls"?yeni.concat(out):out.concat(yeni);return {mT:mT,mH:mH}}
+ var r=liste("ls","id",oz,function(o,t){return sonZ(t)>sonZ(o)});liste("cari","ad",J,function(){return false});
+ /* diğer ayarlar (fiyat düzeltmeleri, nakliye fiyatları, iskonto…): alan alan; ben değiştirmediysem ötekinin değeri */
+ (function alan(m,b,t,h,d){var K={};[m,t].forEach(function(x){Object.keys(x).forEach(function(k){K[k]=1})});Object.keys(K).forEach(function(k){if(!d&&(k==="ls"||k==="cari"||k==="cur"||k==="no"||k==="noY"))return;
+  var benDeg=J(m[k])!==J(b[k]),oDeg=J(t[k])!==J(h[k]);if(!oDeg||J(m[k])===J(t[k]))return;
+  if(!benDeg){if(t[k]===undefined)delete m[k];else m[k]=t[k];deg=true;return}
+  if(d<3&&ob(m[k])&&ob(t[k]))alan(m[k],ob(b[k])?b[k]:{},t[k],ob(h[k])?h[k]:{},d+1)})})(M,B,T,H,0);
+ /* sipariş numarası: sayaç geri gitmez; iki pencerede aynı numarayla açılmış gönderilmemiş yeni siparişe yeni numara verilir */
+ if(T.noY&&(!M.noY||String(T.noY)>String(M.noY))){M.noY=T.noY;M.no=T.no}else if(String(T.noY||"")===String(M.noY||"")&&T.no>(M.no||0))M.no=T.no;
+ var nolar={};Object.keys(r.mT).forEach(function(id){nolar[r.mT[id].no]=1});
+ (M.ls||[]).forEach(function(o){if(!o||r.mT[o.id]||r.mH[o.id]||!nolar[o.no]||Object.keys(o.gon||{}).length)return;var m=String(o.no||"").match(/^SP-(\d{4})-\d+$/);if(!m||m[1]!==String(M.noY||""))return;M.no=(+M.no||0)+1;o.no="SP-"+m[1]+"-"+("00"+M.no).slice(-3);nolar[o.no]=1;deg=true});
+ return deg}
+function save(){try{var ham=spHamOku();if(window._spKayitTam)window._spKayitTam=0;else if(ham!==_spHam&&S.sip&&typeof S.sip==="object"){var T=spCoz(ham),B=null;try{B=JSON.parse(_spBaz)}catch(e){}if(T&&spBirlestir(S.sip,B,T,spCoz(_spHam)))spCizIste()}
+ var yeni=JSON.stringify({sip:S.sip});localStorage.setItem("siparis-v1",yeni);_spHam=yeni;_spBaz=JSON.stringify(S.sip||null)}catch(e){if(!window._qWarn){window._qWarn=1;try{alert("Kayıt yapılamadı: tarayıcı depolama alanı dolu veya kapalı.")}catch(x){}}}}
+function spYaziyor(){var a=document.activeElement;return !!(a&&a!==document.body&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.type!=="checkbox"&&a.type!=="file"&&a.type!=="button")}
+function spCizIste(){_spEsBek=1;setTimeout(function(){spEsitle()},0)}
+/* telefondaki kayıt bu pencerenin bildiğinden farklıysa yeniden oku + ekranı yenile; yazarken (kutu seçili ve pencere önde) kutudan çıkılınca */
+function spEsitle(){var ham=spHamOku();if(ham===_spHam&&!_spEsBek)return false;
+ if(spYaziyor()&&(!document.hasFocus||document.hasFocus())){_spEsBek=1;return false}
+ /* yarım kalan yazı (bekleyen miktar, seçili kutu) önce kaydedilir; kayıt sırasında birleştirme yapılır */
+ try{if(window.spAkit)spAkit()}catch(e){}if(spYaziyor()){try{document.activeElement.blur()}catch(e){}}
+ ham=spHamOku();if(ham!==_spHam){var T=spCoz(ham);if(T){var c0=S.sip&&S.sip.cur;S.sip=T;_spHam=ham;/* bu pencerede açık olan sipariş açık kalır; o sipariş yoksa (kaydedilmemiş boş taslaktı ya da öteki pencere sildi) öteki pencerenin açık siparişi buraya taşınmaz, boş yeni sipariş açılır */T.cur=c0!=null&&Array.isArray(T.ls)&&T.ls.some(function(o){return o&&o.id===c0})?c0:null;_spBaz=JSON.stringify(S.sip)}}
+ _spEsBek=0;try{if(window.spRender&&document.getElementById("spBody"))spRender()}catch(e){}return true}
+window.addEventListener("storage",function(e){if(e.key===null||e.key==="siparis-v1")spEsitle()});
+window.addEventListener("focus",function(){spEsitle()});window.addEventListener("pageshow",function(){spEsitle()});
+document.addEventListener("visibilitychange",function(){if(document.visibilityState!=="hidden")spEsitle()});
+document.addEventListener("focusout",function(){if(_spEsBek||spHamOku()!==_spHam)setTimeout(function(){spEsitle()},700)},true);
 if(!SP&&S.sip)save();
 </script>
 <script src="siparis.js?v=220"></script>
 <script>
-spOpen();(function(){var p=document.getElementById('spPanel'),m=document.querySelector('main');if(p&&m)m.appendChild(p)})();
+spOpen();(function(){var p=document.getElementById('spPanel'),m=document.querySelector('main');if(p&&m)m.appendChild(p)})();spBazAl();
 </script>
 <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
 </body></html>

@@ -5,7 +5,8 @@
    Yemlik buğday: Gaziantep dökerli ve kırık ayrı seriler (en ucuz "Gaziantep kırık"). Ayçiçeği küspesi: 12 ↔ 16 zıplıyor (oynak, harekete girmez).
    DDGS: 100 günde 5 işlem, son işlem +%11 (az işlem, harekete girmez). Kepek: düzenli seri, son gün +%6 (olağan dışı hareket).
    %2 eşiği: soya fasulyesi Adana 28,05 → 28,64 (+%2,1) uyarır, çiğit 17,75 → 17,413 (−%1,9) uyarmaz.
-   Çiğit ayrı satır; pamuk tohumu küspesinde borsa işlemi yok. sakin: aynı gün, hiçbir şey olmayan veri. */
+   Çiğit ayrı satır; pamuk tohumu küspesinde borsa işlemi yok. sakin: aynı gün, hiçbir şey olmayan veri.
+   Bu örnekte "gorulme" damgası yok (eski dosya biçimi): hareket uyarısı eski kuralla (son borsa günü / son 4 gün) çalışır. Damgalı örnek: gec(). */
 function gun(n, adim, f0, son) { const a = []; let d = new Date(Date.parse(son + "T00:00:00Z") - (n - 1) * adim * 864e5); for (let i = 0; i < n; i++) { a.push([d.toISOString().slice(0, 10), f0(i, n)]); d = new Date(d.getTime() + adim * 864e5); } return a; }
 const SON = "2026-11-13", KUR = 50;
 function ornek() {
@@ -38,4 +39,20 @@ function ornek() {
   };
   return { D, uy, sakin, simdi: Date.parse("2026-11-14T05:06:00Z") };
 }
-module.exports = { ornek };
+/* Geç gelen fiyatlar (kontrol 18.11.2026). "gorulme" = güncelleme betiğinin serinin SON fiyatını ilk gördüğü an; hareket uyarısı tarihe değil buna bakar.
+   Bildirim 14.11 (Cumartesi) 08:06; bir önceki bildirim 13.11 (Cuma) 08:06 = 05:06 UTC.
+   Kepek Gaziantep: son fiyat 12.11 tarihli (+%6), bülteni 13.11 öğleden sonra geldi → uyarır, satırda "(12.11 fiyatı, geç geldi)" (eski kuralda hiç uyarmazdı).
+   Soya fasulyesi Adana: son fiyat 12.11 (+%2,1), 12.11 akşamı görüldü (Cuma bildiriminde çıktı) → bir daha uyarmaz.
+   Arjantin FOB mısır (FAO haftalık): 30.10 tarihli fiyat 13.11 gecesi yayımlandı (224 → 219 $/t, −%2,2) → uyarır, "(30.10 fiyatı)"; ithal–yerli geçişi de bu yeni fiyatla tetiklenir.
+   Arpa Polatlı: son borsa günü, gece görüldü → uyarır. Çiğit: damga yok → eski kural (son borsa günü; −%1,9 eşiğin altında). */
+function gec() {
+  const o = ornek(), D = o.D, yi = (ad, borsa) => D.yurtici.urunler.find((u) => u.ad === ad && u.borsa === borsa);
+  D.yurtici.urunler.forEach((u) => { if (u.seri.length) u.gorulme = "2026-11-13T19:40Z"; });
+  const k = yi("Buğday kepeği", "Gaziantep"); k.seri = gun(100, 1, (i, n) => (i === n - 1 ? 14.9 : i % 2 ? 14.0 : 14.05), "2026-11-12"); k.gorulme = "2026-11-13T13:30Z";
+  const s = yi("Soya fasulyesi", "Adana"); s.seri = gun(100, 1, (i, n) => (i === n - 1 ? 28.64 : i % 2 ? 28.0 : 28.05), "2026-11-12"); s.gorulme = "2026-11-12T19:00Z";
+  delete yi("Çiğit (pamuk tohumu)", "Adana").gorulme;
+  const a = D.urunler.find((u) => /Arjantin/.test(u.merkez)); a.seri = gun(12, 7, (i, n) => (i === n - 1 ? 219 : i % 2 ? 223 : 224), "2026-10-30").map(([d, v]) => [d, v * KUR]); a.gorulme = "2026-11-13T22:10Z";
+  D.urunler.find((u) => /Ukrayna/.test(u.merkez)).gorulme = "2026-11-06T22:10Z";
+  return { D, uy: [], simdi: o.simdi };
+}
+module.exports = { ornek, gec };

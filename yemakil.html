@@ -88,8 +88,8 @@ window.ykGeriDon=geriDon;
 $("ykGonder").onclick=function(){YK.gonder(function(s,m){msg(m);ciz()})};
 $("ykYukleB").onclick=function(){var f=$("ykDosya");f.value="";f.click()};
 window.ykDosyaMetni=function(txt,sor){var c=YK.dosyaCoz(txt);if(c.hata){msg(c.hata);return Promise.resolve(c)}
- if(sor!==false&&!confirm("Yedek dosyası"+(c.tarih?" ("+new Date(c.tarih).toLocaleDateString("tr-TR")+")":"")+": "+c.programlar.join(", ")+(c.ozet?" — "+c.ozet:"")+".\n\nBu telefondaki "+c.programlar.join(", ")+" kayıtlarının YERİNE yüklensin mi? (Dosyada olmayan programlar değişmez; şimdiki hâl önce yedeklenir, geri alınabilir.)"))return Promise.resolve({iptal:true});
- return YK.dosyaYukle(c).then(function(s){if(s&&s.ok)msg("Yedek yüklendi: "+c.programlar.join(", ")+(c.ozet?" ("+c.ozet+")":"")+".",s.oncesi);else msg((s&&s.hata)||"Yüklenemedi.");ciz();return s})};
+ if(sor!==false&&!confirm("Yedek dosyası"+(c.tarih?" ("+new Date(c.tarih).toLocaleDateString("tr-TR")+")":"")+": "+c.programlar.join(", ")+(c.ozet?" — "+c.ozet:"")+".\n\nBu telefondaki "+c.programlar.join(", ")+" kayıtlarının YERİNE yüklensin mi? (Dosyada olmayan programlar değişmez; "+(YK.dbYok()?/* V221 (denetim 17): otomatik yedek çalışmıyorsa "geri alınabilir" sözü verilmez */"DİKKAT: bu tarayıcıda otomatik yedek çalışmadığı için şimdiki hâl yedeklenemez, bu işlem GERİ ALINAMAZ. Emin değilseniz İptal deyip önce \"Yedeği telefondan dışarı gönder\" ile yedek alın.":"şimdiki hâl önce yedeklenir, geri alınabilir.")+")"))return Promise.resolve({iptal:true});
+ return YK.dosyaYukle(c).then(function(s){if(s&&s.ok)msg("Yedek yüklendi: "+c.programlar.join(", ")+(c.ozet?" ("+c.ozet+")":"")+"."+(s.oncesi?"":" Önceki hâl yedeklenemedi; bu yükleme geri alınamaz."),s.oncesi);else msg((s&&s.hata)||"Yüklenemedi.");ciz();return s})};
 $("ykDosya").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){ykDosyaMetni(String(r.result||""))};r.readAsText(f)};
 YK.dinle(ciz);ciz();window.ykCiz=ciz})();
 </script>

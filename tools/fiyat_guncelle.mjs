@@ -2,7 +2,9 @@
 // Chicago vadeli (CBOT), FAO, USDA, Güney Amerika FOB fiyatlarını ve USD/TRY kurunu çeker; yurt içi fiyatları
 // Gaziantep, Konya, Polatlı ve Adana borsalarının günlük bültenlerinden ekler; Mersin motorin fiyatını (sipariş nakliye hesabı) ekler.
 // Sayfanın okuduğu fiyatlar.json yalnız son SAYFA_GUN günü tutar (3 aylık grafik ve yüzdeler için yeter; dosya büyümez);
-// uzun geçmiş (SAKLA_GUN) fiyat-arsiv.json'da birikir. Bir kaynak çekilemezse önceki verisi korunur; her istek süre sınırlıdır.
+// uzun geçmiş (SAKLA_GUN) fiyat-arsiv.json'da birikir. Bir kaynak çekilemezse önceki verisi korunur; her istek ve her aşama süre sınırlıdır.
+// Gecede birkaç kez çalışır (GitHub zamanlaması saatlerce gecikebiliyor): veri değişmediyse dosyalara dokunmaz (kayıt oluşmaz),
+// haftalık kaynaklar (FAO, USDA) 6 saatte bir çekilir. Her serinin son fiyatının ilk görüldüğü an "gorulme" alanına yazılır (uyarılar için).
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -21,9 +23,26 @@ const URUNLER = [
 // Pano en çok 3 ay gösterir (grafik 91 gün; aylık seriler ~2,5 ay gecikmeli geldiği için 3 aylık yüzde ~170 gün geriye bakar) → fiyatlar.json yalnız son SAYFA_GUN gün (denetim F2).
 const SAKLA_GUN = 740;
 const SAYFA_GUN = 170;
-// Süre sınırları (denetim O6): her istek en çok 25 sn; yavaş döngüler (borsa günleri, Arjantin arşivi) toplam 7 dk'yı aşınca durur,
-// o ana kadar çekilenler yazılır, kalan günler sonraki çalıştırmada tamamlanır.
-const ISTEK_SN = 25, BASLANGIC = Date.now(), vakitVar = () => Date.now() - BASLANGIC < 7 * 60e3;
+// Süre sınırları (denetim O6; kontrol 18.11.2026): her istek en çok 25 sn. Eskiden 7 dakikalık sınır yalnız borsa günleri ve Arjantin arşivi
+// döngülerinde denetleniyordu; FAO ya da Yahoo yanıt vermeden beklerse (25 sn × 3 deneme × 14 seri) betik iş akışının 11 dakikalık sınırına
+// takılıp hiçbir şey yazamıyordu. Şimdi her aşamanın kendi süresi var (asama): süre dolunca o aşamanın kalan istekleri hemen vazgeçer
+// (önceki veri korunur) ve sonraki aşamaya (borsa, motorin) vakit kalır. Yanıt vermeyen sunucu (zaman aşımı / bağlantı hatası) o çalıştırmada
+// bir daha denenmez. Toplam: dünya fiyatları en çok ~4 dk, borsa 6 dk 15 sn'ye kadar, motorin en geç 8. dakikada biter.
+const ISTEK_SN = 25, BASLANGIC = Date.now(), TOPLAM_SN = 7 * 60, SERT_SN = 8 * 60;
+let asamaAd = "başlangıç", asamaSon = BASLANGIC + TOPLAM_SN * 1000;
+const asama = (ad, sn) => { asamaAd = ad; asamaSon = Math.min(Date.now() + sn * 1000, BASLANGIC + SERT_SN * 1000); };
+const vakitVar = () => Date.now() < asamaSon - 2000;
+const olu = new Set();
+const agHatasi = (e) => !!e && (e.name === "TimeoutError" || e.name === "AbortError" || e instanceof TypeError);
+// Bu istek için kalan süre (ms); sunucu bu çalıştırmada yanıt vermediyse ya da aşamanın süresi dolduysa hemen hata
+function istekSuresi(url) {
+  const host = new URL(url).host;
+  if (olu.has(host)) throw new Error(host + " yanıt vermiyor (bu çalıştırmada atlandı)");
+  const ms = Math.floor(Math.min(ISTEK_SN * 1000, asamaSon - Date.now()));
+  if (ms < 1500) throw new Error("süre doldu (" + asamaAd + ")");
+  return ms;
+}
+const vazgec = (e) => /yanıt vermiyor|^süre doldu/.test(String(e && e.message));
 const UA = { "User-Agent": "Mozilla/5.0 (YemAkil fiyat panosu)" };
 const KONYA = "https://www.ktb.org.tr/api/v1/Alpha.WebPanel/OnlineKullaniciBulten/GetGunlukBulten/";
 const GAZIANTEP = "https://www.gtb.org.tr/gunluk-bulten?tarih=";
@@ -56,14 +75,19 @@ export const YURTICI = [
 ];
 const sayi = (x) => parseFloat(String(x ?? "").replace(/\./g, "").replace(",", "."));
 const bekle = (ms) => new Promise((s) => setTimeout(s, ms));
-// İstek: süre sınırlı (ISTEK_SN), 3 deneme
+// İstek: süre sınırlı (ISTEK_SN ve aşamanın kalan süresi); HTTP hatasında 3, zaman aşımı/bağlantı hatasında 2 deneme, sonra sunucu "yanıt vermiyor" sayılır
 async function getir(url, json) {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; ; i++) {
+    const ms = istekSuresi(url);
     try {
-      const r = await fetch(url, { headers: { ...UA, Accept: json ? "application/json" : "text/html" }, signal: AbortSignal.timeout(ISTEK_SN * 1000) });
+      const r = await fetch(url, { headers: { ...UA, Accept: json ? "application/json" : "text/html" }, signal: AbortSignal.timeout(ms) });
       if (!r.ok) throw new Error("HTTP " + r.status);
       return json ? await r.json() : await r.text();
-    } catch (e) { if (i === 2) throw e; await bekle(1500 * (i + 1)); }
+    } catch (e) {
+      const ag = agHatasi(e);
+      if (i >= (ag ? 1 : 2)) { if (ag) olu.add(new URL(url).host); throw e; }
+      await bekle(1500 * (i + 1));
+    }
   }
 }
 const metin = (h) => h.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&#0?39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
@@ -108,24 +132,33 @@ export function urunFiyati(u, K) {
   if (u.borsa === "Adana") { const x = L.find((r) => u.satir.test(r.ad)); return x ? x.ort : null; }
   return null;
 }
+// Aynı tarihe iki kayıt (kontrol 18.11.2026): Yahoo gece seansının anlık fiyatını bir önceki günün tarihiyle ikinci kez veriyor
+// ([18.11 kapanış], [18.11 gece seansı]). İkincisi ertesi günün henüz bitmemiş fiyatıdır; ilki (kapanış) tutulur, yoksa "günlük +%2,6" diye sahte hareket çıkıyordu.
+export function gunTekil(L) {
+  const out = [];
+  for (const p of L) if (!out.length || out[out.length - 1][0] !== p[0]) out.push(p);
+  return out;
+}
+export function yahooSeri(j) {
+  const res = j && j.chart && j.chart.result && j.chart.result[0];
+  if (!res) throw new Error("yanıt boş");
+  const ts = res.timestamp || [], cl = ((res.indicators && res.indicators.quote && res.indicators.quote[0]) || {}).close || [];
+  const out = [];
+  // Tarih borsanın kendi saat diliminde (denetim K7: kur yaz aylarında Greenwich'e göre bir gün geride, Pazar tarihli kaydediliyordu)
+  const tz = (res.meta && res.meta.exchangeTimezoneName) || "UTC";
+  const gun = (t) => { try { return new Date(t * 1000).toLocaleDateString("en-CA", { timeZone: tz }); } catch { return new Date(t * 1000).toISOString().slice(0, 10); } };
+  ts.forEach((t, k) => { const v = cl[k]; if (v != null && isFinite(v)) out.push([gun(t), v]); });
+  return gunTekil(out);
+}
 async function seri(sembol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sembol)}?range=2y&interval=1d`;
   let son;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 2; i++) {
     try {
-      const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(ISTEK_SN * 1000) });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const j = await r.json();
-      const res = j.chart && j.chart.result && j.chart.result[0];
-      const ts = res.timestamp || [], cl = (res.indicators.quote[0] || {}).close || [];
-      const out = [];
-      // Tarih borsanın kendi saat diliminde (denetim K7: kur yaz aylarında Greenwich'e göre bir gün geride, Pazar tarihli kaydediliyordu)
-      const tz = (res.meta && res.meta.exchangeTimezoneName) || "UTC";
-      const gun = (t) => { try { return new Date(t * 1000).toLocaleDateString("en-CA", { timeZone: tz }); } catch { return new Date(t * 1000).toISOString().slice(0, 10); } };
-      ts.forEach((t, k) => { const v = cl[k]; if (v != null && isFinite(v)) out.push([gun(t), v]); });
+      const out = yahooSeri(await getir(url, true));
       if (out.length < 20) throw new Error("az veri: " + out.length);
       return out;
-    } catch (e) { son = e; await new Promise((s) => setTimeout(s, 2000 * (i + 1))); }
+    } catch (e) { son = e; if (vazgec(e) || agHatasi(e)) break; await bekle(2000 * (i + 1)); }
   }
   throw son;
 }
@@ -214,7 +247,9 @@ export function cepeaGecmis(html) {
 }
 // Ham PDF/ikili dosya: süre sınırlı; 404 → null
 async function getirIkili(url) {
-  const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(ISTEK_SN * 1000) });
+  const ms = istekSuresi(url);
+  let r;
+  try { r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(ms) }); } catch (e) { if (agHatasi(e)) olu.add(new URL(url).host); throw e; }
   if (r.status === 404) return null;
   if (!r.ok) throw new Error("HTTP " + r.status);
   return Buffer.from(await r.arrayBuffer());
@@ -227,14 +262,131 @@ export function sayfaKes(v, bugunG) {
     ...(v.yurtici ? { yurtici: { ...v.yurtici, urunler: v.yurtici.urunler.map((u) => ({ ...u, seri: k(u.seri) })) } } : {}),
     ...(v.motorin ? { motorin: { ...v.motorin, seri: k(v.motorin.seri) } } : {}) };
 }
+// "gorulme" (kontrol 18.11.2026): her serinin SON fiyatının bu betikçe ilk görüldüğü an (ISO, dakika). Fiyat uyarıları (fiyat.js fpDikkat) buna bakar:
+// bülteni ertesi gün gelen Gaziantep fiyatı ya da 2 hafta gecikmeli yayımlanan FAO haftalık fiyatı, tarihi eski olsa da geldiği gün "yeni" sayılır.
+// Son tarih değişmediyse eski damga korunur (aynı günün fiyatı düzeltilse de yeniden uyarmaz); önceki dosyada damga yoksa uydurulmaz (bilinmiyor).
+export function gorulmeIsle(yeni, eski, simdi) {
+  if (!eski) return yeni; // ilk dosya: hiçbir fiyat "yeni geldi" sayılmaz
+  const kd = (u) => u.ad + "|" + (u.sembol || "") + "|" + (u.merkez || ""), ky = (u) => u.ad + "|" + u.borsa + (u.tur ? "|" + u.tur : "");
+  const son = (u) => (u && Array.isArray(u.seri) && u.seri.length ? u.seri[u.seri.length - 1][0] : "");
+  const isle = (L, E, k) => {
+    const M = new Map((E || []).map((u) => [k(u), u]));
+    for (const u of L || []) {
+      const o = M.get(k(u)), d = son(u);
+      delete u.gorulme;
+      if (!d) continue;
+      if (o && son(o) >= d) { if (o.gorulme) u.gorulme = o.gorulme; } else u.gorulme = simdi;
+    }
+  };
+  isle(yeni.urunler, eski.urunler, kd);
+  if (yeni.yurtici) isle(yeni.yurtici.urunler, eski.yurtici && eski.yurtici.urunler, ky);
+  return yeni;
+}
+// Veri aynı mı: aynıysa dosyalar yazılmaz (gecede birkaç çalıştırma boş kayıt üretmesin). "guncel" saati ve kaynak çekim saatleri sayılmaz;
+// kur ve kurla TL'ye çevrilen dünya fiyatlarında binde 1,5'e kadar oynama (kurun dakikalık kıpırtısı) değişiklik sayılmaz; borsa ve motorin birebir karşılaştırılır.
+export function veriAyni(a, b, tol = 0.0015) {
+  if (!a || !b) return false;
+  const es = (x, y, t) => {
+    if (typeof x === "number" && typeof y === "number") return x === y || (t > 0 && Math.abs(x - y) <= t * Math.max(Math.abs(x), Math.abs(y)));
+    if (Array.isArray(x) || Array.isArray(y)) return Array.isArray(x) && Array.isArray(y) && x.length === y.length && x.every((v, i) => es(v, y[i], t));
+    if (x && y && typeof x === "object" && typeof y === "object") { for (const q of new Set([...Object.keys(x), ...Object.keys(y)])) if (!es(x[q], y[q], t)) return false; return true; }
+    return x === y;
+  };
+  for (const q of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if (q === "guncel" || q === "cekim") continue;
+    if (!es(a[q], b[q], q === "usdtry" || q === "urunler" ? tol : 0)) return false;
+  }
+  return true;
+}
+// Motorin (nakliye hesabı için): Opet il fiyatları (Mersin, il kodu 33), yedek Petrol Ofisi. TL/L, KDV dahil pompa fiyatı.
+export function motorinBul(veri) {
+  // Opet: [{districtName, prices:[{productName, amount}]}] — Akdeniz ilçesi önce, "Motorin" adlı ürünlerin en düşüğü (EcoForce/UltraForce)
+  const L = Array.isArray(veri) ? veri : (veri && (veri.data || veri.result || veri.items)) || [];
+  const ilce = (x) => String(x.districtName || x.ilceAdi || x.name || "").toLocaleUpperCase("tr");
+  const sirali = [...L].sort((a, b) => (/AKDENİZ|AKDENIZ/.test(ilce(b)) ? 1 : 0) - (/AKDENİZ|AKDENIZ/.test(ilce(a)) ? 1 : 0));
+  for (const d of sirali) {
+    const P = (d.prices || d.fiyatlar || []).filter((p) => /motorin/i.test(String(p.productName || p.urunAdi || p.name || "")) && !/kırsal|kirsal|gaz/i.test(String(p.productName || "")));
+    const v = P.map((p) => +(p.amount ?? p.price ?? p.fiyat)).filter((x) => x > 10 && x < 500);
+    if (v.length) return { tl: Math.min(...v), ilce: ilce(d) || "MERSİN" };
+  }
+  return null;
+}
+// Petrol Ofisi yedek okuması (kontrol 18.11.2026: eski okuma "MERSİN'den sonraki ikinci rakam motorindir" diye varsayıyor, hücrede
+// KDV dahil + KDV hariç iki rakam olunca benzinin KDV hariç fiyatını (60,84) motorin sanıyordu). Artık tahmin yok:
+// motorin sütunu tablo başlığından ("Motorin" / "Diesel" / "Dizel"), satır Akdeniz ilçesi ya da Mersin adından, rakam KDV dahil olandan seçilir;
+// bunlardan biri açıkça bulunamazsa null döner (önceki değer korunur).
+const fiyatSayilari = (t) => (String(t).match(/\d{2,3}[.,]\d{1,2}/g) || []).map((x) => +x.replace(",", ".")).filter((x) => x > 10 && x < 500);
+export function pompaFiyati(hucre) {
+  const h = String(hucre), dahil = h.match(/<[^>]*class\s*=\s*["'][^"']*\bwith-tax\b[^"']*["'][^>]*>([^<]*)</i);
+  if (dahil) { const v = fiyatSayilari(dahil[1]); if (v.length === 1) return v[0]; }
+  const v = fiyatSayilari(metin(h));
+  if (v.length === 1) return v[0];
+  // iki rakam: KDV dahil ve hariç (oran 1,01–1,30 arası olmalı) → büyük olan pompa fiyatıdır
+  if (v.length === 2) { const b = Math.max(...v), k = Math.min(...v); if (b / k > 1.005 && b / k < 1.31) return b; }
+  return null;
+}
+export function motorinHtml(html) {
+  const H = String(html), DZ = /motor[iİı]n|d[iİı]esel|d[iİı]zel/i, DEGIL = /k[ıi]rsal|gaz|kalorifer|fuel|benz[iİ]n|kurşunsuz/i;
+  const baslikMi = (c) => { const t = metin(c); return DZ.test(t) && !DEGIL.test(t) && !fiyatSayilari(t).length; };
+  for (const tablo of H.match(/<table[\s\S]*?<\/table>/gi) || [H]) {
+    const R = (tablo.match(/<tr[\s\S]*?<\/tr>/gi) || []).map((tr) => ({ tr, h: tr.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || [] }));
+    const bi = R.findIndex((r) => r.h.some(baslikMi));
+    if (bi < 0) continue;
+    const kol = R[bi].h.findIndex(baslikMi), veri = R.slice(bi + 1).filter((r) => r.h.length > kol && kol > 0);
+    const ad = (r) => (metin(r.h[0]) + " " + ((r.tr.match(/data-[a-z-]*name\s*=\s*["']([^"']+)/i) || [])[1] || "")).toLocaleUpperCase("tr");
+    const oku = (r) => (r ? pompaFiyati(r.h[kol]) : null);
+    const ak = oku(veri.find((r) => /AKDEN[İI]Z/.test(ad(r)))), ms = oku(veri.find((r) => /MERS[İI]N/.test(ad(r))));
+    if (ak) return { tl: ak, ilce: "AKDENİZ" };
+    if (ms) return { tl: ms, ilce: "MERSİN" };
+    // il sayfası (başlıkta Mersin yazıyor, satırlar ilçe): ilçelerin ortancası
+    if (/<(title|h1|h2)[^>]*>[^<]*mers[iİ]n/i.test(H)) { const v = veri.map(oku).filter((x) => x > 0).sort((a, b) => a - b); if (v.length) return { tl: v[Math.floor(v.length / 2)], ilce: "il ortancası" }; }
+  }
+  return null;
+}
+// Motorin akıl süzgeci (kontrol 18.11.2026: yedek kaynak 97,20 yerine 60,84 yazdı; Sipariş'teki tahmini nakliye bununla hesaplanıyor).
+// Yeni okuma son kabul edilen değerden %15'ten çok farklıysa tek başına kabul edilmez: ya ikinci kaynak aynı rakamı (±%5) vermeli
+// ya da aynı rakam (±%3) 3 ayrı gün üst üste gelmeli. O zamana kadar önceki değer korunur, "kaynak" alanına not düşülür.
+export const MOT_SAPMA = 0.15, MOT_GUN = 3;
+export function motorinKarar(eM, okumalar, bugun) {
+  const son = eM && eM.tl > 0 ? eM.tl : null, yakin = (a, b, o) => Math.abs(a / b - 1) <= o;
+  if (!okumalar.length) return { kabul: null, bekleyen: (eM && eM.bekleyen) || null, neden: "kaynak yok" };
+  if (son == null) return { kabul: okumalar[0], bekleyen: null, neden: "ilk değer" };
+  const uygun = okumalar.find((o) => yakin(o.tl, son, MOT_SAPMA));
+  if (uygun) return { kabul: uygun, bekleyen: null, neden: "olağan" };
+  const a = okumalar[0], teyit = okumalar.find((o) => o.kaynak !== a.kaynak && yakin(o.tl, a.tl, 0.05));
+  if (teyit) return { kabul: a, bekleyen: null, neden: "iki kaynak aynı rakamı verdi (" + a.kaynak + ", " + teyit.kaynak + ")" };
+  const b = eM.bekleyen && eM.bekleyen.tl > 0 && yakin(a.tl, eM.bekleyen.tl, 0.03) ? eM.bekleyen : null;
+  const gunler = [...new Set([...((b && b.gunler) || []), bugun])].sort();
+  if (gunler.length >= MOT_GUN) return { kabul: a, bekleyen: null, neden: MOT_GUN + " gün üst üste aynı rakam" };
+  return { kabul: null, bekleyen: { tl: a.tl, kaynak: a.kaynak, gunler }, neden: "teyitsiz" };
+}
+// Eski kayıtların temizliği (bir kez; sonra "surum: 2"): önceki kabul edilmiş değerden %15'ten çok sapan ve 3 gün üst üste sürmeyen nokta
+// okuma hatasıdır. Aradaki nokta önceki değerle değiştirilir, sondaki (henüz teyit edilememiş) nokta atılır.
+export function motorinTemizle(seri) {
+  const s = (seri || []).map(([d, v]) => [d, v]), out = [], duz = [];
+  let ref = null;
+  for (let i = 0; i < s.length; i++) {
+    const [d, v] = s[i];
+    if (ref == null || Math.abs(v / ref - 1) <= MOT_SAPMA) { ref = v; out.push([d, v]); continue; }
+    const sur = s.slice(i, i + MOT_GUN);
+    if (sur.length === MOT_GUN && sur.every(([, x]) => Math.abs(x / v - 1) <= 0.03)) { ref = v; out.push([d, v]); continue; }
+    duz.push(d);
+    if (s.slice(i + 1).some(([, x]) => Math.abs(x / ref - 1) <= MOT_SAPMA)) out.push([d, ref]);
+  }
+  return { seri: out, duzeltilen: duz };
+}
 // Önceki veri: uzun geçmiş arşivden (yoksa sayfa dosyasından)
 const oku = (f) => { try { return JSON.parse(fs.readFileSync(f, "utf8")); } catch { return null; } };
 const eski = oku(ARSIV) || oku(OUT);
+// Haftalık kaynaklar (FAO, USDA) her çalıştırmada değil, son başarılı çekimden 6 saat sonra yeniden çekilir (FIYAT_TAM=1: hepsi; elle çalıştırmada)
+const cekimEski = (eski && eski.cekim) || {}, TAM = !!process.env.FIYAT_TAM;
+const taze = (ad, saat) => { const t = Date.parse(cekimEski[ad] || ""); return !TAM && isFinite(t) && Date.now() >= t && Date.now() - t < saat * 36e5; };
+asama("kur ve Chicago", 90);
 let kur;
 try { kur = await seri("TRY=X"); } catch (e) { console.error("USD/TRY çekilemedi:", e.message); kur = (eski && eski.usdtry) || null; }
 if (!kur) { console.error("Kur yok; dosya değiştirilmedi."); process.exit(1); }
 const kurAt = (d) => { let v = null; for (const [t, x] of kur) { if (t <= d) v = x; else break; } return v ?? kur[0][1]; };
-const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli (Yahoo Finance), FAO GIEWS, CEPEA (Brezilya), Arjantin tarım bakanlığı (FOB) ve USDA AMS haftalık yem raporları × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [] };
+const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli (Yahoo Finance), FAO GIEWS, CEPEA (Brezilya), Arjantin tarım bakanlığı (FOB) ve USDA AMS haftalık yem raporları × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [], cekim: { ...cekimEski } };
 let basarili = 0;
 for (const u of URUNLER) {
   try {
@@ -250,8 +402,11 @@ for (const u of URUNLER) {
 }
 // USDA haftalık raporları (3511: yağlı tohum/tahıl yan ürünleri, 3512: değirmen yan ürünleri — kepek):
 // PDF → pdftotext → ürün fiyatları; önceki haftalar korunur, seri haftalık birikir.
-const usdaSon = {};
-for (const rapor of ["3511", "3512"]) {
+asama("dünya fiyatları", 150);
+const usdaSon = {}, usdaAtla = taze("usda", 6);
+let usdaTamam = 0;
+if (usdaAtla) console.log("USDA: son 6 saat içinde çekildi, atlandı");
+else for (const rapor of ["3511", "3512"]) {
   try {
     const buf = await getirIkili(`https://www.ams.usda.gov/mnreports/ams_${rapor}.pdf`);
     if (!buf) throw new Error("HTTP 404");
@@ -262,6 +417,7 @@ for (const rapor of ["3511", "3512"]) {
     const o = usdaOku(p.stdout);
     if (!o || !Object.keys(o.fiyat).length) throw new Error("rapor okunamadı");
     for (const [ad, v] of Object.entries(o.fiyat)) usdaSon[ad] = [o.tarih, v];
+    usdaTamam++;
     console.log("USDA", rapor, o.tarih, JSON.stringify(o.fiyat));
   } catch (e) { console.error("USDA", rapor, "çekilemedi:", e.message); }
 }
@@ -270,9 +426,10 @@ for (const u of USDA) {
   const seri = ((eskiU && eskiU.seri) || []).filter(([d]) => !yeni || d !== yeni[0]);
   if (yeni) seri.push([yeni[0], Math.round(yeni[1] * kurAt(yeni[0]))]);
   seri.sort((a, b) => (a[0] < b[0] ? -1 : 1));
-  if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.filter(([d]) => d >= new Date(Date.now() - SAKLA_GUN * 864e5).toISOString().slice(0, 10)), ...(yeni ? {} : { eski: true }) });
+  if (seri.length) sonuc.urunler.push({ ad: u.ad, sembol: "USDA", birim: "ABD iç piyasa (USDA AMS haftalık, FOB bölge ortalaması) $/kısa ton → USD/ton", seri: seri.filter(([d]) => d >= new Date(Date.now() - SAKLA_GUN * 864e5).toISOString().slice(0, 10)), ...(yeni || (usdaAtla && !(eskiU && eskiU.eski)) ? {} : { eski: true }) });
 }
 if (Object.keys(usdaSon).length) basarili++;
+if (usdaTamam === 2) sonuc.cekim.usda = sonuc.guncel;
 // FAO GIEWS FPMA uluslararası ihracat fiyatları (USD/ton; haftalık varsa haftalık, yoksa aylık; geçmiş dahil).
 export const FAO = [
   { ad: "Arpa", merkez: "Karadeniz FOB (FAO/IGC, aylık)", uuid: "1d723a09-4225-49ee-b629-2f23a7ce7fc4" },
@@ -297,19 +454,24 @@ export function faoSeri(j) {
   return L.map((x) => [x.date, x.price_value_dollar]).sort((a, b) => (a[0] < b[0] ? -1 : 1));
 }
 {
-  const sinir = new Date(Date.now() - SAKLA_GUN * 864e5).toISOString().slice(0, 10);
+  const sinir = new Date(Date.now() - SAKLA_GUN * 864e5).toISOString().slice(0, 10), faoAtla = taze("fao", 6);
+  let faoHata = 0;
+  if (faoAtla) console.log("FAO: son 6 saat içinde çekildi, atlandı");
   for (const u of FAO) {
+    const o0 = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "FAO" && x.ad === u.ad && x.merkez === u.merkez);
+    if (faoAtla && o0) { sonuc.urunler.push({ ...o0 }); continue; }
     try {
       const L = faoSeri(await getir(`https://fpma.fao.org/giews/v4/global/price_module/api/v1/FpmaSeriePrice/${u.uuid}/`, true)).filter(([d]) => d >= sinir);
       if (!L.length) throw new Error("veri yok");
       sonuc.urunler.push({ ad: u.ad, sembol: "FAO", merkez: u.merkez, birim: "USD/ton → TL/ton (o tarihteki kur)", seri: L.map(([d, v]) => [d, Math.round(v * kurAt(d))]) });
       basarili++;
     } catch (e) {
+      faoHata++;
       console.error("FAO", u.merkez, "çekilemedi:", e.message);
-      const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === "FAO" && x.ad === u.ad && x.merkez === u.merkez);
-      if (o) sonuc.urunler.push({ ...o, eski: true });
+      if (o0) sonuc.urunler.push({ ...o0, eski: true });
     }
   }
+  if (!faoAtla && !faoHata) sonuc.cekim.fao = sonuc.guncel;
 }
 // Güney Amerika: Brezilya CEPEA Paranaguá limanı soya göstergesi (sayfadaki son ~15 gün, US$/60 kg çuval). Geçmiş günden güne birikir.
 // (Brezilya iç piyasa mısırı, Çin ve Kanada iç fiyatları Türkiye'ye gelen malın fiyatını göstermediği için çıkarıldı; denetim F4.)
@@ -418,12 +580,15 @@ async function adanaGetir(gun) {
 }
 const enErken = BORSALAR.map((b) => basla[b]).sort()[0];
 let tamam = true;
+// Gaziantep bülteninde hiçbir kalıba uymayan küspe/pamuk adları günlüğe yazılır (pamuk tohumu küspesi serisi boş: bültendeki gerçek yazım görülsün)
+const eslesmeyen = new Set();
+asama("borsa", Math.max(20, (BASLANGIC + 375e3 - Date.now()) / 1000));
 for (let gun = enErken; gun <= bugun; gun = gunEkle(gun, 1)) {
   if (!vakitVar()) { tamam = false; console.error("Yurt içi: süre doldu,", gun, "ve sonrası sonraki çalıştırmada"); break; }
   const hg = new Date(gun + "T00:00:00Z").getUTCDay();
   if (hg === 0 || hg === 6) continue;
   const K = {}, [y, m, d] = gun.split("-");
-  if (gun >= basla.Gaziantep) try { K.Gaziantep = gaziantepSatirlar(await getir(GAZIANTEP + gun, false), gun); if (K.Gaziantep.length) say.Gaziantep++; } catch (e) { hataYaz("Gaziantep", gun, e); }
+  if (gun >= basla.Gaziantep) try { K.Gaziantep = gaziantepSatirlar(await getir(GAZIANTEP + gun, false), gun); if (K.Gaziantep.length) say.Gaziantep++; for (const x of K.Gaziantep) if (/KÜSP|PAMUK|ÇİĞİT/.test(x.ad) && !YURTICI.some((u) => u.borsa === "Gaziantep" && u.re.test(x.ad))) eslesmeyen.add(x.ad); } catch (e) { hataYaz("Gaziantep", gun, e); }
   if (gun >= basla.Konya) try { const k = await getir(KONYA + gun, true); if (Array.isArray(k)) { K.Konya = k; if (k.length) say.Konya++; } } catch (e) { hataYaz("Konya", gun, e); }
   if (gun >= basla["Polatlı"]) try { K["Polatlı"] = polatliSatirlar(await getir(POLATLI + `${d}.${m}.${y}`, true)); if (K["Polatlı"].length) say["Polatlı"]++; } catch (e) { hataYaz("Polatlı", gun, e); }
   if (gun >= basla.Adana) try { K.Adana = await adanaGetir(gun); if (K.Adana.length) say.Adana++; } catch (e) { hataYaz("Adana", gun, e); }
@@ -445,42 +610,48 @@ if (tamam) geriDoldur.forEach((b) => { yi.kontrolB[b] = bugun; YURTICI.filter((u
 sonuc.yurtici = yi;
 if (BORSALAR.some((b) => say[b])) basarili++;
 console.log(`Yurt içi: ${BORSALAR.map((b) => b + " " + say[b] + " gün").join(", ")} okundu; ${say.hata} hata.`);
-// Motorin (nakliye hesabı için): Opet il fiyatları (Mersin, il kodu 33), yedek Petrol Ofisi. TL/L, KDV dahil pompa fiyatı.
-export function motorinBul(veri) {
-  // Opet: [{districtName, prices:[{productName, amount}]}] — Akdeniz ilçesi önce, "Motorin" adlı ürünlerin en düşüğü (EcoForce/UltraForce)
-  const L = Array.isArray(veri) ? veri : (veri && (veri.data || veri.result || veri.items)) || [];
-  const ilce = (x) => String(x.districtName || x.ilceAdi || x.name || "").toLocaleUpperCase("tr");
-  const sirali = [...L].sort((a, b) => (/AKDENİZ|AKDENIZ/.test(ilce(b)) ? 1 : 0) - (/AKDENİZ|AKDENIZ/.test(ilce(a)) ? 1 : 0));
-  for (const d of sirali) {
-    const P = (d.prices || d.fiyatlar || []).filter((p) => /motorin/i.test(String(p.productName || p.urunAdi || p.name || "")) && !/kırsal|kirsal|gaz/i.test(String(p.productName || "")));
-    const v = P.map((p) => +(p.amount ?? p.price ?? p.fiyat)).filter((x) => x > 10 && x < 500);
-    if (v.length) return { tl: Math.min(...v), ilce: ilce(d) || "MERSİN" };
-  }
-  return null;
-}
-export function motorinHtml(html) {
-  // Petrol Ofisi il sayfası: önce tablo başlığındaki "Motorin" sütunu (denetim K17: sütun sırası değişirse benzin motorin sanılmasın)
-  const satirlar = (String(html).match(/<tr[\s\S]*?<\/tr>/gi) || []).map((tr) => (tr.match(/<t[dh][\s\S]*?<\/t[dh]>/gi) || []).map(metin));
-  const bas = satirlar.find((r) => r.some((c) => /motorin/i.test(c))), kol = bas ? bas.findIndex((c) => /motorin/i.test(c) && !/kırsal|kirsal/i.test(c)) : -1;
-  const ms = satirlar.find((r) => r.length > kol && /MERS[İI]N/i.test(r[0] || ""));
-  if (kol >= 0 && ms) { const v = +String(ms[kol]).replace(/[^\d,.]/g, "").replace(",", "."); if (v > 10 && v < 500) return { tl: v, ilce: "MERSİN" }; }
-  // Yedek: düz metinde "MERSİN" ve ardından benzin, motorin… fiyatları
-  const t = metin(html), m = t.match(/MERS[İI]N[^0-9]{0,40}((?:\d{2,3}[.,]\d{2}\s*){2,6})/i);
-  if (!m) return null; const nums = m[1].trim().split(/\s+/).map((x) => +x.replace(",", ".")).filter((x) => x > 10 && x < 500);
-  return nums.length >= 2 ? { tl: nums[1], ilce: "MERSİN" } : null; // PO sırası: Benzin, Motorin, …
-}
+if (eslesmeyen.size) console.log("Gaziantep bülteninde eşleşmeyen küspe/pamuk adları:", [...eslesmeyen].join(" | "));
+asama("motorin", 60);
 {
-  const eM = (eski && eski.motorin) || null;
-  let mo = null, kaynak = "";
-  try { mo = motorinBul(await getir("https://api.opet.com.tr/api/fuelprices/prices?ProvinceCode=33&IncludeAllProducts=true", true)); kaynak = "Opet"; } catch (e) { console.error("Opet motorin:", e.message); }
-  if (!mo) try { mo = motorinHtml(await getir("https://www.petrolofisi.com.tr/akaryakit-fiyatlari/mersin-akaryakit-fiyatlari", false)); kaynak = "Petrol Ofisi"; } catch (e) { console.error("PO motorin:", e.message); }
-  if (mo) {
-    const s = ((eM && eM.seri) || []).filter(([d]) => d !== bugun); s.push([bugun, Math.round(mo.tl * 100) / 100]);
-    sonuc.motorin = { tl: Math.round(mo.tl * 100) / 100, tarih: bugun, yer: "Mersin " + mo.ilce, kaynak, seri: s.slice(-400) };
-    console.log(`Motorin: ${sonuc.motorin.tl} TL/L (${kaynak}, ${sonuc.motorin.yer})`);
-  } else if (eM) { sonuc.motorin = { ...eM, eski: true }; console.log("Motorin çekilemedi; önceki değer korundu."); }
+  let eM = (eski && eski.motorin) || null;
+  const yuv = (x) => Math.round(x * 100) / 100, trS = (x) => yuv(x).toFixed(2).replace(".", ",");
+  // Bir kez (surum 2'den önceki kayıtlar): hatalı okuma noktalarını temizle; son kabul edilen değer temiz seriden alınır
+  if (eM && eM.surum !== 2 && Array.isArray(eM.seri) && eM.seri.length) {
+    const t = motorinTemizle(eM.seri);
+    if (t.duzeltilen.length) {
+      console.log("Motorin geçmişi: hatalı okuma noktaları düzeltildi:", t.duzeltilen.join(", "));
+      const sonN = t.seri[t.seri.length - 1], sag = t.seri.filter(([d]) => !t.duzeltilen.includes(d)).pop();
+      eM = { ...eM, seri: t.seri, duzeltilen: [...new Set([...(eM.duzeltilen || []), ...t.duzeltilen])].slice(-30) };
+      if (sonN && !(Math.abs(eM.tl / sonN[1] - 1) <= MOT_SAPMA)) eM = { ...eM, tl: sonN[1], tarih: (sag || sonN)[0], yer: "Mersin", kaynak: "önceki değer (hatalı okuma düzeltildi)" };
+    }
+  }
+  const oku = [];
+  try { const o = motorinBul(await getir("https://api.opet.com.tr/api/fuelprices/prices?ProvinceCode=33&IncludeAllProducts=true", true)); if (o) oku.push({ ...o, kaynak: "Opet" }); else console.error("Opet motorin: yanıtta motorin fiyatı bulunamadı"); } catch (e) { console.error("Opet motorin:", e.message); }
+  // Yedek kaynak yalnız Opet okunamadıysa ya da Opet'in rakamı son kabul edilenden %15'ten çok farklıysa (teyit için) sorulur
+  if (!oku.length || (eM && eM.tl > 0 && Math.abs(oku[0].tl / eM.tl - 1) > MOT_SAPMA)) {
+    try { const o = motorinHtml(await getir("https://www.petrolofisi.com.tr/akaryakit-fiyatlari/mersin-akaryakit-fiyatlari", false)); if (o) oku.push({ ...o, kaynak: "Petrol Ofisi" }); else console.error("PO motorin: sayfada motorin sütunu ya da Mersin satırı açıkça bulunamadı (tahmin edilmedi)"); } catch (e) { console.error("PO motorin:", e.message); }
+  }
+  const k = motorinKarar(eM, oku, bugun), ek = { surum: 2, ...(eM && eM.duzeltilen && eM.duzeltilen.length ? { duzeltilen: eM.duzeltilen } : {}), ...(eM && eM.not ? { not: eM.not } : {}) };
+  if (k.kabul) {
+    const s = ((eM && eM.seri) || []).filter(([d]) => d !== bugun); s.push([bugun, yuv(k.kabul.tl)]);
+    if (ek.duzeltilen) { ek.duzeltilen = ek.duzeltilen.filter((d) => d !== bugun); if (!ek.duzeltilen.length) delete ek.duzeltilen; }
+    sonuc.motorin = { tl: yuv(k.kabul.tl), tarih: bugun, yer: "Mersin " + k.kabul.ilce, kaynak: k.kabul.kaynak, seri: s.slice(-400), ...ek };
+    console.log(`Motorin: ${sonuc.motorin.tl} TL/L (${k.kabul.kaynak}, ${sonuc.motorin.yer}; ${k.neden})`);
+  } else if (eM) {
+    const temel = String(eM.kaynak || "").replace(/ ?\((önceki değer|hatalı okuma)[^)]*\)$/, "") || "önceki değer";
+    const not = k.bekleyen ? `${k.bekleyen.kaynak} ${trS(k.bekleyen.tl)} TL/L teyit edilmedi` : "kaynaklara ulaşılamadı";
+    sonuc.motorin = { tl: eM.tl, tarih: eM.tarih, yer: eM.yer, kaynak: temel === "önceki değer" ? `önceki değer (${not})` : `${temel} (önceki değer; ${not})`, seri: (eM.seri || []).slice(-400), eski: true, ...(k.bekleyen ? { bekleyen: k.bekleyen } : {}), ...ek };
+    console.log(k.bekleyen ? `Motorin: ${k.bekleyen.kaynak} ${trS(k.bekleyen.tl)} TL/L son kabul edilen ${trS(eM.tl)} TL/L'den %${Math.round(Math.abs(k.bekleyen.tl / eM.tl - 1) * 100)} farklı ve teyit edilmedi (${k.bekleyen.gunler.length}/${MOT_GUN} gün); önceki değer korundu.` : "Motorin çekilemedi; önceki değer korundu.");
+  }
 }
 if (!basarili) { console.error("Hiç kaynak çekilemedi; dosya değiştirilmedi."); process.exit(1); }
-fs.writeFileSync(ARSIV, JSON.stringify(sonuc));
-fs.writeFileSync(OUT, JSON.stringify(sayfaKes(sonuc, bugun)));
-console.log(`${path.basename(OUT)} (son ${SAYFA_GUN} gün) ve ${path.basename(ARSIV)} yazıldı: ${basarili} kaynak grubu çekildi, ${sonuc.urunler.filter((u) => u.eski).length} dünya serisi eski kaldı; USD/TRY ${kur.at(-1)[1].toFixed(2)} (${kur.at(-1)[0]}); ${Math.round((Date.now() - BASLANGIC) / 1000)} sn`);
+gorulmeIsle(sonuc, eski, sonuc.guncel.slice(0, 16) + "Z");
+const sn = Math.round((Date.now() - BASLANGIC) / 1000), eskiYas = eski ? Date.now() - Date.parse(eski.guncel) : NaN;
+// Veri değişmediyse dosyalara dokunulmaz (iş akışı "değişiklik yok" der, kayıt oluşmaz); yine de 20 saatte bir yazılır ki "güncelleme" saati ve sayfadaki "N gündür güncellenmedi" uyarısı doğru kalsın
+if (eski && fs.existsSync(OUT) && fs.existsSync(ARSIV) && eskiYas >= 0 && eskiYas < 20 * 36e5 && veriAyni(sonuc, eski)) {
+  console.log(`Veri değişmedi: dosyalar yazılmadı (son yazım ${eski.guncel}); ${basarili} kaynak grubu çekildi; ${sn} sn`);
+} else {
+  fs.writeFileSync(ARSIV, JSON.stringify(sonuc));
+  fs.writeFileSync(OUT, JSON.stringify(sayfaKes(sonuc, bugun)));
+  console.log(`${path.basename(OUT)} (son ${SAYFA_GUN} gün) ve ${path.basename(ARSIV)} yazıldı: ${basarili} kaynak grubu çekildi, ${sonuc.urunler.filter((u) => u.eski).length} dünya serisi eski kaldı; USD/TRY ${kur.at(-1)[1].toFixed(2)} (${kur.at(-1)[0]}); ${sn} sn`);
+}
