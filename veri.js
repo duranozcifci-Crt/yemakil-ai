@@ -193,6 +193,9 @@ function OGRRow(n,y,a,r,v,o){o=o||{};var u=o.u===undefined?"%":o.u,d=o.d===undef
  else{L=["Normal: "+RG(a,r),"Dikkat: "+(E?"≤ ":"< ")+P(a)+" veya "+(E?"≥ ":"> ")+P(r)];if(H(v))st=(E?(v<=a||v>=r):(v<a||v>r))?"wa":"ok"}
  if(o.th)L=o.th.slice();if(o.nt)L.push(o.nt);
  return {n:n,th:L,v:H(v)?P(v):(o.na||"—"),st:H(v)?st:"",bad:bad,a:a,r:r,raw:H(v)?v:null}}
+/* döneme bağlı satır (kontrol 18.11.2026): hayvan o dönemde değilse satır işaretlenmez (⚠/✓ yok), "bu dönemde değerlendirilmez" yazar — kartla aynı davranış */
+function OGRNA(row,yok){if(yok&&row){row.st="";row.v=(row.raw!==null&&row.raw!==undefined?row.v+" — ":"")+"bu dönemde değerlendirilmez";row.na=1}return row}
+function OGRWK(b){return (b&&b.wk>=0&&b.wk!==""&&b.wk!==null)?+b.wk:20}
 function OGR4(n,key,v,yon,o){o=o||{};var t=(typeof ref4==="function"&&ref4("sagmal",key))||{},N=function(x){return (x===null||x===undefined)?null:x},u=!t.birim||t.birim==="oran"||t.birim==="puan"?"":/^%/.test(t.birim)?"%":" "+t.birim;
  if(o.u===undefined)o.u=u;if(o.d===undefined)o.d=t.d;return OGRRow(n,yon,yon==="alt"?N(t.as):N(t.us),yon==="alt"?N(t.ak):N(t.uk),v,o)}
 var OGRVET="İlaç, serum ve doz kararı veteriner hekimindir; bu bölüm doz vermez.";
@@ -232,37 +235,37 @@ var OGRRK={
   vet:"Topallık yaygınsa, inek yem yemiyorsa, ishal ve ateş varsa veteriner hekime danışın.",kay:function(){return RKSRC.acid}},
  keto:{ad:"Ketozis",ne:"Doğumdan sonraki ilk haftalarda süt için gereken enerji yemden karşılanamayınca inek vücut yağını hızla eritir; karaciğer bu yağı işleyemez, kanda keton (BHB) yükselir, karaciğer yağlanır.",
   rows:function(C){var r=C.r||{},m=r.m||C.m||{},b=C.b||{},V=OGRG,T=function(k){return ref4("sagmal",k)||{}},l0=V(function(){return C.e.lim[0]});return [
-   OGR4("Süt yağı / protein (ilk 100 gün)","fpr",r.fpr>0?r.fpr:null,"ust",{na:"girilmedi"}),
+   OGRNA(OGR4("Süt yağı / protein (ilk 100 gün)","fpr",r.fpr>0?r.fpr:null,"ust",{na:"girilmedi"}),OGRWK(b)>14),
    OGRRow("Enerji açığı (karşılanmayan pay)","ust",l0!==null?(1-l0)*100:NaN,T("enAcik").uk,C.def!==null?Math.max(0,C.def):null,{d:0}),
-   OGRRow("Kondisyon (ilk 8 hafta)","ara",T("bcsTaze").as,T("bcsTaze").us,b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi"}),
+   OGRNA(OGRRow("Kondisyon (ilk 8 hafta)","ara",T("bcsTaze").as,T("bcsTaze").us,b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi"}),OGRWK(b)>8),
    OGRRow("Doğumdan beri kondisyon kaybı","ust",T("bcsKayip").us,T("bcsKayip").uk,V(function(){return r.bcsL}),{u:" puan",eq:true,na:"doğumdaki kondisyon girilmedi"}),
-   OGR4("Nişasta (taze inek)","sta",V(function(){return m.sta}),"alt"),
+   OGRNA(OGR4("Nişasta (taze inek)","sta",V(function(){return m.sta}),"alt"),OGRWK(b)>3),
    OGRRow("Metiyonin (% MP)","alt",REF.met.min,null,V(function(){return r.Q.met>0?r.Q.met:null}),{nt:"hedef %"+REF.met.hedef})]},
   neden:["Doğumdan sonra süt verimi yem tüketiminden hızlı artar; aradaki enerji açığı vücut yağıyla kapanır.","Doğuma yağlı giren inek daha az yer, daha çok yağ eritir.","Yaşlı inek, sıcak stresi, düşük nişasta (glikoz öncülü az) ve bozuk (bütirik) silaj riski artırır."],
   bel:["İştah düşer, önce kesif yemi bırakır; süt verimi düşer.","Hızlı zayıflama; dışkı sert ve kuru.","Nefeste ve sütte aseton (çürük elma) kokusu; bazen sinirsel belirtiler (yalanma, sendeleme).","Kesin tanı kan testiyle: BHB ≥ 1,2 mmol/L gizli, ≥ 3,0 klinik ketozis."],
   yap:function(){return ["Taze inekte enerjiyi artırın ama nişastayı %"+REF.staLak.hedef.join("–")+" aralığında tutun; yem masası hiç boş kalmasın.","Kuru dönemde kondisyonu 3,0–3,5'te tutun; yakın dönemde enerjiyi kontrollü artırın.","Doğumdan sonraki 3–16. günlerde haftada 2 kez BHB testi yapın.","Bütirik asitli (kokulu) silajı taze ineğe vermeyin.","Korunmuş kolin ve korunmuş metiyonin seçenekleri kartın \"Ne yapılmalı\" kısmındadır."]},
   vet:"İştahsız, hızla zayıflayan, aseton kokulu ya da sinirsel belirti gösteren inekte hemen veteriner hekim çağırın.",kay:function(){return RKSRC.keto}},
  fert:{ad:"Döl tutma ve kızgınlık",ne:"İneğin doğumdan sonra zamanında kızgınlık göstermesi ve tohumlamada gebe kalmasıdır. Enerji açığı, fazla protein, iz mineral eksikliği ve sıcak stresi döl verimini düşürür.",
-  rows:function(C){var r=C.r||{},m=r.m||C.m||{},b=C.b||{},V=OGRG,T=function(k){return ref4("sagmal",k)||{}},X=C.X||{},l0=V(function(){return C.e.lim[0]});return [
+  rows:function(C){var r=C.r||{},m=r.m||C.m||{},b=C.b||{},V=OGRG,T=function(k){return ref4("sagmal",k)||{}},X=C.X||{},l0=V(function(){return C.e.lim[0]}),GEBE=b.dp>=60;return [ /* gebe inekte kart "değerlendirilmedi" der; satırlar da işaretlenmez */
    OGRRow("Enerji açığı","ust",l0!==null?(1-l0)*100:NaN,T("enAcik").uk,C.def!==null?Math.max(0,C.def):null,{d:0}),
    OGRRow("Süt üresi (MUN)","ust",T("mun").us,T("mun").uk,b.mun>0?+b.mun:null,{u:" mg/dL",d:1,na:"girilmedi",nt:"hedef "+OGRF(T("mun").as,0)+"–"+OGRF(T("mun").us,0)}),
    OGRRow("Ham protein (MUN girilmediyse)","ust",null,T("hpMunsuz").us,V(function(){return m.cp}),{d:1}),
    OGRRow("Doğumdan beri kondisyon kaybı","ust",T("bcsKayipDol").us,T("bcsKayipDol").uk,V(function(){return r.bcsL}),{u:" puan",eq:true,na:"doğumdaki kondisyon girilmedi"}),
-   OGRRow("Tohumlamada kondisyon","alt",null,T("bcsTohum").as,b.bcs>0?+b.bcs:null,{u:"",na:"girilmedi"}),
+   OGRNA(OGRRow("Tohumlamada kondisyon (6–20. hafta)","alt",null,T("bcsTohum").as,b.bcs>0?+b.bcs:null,{u:"",na:"girilmedi"}),OGRWK(b)<6||OGRWK(b)>20),
    OGRRow("Selenyum","alt",null,REF.seLak.lo,V(function(){return m.se}),{u:" mg/kg"}),
    OGRRow("Çinko","alt",null,V(function(){return X.zn[0]}),V(function(){return m.zn}),{u:" mg/kg",d:0}),
    OGRRow("Bakır","alt",null,V(function(){return X.cu[0]}),V(function(){return m.cu}),{u:" mg/kg",d:0}),
-   OGRRow("THI (sıcak stresi)","ust",T("thi").us,T("thi").uk,r.thi>0?r.thi:null,{u:"",d:0,eq:true,na:"sıcaklık girilmedi"})]},
+   OGRRow("THI (sıcak stresi)","ust",T("thi").us,T("thi").uk,r.thi>0?r.thi:null,{u:"",d:0,eq:true,na:"sıcaklık girilmedi"})].map(function(x){return OGRNA(x,GEBE&&!x.na)})},
   neden:["Enerji açığında yumurtalık geç çalışır: ilk yumurtlama gecikir, kızgınlık zayıf veya sessiz geçer.","Fazla ya da rumende hızlı çözünen protein kanda ve sütte üreyi yükseltir; rahim ortamı bozulur, embriyo kaybı artar.","Selenyum, çinko, bakır eksikliği bağışıklığı ve sonun atılmasını bozar; sıcak stresi kızgınlığı kısaltır."],
   bel:["Kızgınlık görülmüyor veya çok kısa; tekrar tekrar tohumlama.","Doğumdan sonra hızlı zayıflama; sonun atılamaması, rahim akıntısı.","Süt üresi (MUN) 14 mg/dL üstünde."],
   yap:["Enerji dengesini kurun: doğumdan tohumlamaya kondisyon kaybı 0,5 puanı geçmesin (tohumlamada kondisyon ≥ 2,75).","Süt üresini 8–14 mg/dL'de tutun: proteini ihtiyaç kadar verin, enerji–protein dengesini sağlayın.","İz mineral ve vitaminleri (selenyum, çinko, bakır, mangan, iyot; E ve A vitamini) premiksle tamamlayın.","Fosforu ihtiyaç kadar verin; fazlası döl tutmayı artırmaz.","Sıcakta gölge, fan, duş; yemi serin saatlerde verin."],
   vet:"Kızgınlık görülmeyen, sonu atılmayan, akıntılı ya da tekrar tekrar tohumlanan inekte veteriner muayenesi (rahim, yumurtalık) gerekir; hormon programları veteriner kararıdır.",kay:function(){return RKSRC.fert}},
  humma:{ad:"Süt humması",ne:"Doğum sırasında ve hemen sonra kandaki kalsiyumun düşmesidir. Süt başlayınca kalsiyum ihtiyacı birden artar; vücut hazır değilse inek kaslarını kullanamaz, yatar.",
-  rows:function(C){var m=C.m||{},b=C.b||{},V=OGRG,F_="risks";return [
-   OGRRow("Kalsiyum (yakın dönem)","ust",OGRN(F_,"else if(caP>#)"),OGRN(F_,"if(caP>#&&"),V(function(){return m.ca})),
+  rows:function(C){var m=C.m||{},b=C.b||{},V=OGRG,F_="risks",YK_=(function(){try{return wkToCalv()<=3}catch(e){return true}})();return [
+   OGRRow("Kalsiyum","ust",OGRN(F_,"else if(caP>#)"),OGRN(F_,"if(caP>#&&"),V(function(){return m.ca})),
    OGRRow("Fosfor","ust",null,OGRN(F_,"if(pP>#)"),V(function(){return m.ph})),
-   OGRRow("Potasyum","ust",OGRN(F_,"else if(MXm.k>#&&cl)"),OGRN(F_,"if(MXm.k>#)"),V(function(){return m.k})),
-   OGRRow("DCAD (yakın dönem)","ust",null,OGRN(F_,"MXm.dcad>#)"),V(function(){return m.dcad}),{u:" mEq/kg",d:0}),
+   OGRRow("Potasyum","ust",YK_?OGRN(F_,"else if(MXm.k>#&&cl)"):null,OGRN(F_,"if(MXm.k>#)"),V(function(){return m.k})),
+   OGRNA(OGRRow("DCAD (yakın dönem)","ust",null,OGRN(F_,"MXm.dcad>#)"),V(function(){return m.dcad}),{u:" mEq/kg",d:0}),!YK_),
    OGRRow("Magnezyum","alt",null,OGRN(F_,"MXm.mg<#)"),V(function(){return m.mg})),
    OGRRow("Yonca payı","ust",null,OGRN(F_,"if(alf>#)"),C.alf,{d:0}),
    OGRRow("Kondisyon","ust",null,OGRN(F_,"if(b.bcs>=#){dk"),b.bcs>0?+b.bcs:null,{u:"",eq:true,na:"girilmedi"})]},
