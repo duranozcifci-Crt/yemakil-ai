@@ -1012,6 +1012,43 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
  ok('Tarayıcı JS hatası yok',!errs.length,errs.slice(0,3).join(' | '));
  /* Bozuk kayıt: uygulama varsayılanlarla açılıyor */
  for(const bad of ['{"type":"sut","t":{},"feeds":[null]}','{"feeds":{"a":1},"t":{}}']){const q=await b.newPage({viewport:{width:390,height:844}});const qe=[];q.on('pageerror',e=>qe.push(e.message));await q.goto('file://'+path.resolve(FILE));await q.evaluate(v=>localStorage.setItem(KEY,v),bad);await q.reload();await q.waitForTimeout(500);const nb=await q.evaluate(()=>document.querySelectorAll('#seg button').length);ok('Bozuk kayıtla açılış hatasız: '+bad.slice(0,30),!qe.length&&nb>0,qe.join('|')+' seg='+nb);await q.evaluate(()=>localStorage.clear());await q.close()}
+ /* 30 günde canlı ağırlık: gerçekçi paylaşım (enerji fazlası süt + vücut; kondisyona göre Mcal/kg; aralık) — kullanıcı örneği: 15. hafta, 30 kg süt, +4,0 Mcal, kondisyon 3 → eskiden "+23 kg" */
+ {const q=await b.newPage({viewport:{width:390,height:844}});const qe=[];q.on('pageerror',e=>qe.push(e.message));q.on('console',m=>{if(m.type()==='error')qe.push(m.text())});await q.goto('file://'+path.resolve(FILE));await q.waitForTimeout(500);
+  const w=await q.evaluate(()=>{var out={};
+   var RT=[['Mısır silajı',22],['Kuru yonca',4],['Buğday samanı',0.5],['Arpa',3],['Mısır tane',4],['Soya küspesi',2.5],['Ayçiçeği küspesi',1.5],['Buğday kepeği',1],['Kireç taşı',0.15],['Tuz',0.08]];
+   var set=function(B,arpa,noP){S.type="sut";S.breed="hol";S.b=Object.assign({bw:650,milk:30,fat:3.7,pr:3.2,wk:15,price:0,par:2,bcs:3,dp:0,mode:"lak"},B);S.fsnap=null;S.undo=null;S.feeds.forEach(x=>{x.on=false;x.kg=0;if(noP)x.p=0});RT.forEach(([n,kg])=>{var x=S.feeds.filter(y=>(y.fam||y.n).indexOf(n)===0)[0]||S.feeds.filter(y=>y.n.indexOf(n)===0)[0];x.on=true;x.kg=n==='Arpa'&&arpa!==undefined?arpa:kg});save();renderSeg();showPanels();renderBin();applyRef();renderFarm();renderCmp()};
+   var supOf=function(){var m=metrics(curItems());return KL*fLv(m.meT)*m.meT},balOf=function(){return supOf()-REQ().req};
+   var hit=function(B,t){var lo=0,hi=14;for(var i=0;i<40;i++){var mid=(lo+hi)/2;set(B,mid);if(balOf()<t)lo=mid;else hi=mid}set(B,(lo+hi)/2);return (lo+hi)/2};
+   var G=function(){var t=document.querySelector('#bwTile'),h=[...document.querySelectorAll('#cmp h2')];return{tile:t?t.innerText:'',fut:h.find(x=>x.textContent==='Gelecek').nextElementSibling.innerText,sol:h.find(x=>x.textContent==='Çözümler').nextElementSibling.innerText,nas:(document.querySelector('#bwNasil')||{}).textContent||''}};
+   hit({},4.0);var m=metrics(curItems()),P=bwProj(balOf(),supOf(),MPsut(m)),R=REQ();
+   out.u={bal:balOf(),dbw:P.dbw,lo:P.lo,hi:P.hi,dMilk:P.dMilk,max:P.dbwMax,room:(supOf()-R.mt-R.pg)/R.mk-S.b.milk,g:G()};
+   out.ov=document.documentElement.scrollWidth-document.documentElement.clientWidth;
+   var C=function(bl,o){return bwCore(bl,Object.assign({wk:15,bcs:3,milk:30,mk:0.71,dry:false,mpRoom:null},o))};
+   out.ord=[C(4,{wk:4}).kg,C(4,{wk:15}).kg,C(4,{wk:35}).kg];out.bcs=[C(4,{bcs:2}).kg,C(4,{bcs:3}).kg,C(4,{bcs:4}).kg,bwKgE(3,false),bwKgE(3,true),bwKgE(2,true),bwKgE(4,true)];
+   var d3=C(-4,{wk:3}),d30=C(-4,{wk:30}),d12=C(-12,{wk:3});out.def=[d3.kg,d3.dm,d30.kg,d30.dm,d12.kg,d12.dm,bwMobCap(3,3)];
+   out.dry=C(3,{dry:true}).kg*5.12;out.mp=[C(4,{mpRoom:0}).dm,C(4,{mpRoom:0}).kg,C(4,{}).kg];
+   var bad=0,cons=0,over=0;[-15,-8,-3,-0.5,0,0.5,3,8,15].forEach(function(bl){[0,1,8,15,22,30,45,60,"",undefined].forEach(function(wk){[1,2,3,4,5,"",undefined].forEach(function(bc){[0,30].forEach(function(mi){[null,0,1.5].forEach(function(mp){var c=bwCore(bl,{wk:wk,bcs:bc,milk:mi,mk:0.71,dry:false,mpRoom:mp});if(!isFinite(c.kg)||!isFinite(c.dm)||!isFinite(c.E))bad++;if(c.cap!=="gain"&&Math.abs(c.kg*c.E+c.dm*0.71-bl)>1e-6)cons++;if(c.dm*0.71>Math.max(0,bl)+1e-9||(mp!==null&&bl>0&&c.dm>mp+1e-9))over++})})})})});
+   out.bad=bad;out.cons=cons;out.over=over;
+   var ov2=0,nan2=0;[0,2,4,6,8,10,12].forEach(function(a){set({},a);var mm=metrics(curItems()),s=supOf(),RR=REQ(),PP=bwProj(s-RR.req,s,MPsut(mm)),al=Math.max(0,(s-RR.mt-RR.pg)/RR.mk);if(PP.dMilk>0&&S.b.milk+PP.dMilk>al+1e-6)ov2++;[PP.dbw,PP.lo,PP.hi,PP.dMilk,PP.dbwMax].forEach(function(v){if(!isFinite(v))nan2++});if(!(PP.lo<=PP.dbw+1e-9&&PP.dbw<=PP.hi+1e-9))nan2++;if(/NaN|undefined/.test(document.querySelector('#cmp').innerText))nan2++});out.ov2=ov2;out.nan2=nan2;
+   set({bcs:"",wk:""},5);out.empty=/NaN|undefined/.test(document.querySelector('#cmp').innerText);
+   out.rk=[[{wk:15},4],[{wk:3,milk:38},-6],[{wk:6,milk:35,bcs:3.75},-3]].map(function(c){hit(c[0],c[1]);var r=sutRisk();return r?r.k:null});
+   hit({wk:3,milk:38},-6);out.neg=G();hit({},0.3);out.flat=G();
+   set({mode:"kuru",dp:240,milk:0},0);out.kuru=G();
+   hit({},4.0);set({},hit({},4.0),true);out.np=G().sol;
+   return out});
+  const u=w.u;
+  ok('Canlı ağırlık tahmini (15. hafta, 30 kg süt, +4,0 Mcal, kondisyon 3): 30 günde merkez 10–16 kg (eski hesap 23 kg), aralık 5–21 kg içinde',approx(u.bal,3.99,4.01)&&approx(u.dbw,10,16)&&approx(u.lo,5,u.dbw)&&approx(u.hi,u.dbw,21)&&approx(u.max,22.5,24.5),JSON.stringify([u.bal,u.dbw,u.lo,u.hi,u.max]));
+  ok('Canlı ağırlık kutusu aralıkla yazılır ("+13 kg (7–19)" biçimi), "Gelecek" metninde aralık ve süt artışı notu var, 23 kg yalnız "nasıl hesaplandı?" katlanırında',/^\+1[0-6] kg \(\d+–\d+\)/.test(u.g.tile)&&/\d+–\d+ kg canlı ağırlık artışı/.test(u.g.fut)&&/kg süt artışı beklenir \(inek süte çevirebiliyorsa\)/.test(u.g.fut)&&!/2[34] kg/.test(u.g.fut+u.g.tile)&&/2[34] kg/.test(u.g.nas)&&/NRC 2001/.test(u.g.nas)&&/varsayım/.test(u.g.nas)&&!/kondisyona gidiyor/.test(u.g.fut),JSON.stringify(u.g).slice(0,500));
+  ok('Beklenen süt artışı, rasyonun (enerjinin) taşıdığı sütü aşmaz: örnekte ve 7 farklı rasyonda; NaN yok, alt ≤ merkez ≤ üst',u.dMilk>0.5&&u.dMilk<=u.room+1e-6&&w.ov2===0&&w.nan2===0&&w.over===0,JSON.stringify([u.dMilk,u.room,w.ov2,w.nan2,w.over]));
+  ok('Aynı enerji fazlası erken laktasyonda daha az, geç laktasyonda daha çok canlı ağırlık yapar (4. < 15. < 35. hafta)',w.ord[0]<w.ord[1]&&w.ord[1]<w.ord[2]&&w.ord[0]>0,JSON.stringify(w.ord));
+  ok('Kondisyon etkisi: 1 kg canlı ağırlığın enerjisi kondisyonla artar (NRC 2001: 3 puanda 5,12 artış / 4,92 kayıp); aynı fazla zayıf inekte daha çok kg yapar',w.bcs[0]>w.bcs[1]&&w.bcs[1]>w.bcs[2]&&approx(w.bcs[3],5.10,5.14)&&approx(w.bcs[4],4.90,4.94)&&w.bcs[5]<w.bcs[4]&&w.bcs[4]<w.bcs[6],JSON.stringify(w.bcs));
+  ok('Enerji açığı: erken laktasyonda çoğu vücuttan (3. hafta kayıp > 30. hafta kayıp), geç dönemde daha çok süt düşer; günlük kayıp fizyolojik sınırı (≈1 kg/gün) aşmaz',w.def[0]<w.def[2]&&w.def[2]<0&&w.def[1]<0&&w.def[3]<w.def[1]&&w.def[4]>=-w.def[6]-1e-9&&w.def[6]<=1.0&&w.def[5]<w.def[1],JSON.stringify(w.def));
+  ok('Canlı ağırlık tahmini: hiçbir girdi bileşiminde NaN yok (boş hafta/kondisyon dahil), enerji korunur (vücut + süt = denge), kuru dönemde tamamı vücuda, protein sınırlıysa süt artışı 0',w.bad===0&&w.cons===0&&!w.empty&&approx(w.dry,2.99,3.01)&&w.mp[0]===0&&w.mp[1]>w.mp[2],JSON.stringify([w.bad,w.cons,w.empty,w.dry,w.mp]));
+  ok('Ketozis risk puanı canlı ağırlık tahmininden etkilenmez (3 senaryo, değişiklik öncesi değerler: 0 / 4 / 3)',JSON.stringify(w.rk)==='[0,4,3]',JSON.stringify(w.rk));
+  ok('Açık ve dengede metinler: açıkta "canlı ağırlık kaybı" aralıkla ve süt düşüşüyle; dengeye yakınken "değişmez (±N kg)"; kuru dönemde kutu ve katlanır var',/^-\d+ kg \(\d+–\d+\)/.test(w.neg.tile)&&/\d+–\d+ kg canlı ağırlık kaybı/.test(w.neg.fut)&&/süt düşüşü/.test(w.neg.fut)&&/^değişmez \(±\d+ kg\)/.test(w.flat.tile)&&/belirgin bir değişim beklenmez/.test(w.flat.fut)&&/kg/.test(w.kuru.tile)&&/Kuru dönemde/.test(w.kuru.nas),JSON.stringify([w.neg.tile,w.neg.fut.slice(0,160),w.flat.tile,w.flat.fut.slice(0,120),w.kuru.tile]));
+  ok('Fiyatı girilmemiş yemde "0,00 TL/baş tasarruf" yazılmaz, "(fiyat girilmedi)" yazılır',/azaltın \(fiyat girilmedi\)/.test(w.np)&&!/0,00 TL\/baş/.test(w.np),w.np.slice(0,200));
+  ok('Eski "tamamı vücuda" katsayısı (4,92/5,12 sabit) yalnız eski risk yedek yolunda kaldı; çözüm özeti gerçekçi tahmini kullanıyor',(html.match(/\(b(?:a)?l<0\?4\.92:5\.12\)\*30/g)||[]).length===1&&/dbw:BP\.dbw,dbwMax:BP\.dbwMax/.test(html));
+  ok('Canlı ağırlık tahmini ekranı: 390 px taşma yok, JS hatası yok',w.ov<=0&&!qe.length,w.ov+' '+qe.slice(0,3).join(' | '));await q.close();}
  await b.close();done();
 })().catch(e=>{ok('Test koşucusu',false,e.message);done()});
 
