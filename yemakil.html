@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="icon-yemakil-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon-yemakil.png">
 <link rel="manifest" href="manifest-yemakil.json"><title>YemAkıl</title>
-<script src="yedek.js?v=220"></script>
+<script src="yedek.js?v=221"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f3f3f1;--card:#fff;--tx:#16251c;--mu:#5b6b60;--bd:#dedcd8;--ac:#1d5c4a;--wa:#a86a00;box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
@@ -50,7 +50,7 @@ p.s{color:var(--mu);margin:0;font-size:14px}
 footer{color:var(--mu);font-size:12px;text-align:center;margin-top:18px}
 </style></head><body>
 <main>
-<header><img src="icon-yemakil-192.png" width="132" height="132" alt="yemakıl"><h1>YemAkıl <span style="font-size:11px;font-weight:400;opacity:.75">v220</span></h1><p class="s">Üç program, tek yerde</p></header>
+<header><img src="icon-yemakil-192.png" width="132" height="132" alt="yemakıl"><h1>YemAkıl <span style="font-size:11px;font-weight:400;opacity:.75">v221</span></h1><p class="s">Üç program, tek yerde</p></header>
 <nav aria-label="Programlar">
 <a class="ap ra" href="index.html"><img src="icon-192.png" width="64" height="64" alt=""><div><b>Rasyon</b><span>Süt ve besi sığırı, koyun, buzağı rasyonu; sağlık ve aşı rehberi</span></div><i aria-hidden="true">›</i></a>
 <a class="ap fi" href="fiyat.html"><img src="icon-fiyat-192.png" width="64" height="64" alt=""><div><b>Fiyatlar</b><span>Yem hammaddesi fiyatları: yurt içi borsalar ve dünya</span></div><i aria-hidden="true">›</i></a>
@@ -88,8 +88,8 @@ window.ykGeriDon=geriDon;
 $("ykGonder").onclick=function(){YK.gonder(function(s,m){msg(m);ciz()})};
 $("ykYukleB").onclick=function(){var f=$("ykDosya");f.value="";f.click()};
 window.ykDosyaMetni=function(txt,sor){var c=YK.dosyaCoz(txt);if(c.hata){msg(c.hata);return Promise.resolve(c)}
- if(sor!==false&&!confirm("Yedek dosyası"+(c.tarih?" ("+new Date(c.tarih).toLocaleDateString("tr-TR")+")":"")+": "+c.programlar.join(", ")+(c.ozet?" — "+c.ozet:"")+".\n\nBu telefondaki "+c.programlar.join(", ")+" kayıtlarının YERİNE yüklensin mi? (Dosyada olmayan programlar değişmez; şimdiki hâl önce yedeklenir, geri alınabilir.)"))return Promise.resolve({iptal:true});
- return YK.dosyaYukle(c).then(function(s){if(s&&s.ok)msg("Yedek yüklendi: "+c.programlar.join(", ")+(c.ozet?" ("+c.ozet+")":"")+".",s.oncesi);else msg((s&&s.hata)||"Yüklenemedi.");ciz();return s})};
+ if(sor!==false&&!confirm("Yedek dosyası"+(c.tarih?" ("+new Date(c.tarih).toLocaleDateString("tr-TR")+")":"")+": "+c.programlar.join(", ")+(c.ozet?" — "+c.ozet:"")+".\n\nBu telefondaki "+c.programlar.join(", ")+" kayıtlarının YERİNE yüklensin mi? (Dosyada olmayan programlar değişmez; "+(YK.dbYok()?/* V221 (denetim 17): otomatik yedek çalışmıyorsa "geri alınabilir" sözü verilmez */"DİKKAT: bu tarayıcıda otomatik yedek çalışmadığı için şimdiki hâl yedeklenemez, bu işlem GERİ ALINAMAZ. Emin değilseniz İptal deyip önce \"Yedeği telefondan dışarı gönder\" ile yedek alın.":"şimdiki hâl önce yedeklenir, geri alınabilir.")+")"))return Promise.resolve({iptal:true});
+ return YK.dosyaYukle(c).then(function(s){if(s&&s.ok)msg("Yedek yüklendi: "+c.programlar.join(", ")+(c.ozet?" ("+c.ozet+")":"")+"."+(s.oncesi?"":" Önceki hâl yedeklenemedi; bu yükleme geri alınamaz."),s.oncesi);else msg((s&&s.hata)||"Yüklenemedi.");ciz();return s})};
 $("ykDosya").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){ykDosyaMetni(String(r.result||""))};r.readAsText(f)};
 YK.dinle(ciz);ciz();window.ykCiz=ciz})();
 </script>

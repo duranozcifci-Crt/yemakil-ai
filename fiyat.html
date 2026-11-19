@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="icon-fiyat-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon-fiyat.png">
 <link rel="manifest" href="manifest-fiyat.json"><title>YemAkıl Fiyatlar</title>
-<script src="yedek.js?v=220"></script>
+<script src="yedek.js?v=221"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#e9eee9;--card:#fbfcfb;--tx:#16251c;--mu:#5b6b60;--ac:#1d5c4a;--on:#fff;--bd:#cbd5cd;--bad:#a8281f;--ok:#1d6b3a;--wa:#a86a00;box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
@@ -36,7 +36,9 @@ table.c th.r{text-align:right;padding:4px 2px}table.c td:first-child,table.c th:
 td.pc{padding:4px 2px;text-align:right;white-space:nowrap}td.pn{color:var(--mu);padding:4px 2px;text-align:right;font-size:10px;line-height:1.1}
 td.ic{padding:4px 2px 4px 10px}td.alt,th.alt{padding:0 2px;color:var(--mu);font-size:11px;font-weight:400}
 .tf{display:flex;gap:8px;align-items:flex-start}.tform{display:grid;gap:6px;font-size:13px}
-.hb{border-bottom:1px solid var(--bd);padding:4px 0}.hbb{cursor:pointer;padding:8px 2px;font-size:14px}
+.hb{border-bottom:1px solid var(--bd);padding:4px 0}.hbb{cursor:pointer;padding:8px 2px;font-size:14px;display:flex;align-items:center;gap:8px}.hbt{flex:1;min-width:0}.hbb .pb{flex:none;margin-left:0}
+table.c tr.ns td{border-bottom:0;padding-bottom:1px}table.c tr.nt td{padding-top:0;font-size:11px;line-height:1.35}
+@media (max-width:374px){table.c,table.c th{font-size:11px}td.pc,td.pn,table.c th.r{padding-left:1px;padding-right:1px}td.ic{padding-left:4px}}
 details.dt{margin:6px 0}details.dt summary{color:var(--ac);cursor:pointer;padding:8px 0;font-size:13px}
 .nv{display:flex;align-items:center;gap:6px;margin:3px 0}.nv input{width:70px}
 .ogbar{display:flex;justify-content:flex-end;margin:-4px 0 8px}.ogbar label{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:2px 12px;border:1px solid var(--bd);border-radius:999px;background:var(--card);color:var(--tx);font-size:13px;cursor:pointer;margin:0}.ogbar input{width:20px;height:20px;min-height:0;margin:0;accent-color:var(--ac)}
@@ -45,7 +47,7 @@ details.og{margin:6px 0 8px;border:1px solid color-mix(in srgb,var(--ac) 45%,var
 </style>
 </head>
 <body><main>
-<h1 aria-label="YemAkıl Fiyatlar" style="display:flex;align-items:center;gap:10px"><img src="icon-fiyat-192.png" width="64" height="64" alt="yemakıl Fiyatlar" style="border-radius:14px"><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="font-size:11px;font-weight:400;opacity:.75">v220</span></h1>
+<h1 aria-label="YemAkıl Fiyatlar" style="display:flex;align-items:center;gap:10px"><img src="icon-fiyat-192.png" width="64" height="64" alt="yemakıl Fiyatlar" style="border-radius:14px"><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="font-size:11px;font-weight:400;opacity:.75">v221</span></h1>
 <div id="ogBar"></div>
 <div id="fpBody"></div>
 </main>
@@ -59,7 +61,7 @@ var RS=oku("rasyon-v1")||{},FS=oku("fiyat-v1")||{};
 var S={feeds:Array.isArray(RS.feeds)?RS.feeds:[],ph:(RS.ph&&typeof RS.ph==="object")?RS.ph:{},navlun:FS.navlun||RS.navlun,teklif:Array.isArray(FS.teklif)?FS.teklif:[]};
 function save(){try{localStorage.setItem("fiyat-v1",JSON.stringify({navlun:S.navlun,teklif:S.teklif}))}catch(e){}}
 </script>
-<script src="fiyat.js?v=220"></script>
+<script src="fiyat.js?v=221"></script>
 <script>
 fpRender();fpLoad();
 </script>
