@@ -1049,6 +1049,12 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   ok('Fiyatı girilmemiş yemde "0,00 TL/baş tasarruf" yazılmaz, "(fiyat girilmedi)" yazılır',/azaltın \(fiyat girilmedi\)/.test(w.np)&&!/0,00 TL\/baş/.test(w.np),w.np.slice(0,200));
   ok('Eski "tamamı vücuda" katsayısı (4,92/5,12 sabit) yalnız eski risk yedek yolunda kaldı; çözüm özeti gerçekçi tahmini kullanıyor',(html.match(/\(b(?:a)?l<0\?4\.92:5\.12\)\*30/g)||[]).length===1&&/dbw:BP\.dbw,dbwMax:BP\.dbwMax/.test(html));
   ok('Canlı ağırlık tahmini ekranı: 390 px taşma yok, JS hatası yok',w.ov<=0&&!qe.length,w.ov+' '+qe.slice(0,3).join(' | '));await q.close();}
+ /* V223: gebe/kuru hayvanda açıklamalar süt düşüşünden söz etmez (kullanıcı bildirimi 2026-11-20) */
+ {const q=await b.newPage({viewport:{width:390,height:844}});const qe=[];q.on('pageerror',e=>qe.push(e.message));await q.goto('file://'+path.resolve(FILE));await q.waitForTimeout(500);
+  const sd=await q.evaluate(()=>{var o={},T="önce süt/artış, sonra kondisyon kaybolur. süt/artış düşer; süt/artış düşüşü; süt/artış düşüyor",kt=S.type,km=S.b.mode;
+   S.type="sut";S.b.mode="kuru";o.kuru=sinifDil(T);var P=["KM alımı, kg","","","",1,"",""];o.note=noteMsg(P,8.6,10.5,12.9,false);S.b.mode="lak";o.lak=sinifDil(T);o.noteL=noteMsg(P,18,22,25,false);S.b.mode="duve";o.duve=sinifDil(T);
+   S.type="besi";o.besi=sinifDil(T);S.type="koyun";var K=K_def(),m0=K.mode;K.mode="gebe";o.kg=sinifDil(T);K.mode="lak";o.kl=sinifDil(T);K.mode="idame";o.ki=sinifDil(T);K.mode=m0;S.type=kt;S.b.mode=km;o.bos=sinifDil("değişmez");return o});
+  ok('Açıklama dili döneme göre: kuru/gebe inekte ve gebe koyunda "süt düşüşü" yok (kondisyon, buzağı/kuzu gelişimi, ketozis/toksemi); sağmalda süt, düve/beside canlı ağırlık artışı; "süt/artış" kalıbı ekrana çıkmıyor',!/süt\/artış/.test(JSON.stringify(sd))&&!/süt düş|süt verimi düş|önce süt/.test(sd.kuru)&&/buzağının gelişimi/.test(sd.kuru)&&/ketozis/.test(sd.kuru)&&/buzağının gelişimi/.test(sd.note)&&!/önce süt/.test(sd.note)&&/süt verimi/.test(sd.lak)&&/süt düş/.test(sd.noteL)&&/canlı ağırlık artışı/.test(sd.duve)&&/canlı ağırlık artışı/.test(sd.besi)&&/kuzunın|kuzunun/.test(sd.kg)===/kuzunun/.test(sd.kg)&&/toksemi/.test(sd.kg)&&/süt verimi/.test(sd.kl)&&/kondisyon/.test(sd.ki)&&sd.bos==="değişmez"&&!qe.length,JSON.stringify(sd).slice(0,600));await q.close();}
  await b.close();done();
 })().catch(e=>{ok('Test koşucusu',false,e.message);done()});
 

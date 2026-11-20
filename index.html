@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json"><title>YemAkıl Rasyon</title>
-<script src="yedek.js?v=222"></script>
+<script src="yedek.js?v=223"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f3efeb;--card:#fdfcfb;--tx:#1f1a17;--mu:#6b625b;--ac:#d9580a;--on:#fff;--bd:#dcd3cb;--bad:#a8281f;--ok:#1d6b3a;--wa:#a86a00;box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
@@ -106,7 +106,7 @@ details.ogrB{border-left:3px solid var(--ac);padding:0 0 2px 10px;margin:8px 0}d
 body:not(.ogr-on) .ogrB,body:not(.ogr-on) .ogrL{display:none!important}
 table.ogrT{width:100%;table-layout:fixed;font-size:12px;margin:4px 0 6px;border-collapse:collapse}table.ogrT th,table.ogrT td{text-align:left;white-space:normal;overflow-wrap:anywhere;padding:4px 3px;vertical-align:top}table.ogrT th:nth-child(1),table.ogrT td:nth-child(1){width:34%}table.ogrT th:nth-child(3),table.ogrT td:nth-child(3){width:25%}table.ogrT tr.ogrG td{font-weight:600;color:var(--ac);padding-top:8px}details.ogrP{border-bottom:1px dashed var(--bd);padding:1px 0}details.ogrP summary{font-size:13px;padding:6px 0;cursor:pointer}details.ogrP p.s{margin:3px 0 3px 8px}.ogrB p.ogrKy{font-size:12px;color:var(--mu)}
 </style></head><body><main>
-<h1 aria-label="YemAkıl Rasyon" style="display:flex;align-items:center;gap:10px;background:#fff;color:#111;border-bottom:1px solid #e3e3e3;padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px"><img src="logo-rasyon-yuvarlak.png" width="64" height="64" alt="yemakıl Rasyon" style="border-radius:14px"><button type="button" id="ogrTgl" aria-pressed="false" title="Öğretici mod: her bölümde ne işe yaradığını ve sonuçların nasıl okunduğunu anlatır">🎓 Öğretici</button><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="color:#555;font-size:11px;font-weight:400;opacity:.75">v222</span></h1>
+<h1 aria-label="YemAkıl Rasyon" style="display:flex;align-items:center;gap:10px;background:#fff;color:#111;border-bottom:1px solid #e3e3e3;padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px"><img src="logo-rasyon-yuvarlak.png" width="64" height="64" alt="yemakıl Rasyon" style="border-radius:14px"><button type="button" id="ogrTgl" aria-pressed="false" title="Öğretici mod: her bölümde ne işe yaradığını ve sonuçların nasıl okunduğunu anlatır">🎓 Öğretici</button><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="color:#555;font-size:11px;font-weight:400;opacity:.75">v223</span></h1>
 
 <div class="seg" id="seg"></div>
 <div id="sutPanel" style="scroll-margin-top:8px"><h2>Irk ve verim</h2>
@@ -2064,10 +2064,17 @@ var INFO={
 "Çinko, mg/kg":{b:"Çinko: tırnak boynuzu (keratin), deri, bağışıklık, döl. Hedef 40–60 mg/kg; ayak sorunlu sürüde organik çinko. Yüksek Ca ve Fe çinko emilimini düşürür.",lo:"Topallık, tırnak çürüğü, kaba ve kırık tüy, yavaş yara iyileşmesi, mastitis artışı.",hi:"Bakır eksikliği belirtileri."},
 "Selenyum, mg/kg":{b:"Selenyum ve E vitamini antioksidan ikilisi. Hedef 0,3 mg/kg; yasal üst sınır 0,5 mg/kg KM. Türkiye topraklarının büyük kısmı Se fakir. Doz hatası zehirler: sadece ön karışım/premiks ile.",lo:"Sonun atılamaması, mastitis, ayağa kalkamayan zayıf buzağı/kuzu (beyaz kas hastalığı), döl tutmama.",hi:"Kıl dökülmesi, tırnak deformasyonu, topallık."}
 };
+/* Açıklama metinlerindeki genel "süt/artış" ifadesi hayvanın dönemine göre yazılır (kullanıcı bildirimi 2026-11-20: gebe/kuru hayvanda süt düşüşünden söz edilmesin) */
+function sinifDil(t){if(!t||t.indexOf("süt/artış")<0)return t;var K=S.type,M="art";
+ if(K==="sut")M=isDry()?"gebe":isHf()?"art":"sut";else if(K==="koyun"){var km=K_def().mode;M=km==="gebe"?"gebeK":km==="lak"?"sut":km==="idame"?"kon":"art"}
+ if(M==="gebe"||M==="gebeK"){var y=M==="gebe"?"buzağı":"kuzu",rk=M==="gebe"?"doğum sonrası ketozis":"gebelik toksemisi";
+  return t.replace(/önce süt\/artış, sonra kondisyon kaybolur/g,"kondisyon erir; "+y+(M==="gebe"?"nın":"nun")+" gelişimi ve doğum sonrası süt verimi olumsuz etkilenir, "+rk+" riski artar").replace(/süt\/artış düşer/g,"kondisyon ve "+y+" gelişimi geriler").replace(/süt\/artış düşüşü/g,"kondisyon kaybı").replace(/süt\/artış düşüyor/g,"kondisyon düşüyor").replace(/süt\/artış/g,"kondisyon")}
+ if(M==="kon")return t.replace(/önce süt\/artış, sonra kondisyon kaybolur/g,"kondisyon kaybolur").replace(/süt\/artış düşer/g,"kondisyon düşer").replace(/süt\/artış düşüşü/g,"kondisyon kaybı").replace(/süt\/artış düşüyor/g,"kondisyon düşüyor").replace(/süt\/artış/g,"kondisyon");
+ var w=M==="sut"?"süt verimi":"canlı ağırlık artışı";return t.replace(/süt\/artış düşüşü/g,M==="sut"?"süt düşüşü":"artışın yavaşlaması").replace(/süt\/artış düşüyor/g,M==="sut"?"süt düşüyor":"artış yavaşlıyor").replace(/süt\/artış düşer/g,M==="sut"?"süt düşer":"artış yavaşlar").replace(/süt\/artış/g,w)}
 function noteMsg(p,v,lo,hi,dir){var lab=p[0],E=EXP[lab],K=S.type==="sut"?(isDry()?"kuru":isHf()?"duve":"sut"):S.type,D=dir?"hi":"lo",e=null;if(E){if(E[K]&&E[K][D])e=E[K][D];else if(E[D])e=E[D]}
  var base=dir?p[6]:p[5];if(!e)return base;var d=p[4]!==undefined?p[4]:1,unit=/, %|\(katı\), %/.test(lab)?"%":/mg\/kg/.test(lab)?" mg/kg":/mEq/.test(lab)?" mEq/kg":/, g$/.test(lab)?" g":/, kg$/.test(lab)?" kg":/Mcal\/kg/.test(lab)?" Mcal/kg":/Mcal$/.test(lab)?" Mcal":/L\/gün/.test(lab)?" L":"";
  var nm=lab.replace(/,.*$/,'').replace(/ \(katı\)| \(başlangıç yemi\)| \(katı içinde\)/,''),mv=(unit==="%"?"%":"")+f(v,d)+(unit!=="%"?unit:""),rng=r4Ref(lo,hi,d);
- var N=INFO[lab],sg=N?(dir?N.hi:N.lo):"";return '<b>'+nm+(dir?' yüksek':' düşük')+'</b> ('+mv+'; hedef '+rng+'). '+e[0]+(sg?' <b>Ahırda belirtisi:</b> '+sg:'')+' <b>Ne yapmalı:</b> '+e[1]+(N&&N.b?'<br><span style="opacity:.85"><b>Bilgi:</b> '+N.b+'</span>':'')}
+ var N=INFO[lab],sg=N?(dir?N.hi:N.lo):"";return sinifDil('<b>'+nm+(dir?' yüksek':' düşük')+'</b> ('+mv+'; hedef '+rng+'). '+e[0]+(sg?' <b>Ahırda belirtisi:</b> '+sg:'')+' <b>Ne yapmalı:</b> '+e[1]+(N&&N.b?'<br><span style="opacity:.85"><b>Bilgi:</b> '+N.b+'</span>':''))}
 
 /* ===== EK ANALİZ: RDP/RUP ve metabolik protein (NRC 2001 / NASEM 2021 basitleştirilmiş), Lys/Met, DCAD, makro-iz mineraller, peNDF; KAYITLI ÇİFTLİK RASYONLARI; RAPOR ===== */
 /* XR / XEE (mineral, peNDF, DCAD, ham yağ aralıkları) artık REF4'ten türetilir: [alt sınır, üst sınır]; ayrı sayı kopyası yoktur */
