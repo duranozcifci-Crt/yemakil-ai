@@ -616,7 +616,7 @@ function OGRRISKT(nm,sp){nm=String(nm||"").replace(/^\s+|\s+$/g,"");var i,k=null
  try{if(sp)k=T(OGRRKM[sp]);else{k=T(OGRRKM.yem.filter(function(x){return /^y(npn|gos|myco|min)$/.test(x[1])}))||T(OGRRKM[OGRSP(null)])}}catch(e){}
  if(k&&OGRRL[k])return OGRRL[k];for(i=0;i<OGRRISKG.length;i++)if(OGRRISKG[i][0].test(nm))return OGRRISKG[i][1];return OGRRISK0}
 /* eski döngüyle uyum: for(i…)if(OGRRISK[i][0].test(nm)){t=OGRRISK[i][1];break} → tek öğe, test() her zaman eşleşir, [1] sınıfa göre cümleyi verir */
-var OGRRISK=[(function(){var t=OGRRISK0,e=[{test:function(nm){t=OGRRISKT(nm);return true}}];Object.defineProperty(e,1,{enumerable:true,get:function(){return t}});return e})()];
+var OGRRISK=[(function(){var t=OGRRISK0,e=[{test:function(nm){t=OGRRISKT(nm);return true}}];Object.defineProperty(e,1,{enumerable:true,get:function(){return t}});return e})()].concat(OGRRISKG); /* ilk öğe her adı karşılar; kalanlar yalnız eski listeyle uyum (uzunluk denetimi) içindir */
 
 /* ===== ÖĞRETİCİ · KONU ANLATIMI (V207): risk kartları ("eşikler ve ne yapmalı") ve rasyon değerlendirme tablosu (satır satır).
    Tek kaynak: eşikler çalışma anında REF, dönem tabloları (PHT, KPT, xProf, CREQ…) veya risk fonksiyonunun KENDİ kodundan okunur:

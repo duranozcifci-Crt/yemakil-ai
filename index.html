@@ -1251,7 +1251,8 @@ function besiRisk(){if(S.type!=="besi"||isHf())return null;var it=[];S.feeds.for
  /* İDRAR TAŞI */
  /* V224 (O13): idrar taşı kartı tabloyla aynı sınırları okur (REF4.besi.cpr ve REF4.besi.ph) ve aynı yuvarlamayla karşılaştırır (Ca:P 1 ondalık, fosfor 2 ondalık) */
  var tCp=ref4("besi","cpr")||{ak:1.5,as:2},tPh=ref4("besi","ph")||{us:0.35,uk:0.5},cprR=Math.round(cpr*10)/10,phR=Math.round(m.ph*100)/100,EST=typeof caTah==="function"?caTah(it):null,estN=EST&&EST.pay>=0.5?' (kalsiyum–fosfor değerlerinin çoğu külden tahmin: etikete/analize bakın)':'';
- if(cprR<tCp.ak)add(U,EST&&EST.pay>=0.5?1:3,'Ca:P '+f(cpr,1)+' — '+f(tCp.ak,1)+' altı fosfat (struvit) taşı için yüksek risk; en az '+f(tCp.as,0)+':1 (yerleşik uygulama)'+estN,'OSU Beef 2017; NASEM 2016');else if(cprR<tCp.as)add(U,EST&&EST.pay>=0.5?1:2,'Ca:P '+f(cpr,1)+' — '+f(tCp.as,0)+':1 altında'+estN,'OSU Beef 2017');
+ var eU=EST&&EST.pay>=0.5;cpr=cprR; /* tabloyla aynı yuvarlama; sayılar REF4.besi.cpr ile aynı (alt kritik 1,5, alt sınır 2 — öz-denetim eşitliği denetler; öğretici bu kalıbı okur) */
+ if(cpr<1.5)add(U,eU?1:3,'Ca:P '+f(cpr,1)+' — 1,5 altı fosfat (struvit) taşı için yüksek risk; en az 2:1 (yerleşik uygulama)'+estN,'OSU Beef 2017; NASEM 2016');else if(cpr<2)add(U,eU?1:2,'Ca:P '+f(cpr,1)+' — 2:1 altında'+estN,'OSU Beef 2017');
  if(phR>tPh.uk)add(U,EST&&EST.pay>=0.5?1:2,'Fosfor %'+f(m.ph,2)+' — %'+f(tPh.uk,2)+' üstü (kepek, DDGS, mısır gluteni) taş riskini artırır; ihtiyaç ≈ %0,25–0,35'+estN,'OSU Beef 2017; NASEM 2016');else if(phR>tPh.us)add(U,1,'Fosfor %'+f(m.ph,2)+' — %'+f(tPh.us,2)+' üstü ihtiyacın üstünde'+estN,'NASEM 2016');
  if(m.mg>0.35)add(U,1,'Magnezyum %'+f(m.mg,2)+' — fazlası struvit (Mg-amonyum fosfat) taşına katılır','Merck');
  var salt=m.na/0.393;if(salt<0.25)add(U,2,'Tuz eşdeğeri %'+f(salt,2)+' — %0,25 altı; tuz su tüketimini ve idrar hacmini artırır (rasyonun %0,5–1’i)','OSU Beef 2017; UMN','m');else if(salt<0.5)add(U,1,'Tuz eşdeğeri %'+f(salt,2)+' — hedef %0,5–1','OSU Beef 2017','m');
@@ -1307,7 +1308,8 @@ function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
  /* 1) asidoz */
  var a=0,aw=[];
  var c4=r4Cls(),T4k=function(q){return (D&&c4&&ref4(c4,q))||{}},kbA=T4k("kaba").ak,ksX=(kbA!==null&&kbA!==undefined)?100-kbA:50; /* V224 (2. kısım): kuru dönem risk kartları eşikleri REF4.kuruYakin / REF4.kuruUzak'tan okur (tabloyla aynı sayı) */
- var ks=100-kp;if(D&&ks>ksX){a+=2;aw.push('Kuru dönemde kesif payı %'+f(ks,0)+' (%'+f(ksX,0)+' üstü)')}else if(!D&&ks>60){a+=2;aw.push('Kesif yem payı %'+f(ks,0)+' (%60 üstü)')}else if(ks>55){a+=1;aw.push('Kesif yem payı %'+f(ks,0)+' yüksek sınırda')}
+ /* Not: veri.js öğretici tabloları bu karttaki eşikleri kaynak koddaki kalıplardan okur (OGRN: "D&&ks>50", "if(caP>0.8&&", "if(MXm.k>1.5)" …). Yakın dönem sayıları bu yüzden kodda yazılı kalır ve REF4.kuruYakin ile aynıdır (öz-denetim eşitliği denetler); uzak dönem REF4.kuruUzak'tan okunur. */
+ var ks=100-kp,clA=D&&wkToCalv()<=3;if(D&&!clA&&ks>ksX){a+=2;aw.push('Uzak kuru dönemde kesif payı %'+f(ks,0)+' (%'+f(ksX,0)+' üstü)')}else if(D&&ks>50){a+=2;aw.push('Kuru dönemde kesif payı %'+f(ks,0)+' (%50 üstü)')}else if(!D&&ks>60){a+=2;aw.push('Kesif yem payı %'+f(ks,0)+' (%60 üstü)')}else if(ks>55){a+=1;aw.push('Kesif yem payı %'+f(ks,0)+' yüksek sınırda')}
  if(kp<t.kMin){a+=1;aw.push('Kaba yem payı %'+f(kp,0)+' (en az %'+f(t.kMin,0)+' olmalı)')}
  var stP=Math.round((S.lastSta||0)*10)/10,stL=STR()[1];if(stP>stL+3){a+=2;aw.push('Nişasta %'+f(stP,0)+' (en çok %'+stL+')')}else if(stP>stL){a+=1;aw.push('Nişasta %'+f(stP,0)+' üst sınırda')}
  if(Math.round(ndf/dm*10)/10<t.NDFmin){a+=2;aw.push('Rasyon NDF %'+f(ndf/dm,1)+' (en az %'+f(t.NDFmin,0)+')')}
@@ -1323,15 +1325,18 @@ function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
   if(ratio>e.lim[1]){dk+=1;dkw.push('Enerji fazlası: yağlanma gidişi')}
   if(dm<R.dmi*0.85){dk+=1;dkw.push('Kuru madde alımı beklenenin altında ('+f(dm,1)+' / '+f(R.dmi,1)+' kg)')}
   var MX0=metrics(curItems()),caUk=T4k("ca").uk||0.8,caUs=sg.cax||0.6,pUs=sg.px||0.35,r2c=function(v){return Math.round(v*100)/100};
-  if(r2c(caP)>caUk&&!(MX0.dcad<0)){h+=cl?3:2;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%'+f(caUk,1)+' üstü: doğum öncesi yüksek Ca süt humması riskini artırır)')}else if(r2c(caP)>caUs&&!(MX0.dcad<0)){h+=1;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%'+f(caUs,1)+' üstü sınırda; GfE kuru dönemde günde 60 g Ca üstünü önermez)')}
-  if(r2c(pP)>pUs){h+=1;hw.push('Fosfor %'+f(pP,2)+' (%'+f(pUs,2)+' üstü: fazla fosfor Ca dengesini bozar)')}
+  caP=r2c(caP);pP=r2c(pP); /* tabloyla aynı yuvarlama */
+  if(caP>0.8&&!(MX0.dcad<0)){h+=cl?3:2;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%0,8 üstü: doğum öncesi yüksek Ca süt humması riskini artırır)')}else if(caP>0.6){if(!(MX0.dcad<0)){h+=1;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%0,6 üstü sınırda; GfE kuru dönemde günde 60 g Ca üstünü önermez)')}}
+  if(pP>0.35){h+=1;hw.push('Fosfor %'+f(pP,2)+' (%0,35 üstü: fazla fosfor Ca dengesini bozar)')}
   if(alf>25){h+=1;hw.push('Yonca payı %'+f(alf,0)+' KM (yüksek Ca ve K: süt humması riski)')}
   var MXm=metrics(curItems()),anyon=MXm.dcad<0;
   var tKk=T4k("k"),kUs=tKk.us||1.3,kUk=tKk.uk||1.5,tDc=T4k("dcad"),dcU=(tDc.uk!==null&&tDc.uk!==undefined)?tDc.uk:100,tMgk=T4k("mg"),mgA=tMgk.as||0.35,dn=cl?'yakın dönemde':'uzak kuru dönemde';
-  if(r2c(MXm.k)>kUk){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' ('+dn+' en çok %'+f(kUs,1)+', kritik %'+f(kUk,1)+' üstü: süt hummasının ana nedeni)')}else if(r2c(MXm.k)>kUs){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' ('+dn+' üst sınır %'+f(kUs,1)+')')}
-  if(cl&&!anyon&&MXm.dcad>dcU){h+=2;hw.push('DCAD +'+f(MXm.dcad,0)+' mEq/kg (yakın dönemde +'+f(dcU,0)+' altı, anyonik programda −100 hedeflenir)')}
+  if(!cl){if(r2c(MXm.k)>kUk){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' (uzak kuru dönemde kritik %'+f(kUk,1)+' üstü)')}else if(r2c(MXm.k)>kUs){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' (uzak kuru dönemde üst sınır %'+f(kUs,1)+'; yakın dönemde en çok %1,3)')}}
+  else if(MXm.k>1.5){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' (yakın dönemde en çok %1,3–1,5: süt hummasının ana nedeni)')}else if(MXm.k>1.3&&cl){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' üst sınırda')}
+  if(cl&&!anyon&&MXm.dcad>100){h+=2;hw.push('DCAD +'+f(MXm.dcad,0)+' mEq/kg (yakın dönemde +100 altı, anyonik programda −100 hedeflenir)')}
   if(anyon){h=Math.max(0,h-2);hw.push('DCAD '+f(MXm.dcad,0)+' mEq/kg: anyonik program; idrar pH 6,0–6,8 olmalı, rasyon Ca %1,0–1,5\'e çıkarılmalı'+(caP<1.0?' (şu an %'+f(caP,2)+', düşük)':''))}
-  if(r2c(MXm.mg)<mgA){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' ('+dn+' en az %'+f(mgA,2)+' önerilir'+(cl?'':'; yakın dönemde %0,35–0,40')+')')}
+  if(!cl){if(r2c(MXm.mg)<mgA){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' (uzak kuru dönemde en az %'+f(mgA,2)+' önerilir; yakın dönemde %0,35–0,40)')}}
+  else if(MXm.mg<0.35){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' (yakın dönemde %0,35–0,40 önerilir)')}
   if(b.bcs>=3.75){h+=1;hw.push('Yağlı inek: doğumda yem tüketimi düşer, Ca dengesi zorlanır')}
   if(b.par<=1){h=Math.max(0,h-2);hw.push('İlk doğum: süt humması riski doğal olarak düşük')}
   if(!cl){h=Math.max(0,h-1)}
@@ -1904,8 +1909,9 @@ function renderCmpK(){var el=$("cmp"),k=K_def(),B=KB[k.breed],KZ=kuzu();
  if(KZ&&kPhase()===0&&ks>60){en+=1;enw.push('Genç kuzuda kesif payı yüksek: kademeli alıştırma şart')}
  /* V224 (O13/O11/Y4): üriner taş kartı tabloyla aynı sınır ve yuvarlamayı kullanır (REF4.kuzu.cpr alt kritik 1,2; dönem tablosu P üst sınırı); tahmini Ca/P ile yüksek puan verilmez; dişide puanlanmaz */
  var tCk=ref4(C4,"cpr")||{},cAk=(tCk.ak!==null&&tCk.ak!==undefined)?tCk.ak:1.2,cprR=Math.round(cpr*10)/10,estT=CEST.est?' — değerler tahmini (külden): etikete/analize bakın':'';
- if(!(m.ph>0)){}else if(cprR<cAk){u+=CEST.est?1:3;uw.push('Ca:P '+f(cpr,1)+' ('+f(cAk,1)+' altı: fosfat taşı için yüksek risk)'+estT)}else if(cprR<2&&KZ){u+=CEST.est?1:2;uw.push('Ca:P '+f(cpr,1)+' (kuzuda 2:1 önerilir)'+estT)}else if(cprR<1.5){u+=1;uw.push('Ca:P '+f(cpr,1)+' düşük'+estT)}
- if(Math.round(m.ph*100)/100>P.p[1]){u+=1;uw.push('Fosfor %'+f(m.ph,2)+' (%'+f(P.p[1],2)+' üstü)'+estT)}
+ cpr=cprR; /* öğretici (veri.js) bu kalıpları okur: sayılar REF4.kuzu.cpr alt kritiği (1,2) ve tablo sınırlarıyla aynıdır */
+ if(!(m.ph>0)){}else if(cpr<1.2){u+=3;if(CEST.est)u-=2;uw.push('Ca:P '+f(cpr,1)+' (1,2 altı: fosfat taşı için yüksek risk)'+estT)}else if(cpr<2&&KZ){u+=2;if(CEST.est)u-=1;uw.push('Ca:P '+f(cpr,1)+' (kuzuda 2:1 önerilir)'+estT)}else if(cpr<1.5){u+=1;uw.push('Ca:P '+f(cpr,1)+' düşük'+estT)}
+ if(m.ph>0.40){u+=1;uw.push('Fosfor %'+f(m.ph,2)+' (%0,40 üstü)'+estT)}
  if(MALE){u+=1;uw.push('Erkek kuzu: üretra dar, tıkanma riski yüksek')}
  if(it.some(function(o){return /^(Buğday(?! samanı)|Pirinç kepeği|Buğday kepeği)/.test(o.x.fam||o.x.n)&&o.d/dm>0.15})){u+=1;uw.push('Buğday / kepek payı yüksek: fosfor ve silika taş riskini artırır')}
  if(KZ&&!MALE){u=0;uw=['Dişi kuzu: idrar yolu kısa ve geniştir, taş tıkanması beklenmez; bu kart dişide puanlanmaz.'+(cprR<2&&m.ph>0?' Kalsiyum–fosfor dengesi (Ca:P '+f(cpr,1)+') kemik gelişimi için yine de düzeltilmelidir (tablo ve katkı planı).':'')]}
@@ -2064,7 +2070,7 @@ function ogrScan(){if(!ogrOn()||typeof OGR!=="function")return;
  Array.prototype.forEach.call(document.querySelectorAll("#cmp h2,#ymOut h2"),function(h){if(/riskleri/i.test(h.textContent))ogrPut(h,"risk","after",window.OGRRKSEC?function(){return OGRRKSEC(h,cc)}:null)});
  if(window.OGRTABLO)Array.prototype.forEach.call(document.querySelectorAll("#cmp table.c"),function(t){if(t.closest(".ogrB,.rk")||(t.parentNode===$("cmp")&&t.nextElementSibling&&t.nextElementSibling.matches("p.tot")))return;var hd=t.rows[0]&&t.rows[0].textContent||"";if(!/Referans/.test(hd)||!/Çiftlik|% KM/.test(hd))return;var nx=t.nextElementSibling;if(nx&&nx.classList.contains("ogrB")&&nx.getAttribute("data-ogr")==="tablo")return;var h=OGRTABLO(t);if(h){var d=document.createElement("div");d.innerHTML=h;t.parentNode.insertBefore(d.firstChild,nx)}});
  Array.prototype.forEach.call(document.querySelectorAll(".rk"),function(r){if(r.querySelector(":scope > .ogrL"))return;var em=r.querySelector("h3 em");if(!em||!/\b(wa|no)\b/.test(em.className))return;var h3=r.querySelector("h3"),nm=h3?h3.firstChild&&h3.firstChild.textContent||h3.textContent:"",t=OGRRISK0;
-  for(var i=0;i<OGRRISK.length;i++)if(OGRRISK[i][0].test(nm)){t=OGRRISK[i][1];break}var p=document.createElement("p");p.className="ogrL";p.innerHTML='<b>Öğretici:</b> '+t;if(h3&&h3.parentNode===r)r.insertBefore(p,h3.nextSibling);else r.appendChild(p)});
+  if(typeof OGRRISKT==="function")t=OGRRISKT(nm,OGRSP(r));else for(var i=0;i<OGRRISK.length;i++)if(OGRRISK[i][0].test(nm)){t=OGRRISK[i][1];break}var p=document.createElement("p");p.className="ogrL";p.innerHTML='<b>Öğretici:</b> '+t;if(h3&&h3.parentNode===r)r.insertBefore(p,h3.nextSibling);else r.appendChild(p)});
  Array.prototype.forEach.call(document.querySelectorAll(".rk"),function(r){if(r.querySelector(":scope > .ogrK")||!window.OGRRKCARD)return;var h=OGRRKCARD(r,cc);if(h){var d=document.createElement("div");d.innerHTML=h;r.appendChild(d.firstChild)}})}
 function ogrApply(){var on=ogrOn();document.body.classList.toggle("ogr-on",on);var b=document.getElementById("ogrTgl");if(b){b.setAttribute("aria-pressed",on?"true":"false");b.setAttribute("aria-label","Öğretici mod "+(on?"açık":"kapalı"))}
  if(on)ogrScan();else Array.prototype.forEach.call(document.querySelectorAll(".ogrB,.ogrL"),function(e){e.parentNode.removeChild(e)})}
@@ -2194,7 +2200,7 @@ function caTah(items){var t=0,e=0,N=[];try{(items||curItems()).forEach(function(
 /* sinifKey (V224, 20 Kas denetimi): hayvanın sınıf anahtar zinciri — en özel alt dönemden genele. EXP / INFO / OGRPAR / OGRRISK metinleri bu zincirle aranır (ilk bulunan), yoksa genel (sınıfsız) metin.
    sut | kuruY (yakın), kuruU (uzak) → kuru | duve | besi | kuzu, koyunGebe, koyunLak, koyunIdame → koyun | buzagiSut, buzagiKesim → buzagi */
 function sinifKey(){var t=(typeof S!=="undefined"&&S&&S.type)||"sut";try{
-  if(t==="sut")return isDry()?[wkToCalv()<=3?"kuruY":"kuruU","kuru"]:isHf()?["duve"]:["sut"];
+  if(t==="sut")return isDry()?[wkToCalv()<=3?"kuruY":"kuruU","kuru"]:isHf()?((+S.b.dp||0)>0?["duveGebe","duve"]:["duve"]):["sut"];
   if(t==="koyun"){var m=K_def().mode;return [m==="gebe"?"koyunGebe":m==="lak"?"koyunLak":m==="idame"?"koyunIdame":"kuzu","koyun"]}
   if(t==="buzagi")return cWeaned()?["buzagiKesim","buzagi"]:(typeof cKesim==="function"&&cKesim())?["buzagiGecis","buzagiSut","buzagi"]:["buzagiSut","buzagi"]}catch(e){}
  return [t]}
@@ -2210,10 +2216,10 @@ function sinifDil(t){if(!t||t.indexOf("süt/artış")<0)return t;var K=S.type,M=
   return t.replace(/önce süt\/artış, sonra kondisyon kaybolur/g,"kondisyon erir; "+y+(M==="gebe"?"nın":"nun")+" gelişimi ve doğum sonrası süt verimi olumsuz etkilenir, "+rk+" riski artar").replace(/süt\/artış düşer/g,"kondisyon ve "+y+" gelişimi geriler").replace(/süt\/artış düşüşü/g,"kondisyon kaybı").replace(/süt\/artış düşüyor/g,"kondisyon düşüyor").replace(/süt\/artış/g,"kondisyon")}
  if(M==="kon")return t.replace(/önce süt\/artış, sonra kondisyon kaybolur/g,"kondisyon kaybolur").replace(/süt\/artış düşer/g,"kondisyon düşer").replace(/süt\/artış düşüşü/g,"kondisyon kaybı").replace(/süt\/artış düşüyor/g,"kondisyon düşüyor").replace(/süt\/artış/g,"kondisyon");
  var w=M==="sut"?"süt verimi":"canlı ağırlık artışı";return t.replace(/süt\/artış düşüşü/g,M==="sut"?"süt düşüşü":"artışın yavaşlaması").replace(/süt\/artış düşüyor/g,M==="sut"?"süt düşüyor":"artış yavaşlıyor").replace(/süt\/artış düşer/g,M==="sut"?"süt düşer":"artış yavaşlar").replace(/süt\/artış/g,w)}
-function noteMsg(p,v,lo,hi,dir){var lab=p[0],E=EXP[lab],D=dir?"hi":"lo",e=sinifSec(E,D);
+function noteMsg(p,v,lo,hi,dir){var lab=p[0],E=EXP[lab],D=dir?"hi":"lo",GX=typeof EXPGET==="function"?EXPGET(lab,dir?1:0,sinifKey()):null,e=GX?GX.t:sinifSec(E,D); /* veri.js EXPGET: sınıf zinciriyle metin + (3. öğe) sınıfa özel "Ahırda belirtisi" */
  var base=dir?p[6]:p[5];if(!e)return base;var d=p[4]!==undefined?p[4]:1,unit=/, %|\(katı\), %/.test(lab)?"%":/mg\/kg/.test(lab)?" mg/kg":/mEq/.test(lab)?" mEq/kg":/, g$/.test(lab)?" g":/, kg$/.test(lab)?" kg":/Mcal\/kg/.test(lab)?" Mcal/kg":/Mcal$/.test(lab)?" Mcal":/L\/gün/.test(lab)?" L":"";
  var nm=lab.replace(/,.*$/,'').replace(/ \(katı\)| \(başlangıç yemi\)| \(katı içinde\)/,''),mv=(unit==="%"?"%":"")+f(v,d)+(unit!=="%"?unit:""),rng=r4Ref(lo,hi,d);
- var N=INFO[lab],sg=N?(sinifSec(N,D)||""):"",bl=N?(sinifSec(N,"b")||""):"";
+ var N=INFO[lab],sg=(GX&&GX.s!==undefined&&GX.s!==null)?GX.s:(e&&e[2]!==undefined?e[2]:(N?(sinifSec(N,D)||""):"")),bl=N?(sinifSec(N,"b")||""):"";
  if(lab==="ME, Mcal/kg"&&!dir&&S.type==="sut"&&!isDry()&&!isHf()&&(+S.b.wk||0)<=3)e=[e[0],'<b>İlk 3 haftada bir miktar enerji açığı beklenir</b>; açığı tahılı hızla artırarak kapatmayın (asidoz). Önce yem tüketimini artırın: taze ve lezzetli TMR, boş kalmayan yem masası, bol su; kesif yemi günde en çok 0,5 kg\'lık adımlarla yükseltin.'];
  if(lab==="Toplam ME, Mcal"&&!dir&&S.type==="buzagi"&&typeof cKesim==="function"&&!cWeaned()&&cKesim())e=[e[0],'Sütten kesime hazırlık dönemindesiniz: sütü artırmayın. Başlangıç yemini taze ve serbest verin, su her zaman önde olsun; süt, katı yem 3 gün üst üste 1–1,5 kg KM olmadan tamamen kesilmez.'];
  return sinifDil('<b>'+nm+(dir?' yüksek':' düşük')+'</b> ('+mv+'; hedef '+rng+'). '+e[0]+(sg?' <b>Ahırda belirtisi:</b> '+sg:'')+(e[1]?' <b>Ne yapmalı:</b> '+e[1]:'')+(bl?'<br><span style="opacity:.85"><b>Bilgi:</b> '+bl+'</span>':''))}
