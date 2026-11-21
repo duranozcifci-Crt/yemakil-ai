@@ -107,6 +107,12 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             }
             item {
                 Madde(
+                    "Ağ durumunu görme (ACCESS_NETWORK_STATE, ACCESS_WIFI_STATE)",
+                    "Wi-Fi kontrolü için: bağlı olduğun ağın şifresiz ya da eski şifreli olup olmadığını okur. Yükleme sırasında verilir. İnternete erişim SAĞLAMAZ; ağ adı ve konum okunmaz.",
+                )
+            }
+            item {
+                Madde(
                     "İstenmeyen izinler",
                     "SMS, kişiler, konum, mikrofon, kamera, depolama, bildirim, erişilebilirlik ve cihaz yöneticisi izinleri bilerek istenmez. " +
                         "Bu yüzden CepAkıl sana hiçbir izin penceresi göstermez.",

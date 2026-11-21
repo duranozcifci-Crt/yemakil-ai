@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -73,6 +74,7 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
                     NavigationBarItem(
                         selected = secili,
                         onClick = { sekmeyeGit(nav, s.rota) },
+                        modifier = Modifier.testTag("sekme_${s.rota}"),
                         icon = { Icon(s.ikon, contentDescription = null) },
                         // Büyük yazı ayarında etiketler kesilmesin: menü yazısı en fazla 1,15 katına büyür
                         // (simgeler ve ekran okuyucu adı her zaman tam).

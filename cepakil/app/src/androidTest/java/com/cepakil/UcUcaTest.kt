@@ -1,0 +1,115 @@
+package com.cepakil
+
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.lifecycle.Lifecycle
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.FixMethodOrder
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
+import java.io.File
+import java.io.FileInputStream
+
+/**
+ * Sanal telefonda uçtan uca denetim. GitHub Actions her derlemede çalıştırır;
+ * biri başarısız olursa APK yayımlanmaz. Ekran görüntüleri uygulamanın
+ * files/ekran klasörüne yazılır ve derleme sistemi tarafından alınır.
+ *
+ * Ön koşul: com.cepakil.ornek (ornek modülü) "adb install" ile kurulmuş olmalı
+ * (yükleyen = adb → mağaza dışı; SMS izni istiyor).
+ */
+@RunWith(AndroidJUnit4::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+class UcUcaTest {
+
+    @get:Rule
+    val k = createAndroidComposeRule<MainActivity>()
+
+    private val deneme = "CepAkıl Deneme Uygulaması"
+
+    private fun foto(ad: String) {
+        k.waitForIdle()
+        val bmp = k.onRoot().captureToImage().asAndroidBitmap()
+        val klasor = File(k.activity.filesDir, "ekran").apply { mkdirs() }
+        File(klasor, "$ad.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+
+    private fun var_(metin: String) = k.onAllNodesWithText(metin, substring = true).fetchSemanticsNodes().isNotEmpty()
+
+    private fun bekle(metin: String, sure: Long = 30_000) = k.waitUntil(sure) { var_(metin) }
+
+    private fun sekme(rota: String) {
+        k.onNodeWithTag("sekme_$rota").performClick()
+        k.waitForIdle()
+    }
+
+    private fun kabuk(komut: String): String {
+        val pfd = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(komut)
+        return FileInputStream(pfd.fileDescriptor).use { it.readBytes().decodeToString() }.also { pfd.close() }
+    }
+
+    @Test fun t1_anaSayfaTaramasi() {
+        k.waitUntil(30_000) { var_("Taramayı başlat") || var_("Yeniden tara") }
+        foto("1_ana_sayfa")
+        k.onNode(hasText("Taramayı başlat").or(hasText("Yeniden tara"))).performClick()
+        bekle("koruma puanı", 90_000)
+        foto("2_tarama_sonucu")
+    }
+
+    @Test fun t2_magazaDisiUygulamaYakalanir() {
+        sekme("uygulamalar")
+        k.waitUntil(60_000) { var_("uygulama ·") }
+        k.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Deneme")
+        bekle(deneme)
+        foto("3_uygulamalar")
+        k.onNodeWithText(deneme).performClick()
+        bekle("Bilinen bir mağazadan yüklenmemiş")
+        bekle("Mağaza dışı")
+        foto("4_uygulama_ayrintisi")
+    }
+
+    @Test fun t3_kaldirilanUygulamaListedenDuser() {
+        sekme("uygulamalar")
+        k.waitUntil(60_000) { var_("uygulama ·") }
+        k.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Deneme")
+        bekle(deneme)
+        kabuk("pm uninstall com.cepakil.ornek")
+        // Kullanıcı başka uygulamadan dönmüş gibi: ekran önce arka plana, sonra öne.
+        k.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        k.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+        k.waitUntil(60_000) { !var_(deneme) }
+        foto("5_kaldirildiktan_sonra")
+    }
+
+    @Test fun t4_dolandiricilikMesaji() {
+        sekme("baglanti")
+        k.onAllNodes(hasSetTextAction()).onFirst()
+            .performTextInput("PTT: Gönderiniz adres eksikliği nedeniyle teslim edilemedi. 24 saat içinde ödeme yapın: ptt-kargo.top/ode")
+        k.onNodeWithText("Kontrol et").performClick()
+        bekle("Dolandırıcılık işaretleri var")
+        foto("6_mesaj_kontrolu")
+    }
+
+    @Test fun t5_dosyaVeAyarlar() {
+        sekme("dosya")
+        bekle("Dosya seç")
+        foto("7_dosya")
+        sekme("ayarlar")
+        bekle("Gizlilik")
+        foto("8_ayarlar")
+    }
+}

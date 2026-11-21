@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "CepAkil"
 include(":app")
+include(":ornek")

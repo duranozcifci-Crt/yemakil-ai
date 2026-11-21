@@ -39,6 +39,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cepakil.analiz.Bulgu
+import com.cepakil.analiz.PuanHesaplayici
 import com.cepakil.analiz.Seviye
 import com.cepakil.analiz.YeniUygulamaTakibi
 import com.cepakil.ui.TaramaViewModel
@@ -197,7 +198,7 @@ fun AnaEkranIcerik(
                 val renk = MaterialTheme.colorScheme.primary
                 Satir("Dosya kontrolü", "PDF, APK ya da arşiv dosyasını incele", bas = { TonluSimge(Icons.AutoMirrored.Filled.InsertDriveFile, zemin, renk) }, onClick = dosyayaGit)
                 GrupAyraci()
-                Satir("Bağlantı kontrolü", "Şüpheli bir bağlantıyı açmadan denetle", bas = { TonluSimge(Icons.Filled.Link, zemin, renk) }, onClick = baglantiyaGit)
+                Satir("Mesaj ve bağlantı kontrolü", "SMS, WhatsApp mesajı, bağlantı ya da QR kod", bas = { TonluSimge(Icons.Filled.Link, zemin, renk) }, onClick = baglantiyaGit)
                 GrupAyraci()
                 Satir("Güvenlik önerileri", "Güncelleme, ekran kilidi ve izin ayarları", bas = { TonluSimge(Icons.Filled.Lightbulb, zemin, renk) }, onClick = onerilereGit)
             }
@@ -206,10 +207,10 @@ fun AnaEkranIcerik(
         item {
             SinirNotu(
                 baslik = "Bu tarama neleri kontrol eder?",
-                metin = "Ekran kilidi, güvenlik güncellemesi tarihi, USB hata ayıklama ve yüklü uygulamaların izinleri, " +
+                metin = "Ekran kilidi, güvenlik güncellemesi tarihi, Wi-Fi şifrelemesi, USB hata ayıklama ve yüklü uygulamaların izinleri, kodları, " +
                     "nereden yüklendikleri ile açık erişilebilirlik / cihaz yöneticisi / bildirim erişimi hizmetleri. " +
                     "CepAkıl bir antivirüs değildir: zararlı yazılım imza veritabanı kullanmaz ve internete bağlanmaz. " +
-                    "Tarama yalnız sen düğmeye bastığında çalışır.",
+                    "Tarama yalnız sen düğmeye bastığında çalışır. Koruma puanı bu kontrollerin özetidir; bir güvenlik garantisi değildir.",
             )
         }
     }
@@ -226,6 +227,7 @@ private fun DurumPanosu(d: TaramaViewModel.Durum, taramayiBaslat: () -> Unit) {
         else -> Seviye.YESIL
     }
     val g = durumGorunumu(seviye, if (kayit == null) Baglam.GENEL else Baglam.UYGULAMA)
+    val puan = kayit?.let { PuanHesaplayici.hesapla(it.cihazBulgulari, it.uygulamalar.map { u -> u.seviye }).deger }
     val (baslik, aciklama) = when {
         kayit == null -> "Henüz tarama yapılmadı" to "Telefon ayarlarını ve yüklü uygulamaları tek dokunuşla kontrol et."
         seviye == Seviye.KIRMIZI -> "Öncelikli incelemen gerekenler var" to "Kırmızı işaretli konulara göz at."
@@ -239,13 +241,20 @@ private fun DurumPanosu(d: TaramaViewModel.Durum, taramayiBaslat: () -> Unit) {
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.size(112.dp)) {
                 CircularProgressIndicator(
-                    progress = { 1f },
+                    progress = { (puan ?: 100) / 100f },
                     modifier = Modifier.size(112.dp),
                     color = g.renk.vurgu,
                     trackColor = g.renk.zemin,
                     strokeWidth = 8.dp,
                 )
-                TonluSimge(g.ikon, g.renk.zemin, g.renk.vurgu, 84.dp)
+                if (puan == null) {
+                    TonluSimge(g.ikon, g.renk.zemin, g.renk.vurgu, 84.dp)
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.semantics(mergeDescendants = true) {}) {
+                        Text("$puan", style = MaterialTheme.typography.displaySmall, color = g.renk.vurgu)
+                        Text("koruma puanı", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
             Spacer(Modifier.size(16.dp))
             Text(baslik, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)

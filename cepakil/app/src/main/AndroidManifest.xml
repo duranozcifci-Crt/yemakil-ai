@@ -21,6 +21,20 @@
     -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!--
+        Wi-Fi kontrolü: bağlı ağın şifreleme türünü (şifresiz / WEP / WPA) okumak için.
+        İkisi de yükleme sırasında verilir; internet erişimi SAĞLAMAZ, ağ adı ya da konum okunmaz.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!--
+        Söz: CepAkıl internete ÇIKAMAZ. Kütüphanelerden (ör. QR okuyucu) gelebilecek
+        internet izni burada açıkça silinir; derleme sistemi APK'da bu iznin
+        olmadığını her derlemede denetler.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/veri_aktarim_kurallari"

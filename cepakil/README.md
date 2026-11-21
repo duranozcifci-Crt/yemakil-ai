@@ -11,7 +11,7 @@ dosya ve bağlantıları fark etmesine yardımcı olur.
 
 - Dil: Kotlin · Arayüz: Jetpack Compose (Material 3)
 - En düşük Android: **8.0 (API 26)** · Hedef: **Android 15 (API 35)**
-- Uygulamanın istediği izinler: **2** (`QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`) — ikisi de yükleme sırasında verilir; ayrıntı aşağıda
+- Uygulamanın istediği izinler: `QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` — hepsi yükleme sırasında verilir, hiçbiri kullanıcıya sorulmaz; ayrıntı aşağıda
 - İnternet izni: **yok**
 
 ---
@@ -153,6 +153,30 @@ ilk 8 MB'ı ile sınırlıdır (parmak izi tüm dosyadan hesaplanır).
 bulunamadı.** Bu, dosyanın temiz olduğu anlamına gelmez.” Hiçbir dosya
 “temiz” ilan edilmez.
 
+### Mesaj kontrolü (dolandırıcılık)
+Yapıştırılan ya da “Paylaş > CepAkıl” ile gönderilen mesajın **tamamı**
+incelenir: aciliyet, kurum adı (PTT, e-Devlet, banka, kargo…), ödeme/IBAN,
+kod/şifre isteği, ödül vaadi, yatırım/iş teklifi, yakın taklidi, uygulama
+yükletme. Kod isteme, kurum adı + bağlantı + ödeme/acele, ödül + bağlantı,
+yakın taklidi + para, uygulama yükletme gibi birleşimler **kırmızı** sayılır.
+Gündelik mesajlarda tek bir sözcük (“hemen”, “kargo”) alarm üretmez.
+Mesajdaki her bağlantı ayrıca bağlantı kurallarıyla denetlenir. **Ölçmez:**
+yeni kurguları ve Türkçe dışındaki kalıpları tanımayabilir.
+
+### QR kod kontrolü
+Google Play Hizmetleri'nin hazır kod okuyucusu kullanılır; CepAkıl kamera
+izni istemez. Okunan adres açılmaz, mesaj/bağlantı kurallarıyla denetlenir.
+
+### Wi-Fi kontrolü
+Android 12+ cihazlarda bağlı ağın şifreleme türü okunur: şifresiz ağ ve WEP
+**sarı**, “Enhanced Open” bilgi notu. Ağ adı ve konum okunmaz. Android 11 ve
+öncesinde şifreleme türü konum izni olmadan okunamadığı için kontrol atlanır.
+
+### Koruma puanı
+Ana sayfadaki 0–100 puan, yukarıdaki kontrollerin özetidir (ekran kilidi yok
+−30, kırmızı uygulama başına −12 …). Kırmızı işaret varken puan 59'u, sarı
+varken 84'ü geçmez. Bir güvenlik garantisi değildir.
+
 ### Bağlantı kontrolü
 **Ölçer (bağlantı açılmadan, yalnız yazılışı):** HTTPS / HTTP, `javascript:`
 ve `data:` gibi tehlikeli şemalar, `@` hilesi, IP adresi, alışılmadık port,
@@ -215,7 +239,11 @@ cd cepakil
 Android Studio'da **File > Open** ile `cepakil/` klasörünü açmak yeterlidir.
 
 Depodaki `.github/workflows/cepakil.yml`, `cepakil/` altında her
-değişiklikte testleri, APK derlemesini ve Lint'i GitHub Actions'ta çalıştırır;
+değişiklikte şunları çalıştırır: kural testleri, APK derlemesi, Lint,
+**APK'da internet izni olmadığının denetimi** ve **sanal Android telefonda
+uçtan uca testler** (`app/src/androidTest/UcUcaTest.kt`: tarama, mağaza dışı
+deneme uygulamasının — `ornek/` modülü — yakalanması, kaldırılınca listeden
+düşmesi, dolandırıcılık mesajı, sekmeler). Biri başarısız olursa APK yayımlanmaz;
 derlenen APK “cepakil-debug-apk” adıyla indirilebilir.
 
 > Hata ayıklama APK'sı test içindir. Google Play'e yüklemek için kendi imza

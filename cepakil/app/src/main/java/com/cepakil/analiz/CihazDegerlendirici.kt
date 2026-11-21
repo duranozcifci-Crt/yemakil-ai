@@ -17,7 +17,11 @@ object CihazDegerlendirici {
         val gelistiriciSecenekleri: Boolean?,
         val usbHataAyiklama: Boolean?,
         val bugun: LocalDate,
+        /** Bağlı Wi-Fi ağının şifreleme türü; Wi-Fi'ye bağlı değilse YOK. */
+        val wifi: WifiGuvenlik = WifiGuvenlik.YOK,
     )
+
+    enum class WifiGuvenlik { YOK, ACIK, OWE, WEP, WPA_KISISEL, WPA3, KURUMSAL, BILINMIYOR }
 
     fun degerlendir(c: CihazBilgisi): List<Bulgu> {
         val b = mutableListOf<Bulgu>()
@@ -56,6 +60,22 @@ object CihazDegerlendirici {
                 Seviye.SARI, "Eski Android sürümü (${c.androidSurumu})",
                 "Android 10'dan eski sürümler artık güvenlik güncellemesi almıyor. Mümkünse telefonu güncelle; güncellenemiyorsa yalnız güvendiğin uygulamaları kullan.",
             )
+        }
+
+        when (c.wifi) {
+            WifiGuvenlik.ACIK -> b += Bulgu(
+                Seviye.SARI, "Şifresiz Wi-Fi ağına bağlısın",
+                "Bu ağda gönderdiğin bilgiler başkaları tarafından görülebilir ve ağ sahte olabilir. Bankacılık gibi işlemleri mobil veriyle yap; bu ağı kullanman gerekiyorsa yalnız HTTPS sitelerini aç.",
+            )
+            WifiGuvenlik.WEP -> b += Bulgu(
+                Seviye.SARI, "Wi-Fi ağı çok eski şifreleme kullanıyor (WEP)",
+                "WEP dakikalar içinde kırılabilir; ağ neredeyse şifresiz sayılır. Ağ senin ise modem ayarlarından WPA2 ya da WPA3'e geç.",
+            )
+            WifiGuvenlik.OWE -> b += Bulgu(
+                Seviye.BILGI, "Şifresiz ama trafiği korunan Wi-Fi (Enhanced Open)",
+                "Trafiğin şifrelenir ama ağa herkes katılabilir. Ağın gerçekten beklediğin yer olduğundan emin ol.",
+            )
+            else -> Unit
         }
 
         if (c.usbHataAyiklama == true) {

@@ -2,7 +2,11 @@ package com.cepakil.veri
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 import android.os.Build
+import com.cepakil.analiz.CihazDegerlendirici
 import android.provider.Settings
 import com.cepakil.analiz.CihazDegerlendirici.CihazBilgisi
 import java.time.LocalDate
@@ -21,6 +25,28 @@ class CihazKaynagi(private val context: Context) {
             gelistiriciSecenekleri = guvenli(null) { Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1 },
             usbHataAyiklama = guvenli(null) { Settings.Global.getInt(cr, Settings.Global.ADB_ENABLED, 0) == 1 },
             bugun = LocalDate.now(),
+            wifi = wifiGuvenligi(),
         )
+    }
+
+    /** Bağlı Wi-Fi ağının şifreleme türü (Android 12+). Ağ adı ve konum okunmaz. */
+    private fun wifiGuvenligi(): CihazDegerlendirici.WifiGuvenlik = guvenli(CihazDegerlendirici.WifiGuvenlik.BILINMIYOR) {
+        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return CihazDegerlendirici.WifiGuvenlik.BILINMIYOR
+        val ag = cm.activeNetwork ?: return CihazDegerlendirici.WifiGuvenlik.YOK
+        val nc = cm.getNetworkCapabilities(ag) ?: return CihazDegerlendirici.WifiGuvenlik.YOK
+        if (!nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return CihazDegerlendirici.WifiGuvenlik.YOK
+        if (Build.VERSION.SDK_INT < 31) return CihazDegerlendirici.WifiGuvenlik.BILINMIYOR
+        val wi = nc.transportInfo as? WifiInfo ?: return CihazDegerlendirici.WifiGuvenlik.BILINMIYOR
+        when (wi.currentSecurityType) {
+            WifiInfo.SECURITY_TYPE_OPEN -> CihazDegerlendirici.WifiGuvenlik.ACIK
+            WifiInfo.SECURITY_TYPE_OWE -> CihazDegerlendirici.WifiGuvenlik.OWE
+            WifiInfo.SECURITY_TYPE_WEP -> CihazDegerlendirici.WifiGuvenlik.WEP
+            WifiInfo.SECURITY_TYPE_PSK, WifiInfo.SECURITY_TYPE_WAPI_PSK -> CihazDegerlendirici.WifiGuvenlik.WPA_KISISEL
+            WifiInfo.SECURITY_TYPE_SAE -> CihazDegerlendirici.WifiGuvenlik.WPA3
+            WifiInfo.SECURITY_TYPE_EAP, WifiInfo.SECURITY_TYPE_EAP_WPA3_ENTERPRISE,
+            WifiInfo.SECURITY_TYPE_EAP_WPA3_ENTERPRISE_192_BIT, WifiInfo.SECURITY_TYPE_WAPI_CERT,
+            -> CihazDegerlendirici.WifiGuvenlik.KURUMSAL
+            else -> CihazDegerlendirici.WifiGuvenlik.BILINMIYOR
+        }
     }
 }
