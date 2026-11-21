@@ -111,24 +111,35 @@ object AyarYonlendirici {
      * KVKK 11. madde kapsamında hazır bir veri silme talebi e-postası açar.
      * Gönderen kullanıcıdır; CepAkıl hiçbir şey göndermez (internet izni yok).
      */
-    fun silmeTalebiEpostasi(context: Context, uygulamaAdi: String, paket: String): Boolean {
+    fun silmeTalebiEpostasi(
+        context: Context,
+        uygulamaAdi: String,
+        paket: String,
+        alici: String = "",
+        adSoyad: String = "",
+        hesap: String = "",
+    ): Boolean {
         val konu = "Kişisel verilerimin silinmesi talebi – $uygulamaAdi"
         val metin = """Merhaba,
 
 $uygulamaAdi ($paket) uygulamasındaki hesabımın ve bana ait tüm kişisel verilerin silinmesini, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun 7. ve 11. maddeleri (AB'de yerleşik şirketler için GDPR 17. madde) uyarınca talep ediyorum.
 
-Hesabımda kayıtlı e-posta / telefon: ______________
+Hesabımda kayıtlı e-posta / telefon: ${hesap.ifBlank { "______________" }}
 
 Silme işleminin tamamlandığını tarafıma yazılı olarak bildirmenizi rica ederim. Kanun gereği talebimin en geç 30 gün içinde sonuçlandırılması gerekmektedir.
 
-Ad Soyad: ______________
+Ad Soyad: ${adSoyad.ifBlank { "______________" }}
 """
-        val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+        val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Uri.encode(alici.trim())))
+            .putExtra(Intent.EXTRA_EMAIL, if (alici.isBlank()) emptyArray() else arrayOf(alici.trim()))
             .putExtra(Intent.EXTRA_SUBJECT, konu)
             .putExtra(Intent.EXTRA_TEXT, metin)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return try {
-            context.startActivity(Intent.createChooser(i, "E-posta uygulaması seç").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true
-        } catch (e: Exception) { false }
+            context.startActivity(i); true
+        } catch (e: Exception) {
+            try { context.startActivity(Intent.createChooser(i, "E-posta uygulaması seç").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true } catch (e2: Exception) { false }
+        }
     }
 
     fun hesaplar(context: Context) = ac(context, Intent(Settings.ACTION_SYNC_SETTINGS))

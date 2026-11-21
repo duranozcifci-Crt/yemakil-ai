@@ -4,6 +4,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.input.KeyboardType
+import com.cepakil.analiz.EpostaBulucu
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -58,6 +68,7 @@ import kotlinx.coroutines.withContext
  * kalabilecek izler (ortak klasörlerdeki dosyalar, eklenen hesap, şirketin
  * sunucusundaki veriler) için kullanıcı adım adım yönlendirilir.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
     val context = LocalContext.current
@@ -76,6 +87,21 @@ fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
     var yeniden by remember { mutableStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { yeniden++ }
     LaunchedEffect(yeniden) { if (yeniden > 0) denetle() }
+
+    // Silme talebi için: uygulamanın içinde şirketin e-posta adresi (kaldırmadan önce okunmalı).
+    var adresler by remember(paket) { mutableStateOf<List<String>?>(null) }
+    var alici by rememberSaveable(paket) { mutableStateOf("") }
+    var adSoyad by rememberSaveable { mutableStateOf("") }
+    var hesap by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(paket) {
+        val bulunan = withContext(Dispatchers.IO) {
+            try {
+                EpostaBulucu.bul(kaynak.apkDosyalari(paket).map { f -> { f.inputStream() } }, paket)
+            } catch (e: Throwable) { emptyList() }
+        }
+        adresler = bulunan
+        if (alici.isBlank()) alici = bulunan.firstOrNull().orEmpty()
+    }
 
     val s = ilk
     val ad = s?.bilgi?.ad ?: paket
@@ -110,14 +136,44 @@ fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
                 }
                 val n2 = no++
                 item {
-                    Adim(n2, "Hesabını sil (önce yapılmalı)",
-                        "Üye olduysan bilgilerin şirketin sunucusunda durur; uygulamayı kaldırmak bunları silmez ve hiçbir uygulama bunu senin yerine yapamaz. " +
-                            "En kolay yollar: uygulamada \"Hesabımı sil\" seçeneği, Google Play'in veri silme sayfası ya da şirkete hazır KVKK silme talebi göndermek.") {
-                        IkincilDugme("Uygulamayı aç", { AyarYonlendirici.uygulamayiAc(context, paket) }, ikon = Icons.AutoMirrored.Filled.OpenInNew)
+                    Adim(n2, "Hesabını ve verilerini sildir (önce yapılmalı)",
+                        "Üye olduysan bilgilerin şirketin sunucusunda durur; uygulamayı kaldırmak bunları silmez. " +
+                            "CepAkıl şirkete KVKK silme talebini hazırlar: adresi uygulamanın içinden bulur, metni bilgilerinle doldurur. Sana yalnız e-postada \"Gönder\"e basmak kalır.") {
+                        val liste = adresler
+                        when {
+                            liste == null -> Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                                Spacer(Modifier.size(10.dp))
+                                Text("Şirketin e-posta adresi uygulamanın içinde aranıyor…", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            liste.isEmpty() -> Text(
+                                "Uygulamanın içinde şirket adresi bulunamadı. Play Store sayfasındaki \"Uygulama desteği / Geliştirici iletişim\" bölümündeki e-postayı aşağıya yaz.",
+                                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            liste.size > 1 -> FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                liste.forEach { a -> FilterChip(selected = alici == a, onClick = { alici = a }, label = { Text(a, style = MaterialTheme.typography.labelMedium) }) }
+                            }
+                        }
                         Spacer(Modifier.size(8.dp))
-                        IkincilDugme("Veri silme sayfasını aç (Play)", { AyarYonlendirici.veriGuvenligiSayfasi(context, paket) }, ikon = Icons.Filled.Shop)
+                        OutlinedTextField(alici, { alici = it }, label = { Text("Şirketin e-posta adresi") }, singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        Spacer(Modifier.size(6.dp))
+                        OutlinedTextField(adSoyad, { adSoyad = it }, label = { Text("Ad soyad") }, singleLine = true,
+                            modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        Spacer(Modifier.size(6.dp))
+                        OutlinedTextField(hesap, { hesap = it }, label = { Text("Hesaptaki e-posta ya da telefon") }, singleLine = true,
+                            modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium)
+                        Spacer(Modifier.size(10.dp))
+                        BuyukDugme("Silme talebini gönder", { AyarYonlendirici.silmeTalebiEpostasi(context, ad, paket, alici, adSoyad, hesap) }, ikon = Icons.Filled.Email)
+                        Text(
+                            "E-posta uygulaman her şeyi doldurulmuş olarak açılır; kontrol edip Gönder'e bas. Talebin \"Gönderilenler\"de kanıt olarak kalır. Şirket 30 gün içinde yanıt vermek zorundadır. Yazdığın bilgiler CepAkıl'da saklanmaz.",
+                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                        Spacer(Modifier.size(10.dp))
+                        IkincilDugme("Uygulamada \"Hesabımı sil\" ara", { AyarYonlendirici.uygulamayiAc(context, paket) }, ikon = Icons.AutoMirrored.Filled.OpenInNew)
                         Spacer(Modifier.size(8.dp))
-                        IkincilDugme("Silme talebi e-postası hazırla", { AyarYonlendirici.silmeTalebiEpostasi(context, ad, paket) }, ikon = Icons.Filled.AccountCircle)
+                        IkincilDugme("Play veri silme sayfasını aç", { AyarYonlendirici.veriGuvenligiSayfasi(context, paket) }, ikon = Icons.Filled.Shop)
                     }
                 }
                 val n3 = no++
