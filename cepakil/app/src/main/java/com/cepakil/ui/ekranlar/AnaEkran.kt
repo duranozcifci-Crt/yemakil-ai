@@ -123,9 +123,9 @@ fun AnaEkranIcerik(
                 val ayar = kayit.cihazBulgulari.count { it.seviye.agirlik >= Seviye.SARI.agirlik }
                 val g = durumGorunumu(if (incelenecek > 0) kayit.uygulamalar.maxOf { it.seviye.agirlik }.let { a -> Seviye.entries.first { it.agirlik == a } } else Seviye.YESIL, Baglam.UYGULAMA)
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Kutucuk(kayit.incelenenUygulamaSayisi.toString(), "uygulama incelendi", Modifier.weight(1f))
-                    Kutucuk(incelenecek.toString(), "incelenecek uygulama", Modifier.weight(1f), if (incelenecek > 0) g.renk.vurgu else MaterialTheme.colorScheme.onSurface)
-                    Kutucuk(ayar.toString(), "telefon ayarı uyarısı", Modifier.weight(1f))
+                    Kutucuk(kayit.incelenenUygulamaSayisi.toString(), "uygulama", Modifier.weight(1f))
+                    Kutucuk(incelenecek.toString(), "incelenecek", Modifier.weight(1f), if (incelenecek > 0) g.renk.vurgu else MaterialTheme.colorScheme.onSurface)
+                    Kutucuk(ayar.toString(), "ayar uyarısı", Modifier.weight(1f))
                 }
             }
         }

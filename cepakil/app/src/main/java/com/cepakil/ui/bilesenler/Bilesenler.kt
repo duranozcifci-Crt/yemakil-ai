@@ -257,7 +257,8 @@ fun Kutucuk(sayi: String, etiket: String, modifier: Modifier = Modifier, renk: C
     Grup(modifier) {
         Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp).semantics(mergeDescendants = true) {}) {
             Text(sayi, style = MaterialTheme.typography.headlineSmall, color = renk)
-            Text(etiket, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+            // Dar ekranda kelime ortadan bölünmesin: tek satır, sığana kadar küçülür.
+            SigdirilanMetin(etiket, MaterialTheme.typography.labelMedium.copy(color = MaterialTheme.colorScheme.onSurfaceVariant))
         }
     }
 }
