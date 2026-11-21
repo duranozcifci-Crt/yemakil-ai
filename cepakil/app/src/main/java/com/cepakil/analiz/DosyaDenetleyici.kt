@@ -174,7 +174,7 @@ object DosyaDenetleyici {
     }
 
     private fun metinAltTuru(bas: ByteArray): Tur {
-        val s = String(bas, 0, minOf(bas.size, 4096), Charsets.ISO_8859_1).trimStart('﻿', 'ï', '»', '¿', ' ', '\n', '\r', '\t').lowercase(Locale.ROOT)
+        val s = String(bas, 0, minOf(bas.size, 4096), Charsets.ISO_8859_1).trimStart('\uFEFF', 'ï', '»', '¿', ' ', '\n', '\r', '\t').lowercase(Locale.ROOT)
         return when {
             s.startsWith("#!") -> Tur.BETIK
             s.startsWith("<!doctype html") || s.startsWith("<html") || s.contains("<script") || s.contains("<body") -> Tur.HTML

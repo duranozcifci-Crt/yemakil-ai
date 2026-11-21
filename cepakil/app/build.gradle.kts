@@ -32,11 +32,6 @@ android {
     buildFeatures {
         compose = true
     }
-    lint {
-        // Bulgular CI günlüğünde de görünsün.
-        textReport = true
-        textOutput = file("stdout")
-    }
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
