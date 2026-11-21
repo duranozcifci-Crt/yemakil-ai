@@ -116,6 +116,26 @@ gerçekten kaldırılıp kaldırılmadığını yeniden denetler. Sınır: başk
 uygulamaların ortak klasörlere bıraktığı dosyalar depolama izni olmadan
 listelenemez; sunucudaki verileri yalnız şirket silebilir.
 
+### Yeni yüklenen uygulamalar
+CepAkıl her açıldığında (ön plana geldiğinde) yüklü uygulamaları, telefonda
+saklanan bir önceki listeyle karşılaştırır: **yeni yüklenenleri** ve
+**güncellemeyle yeni hassas izin isteyenleri** ana sayfada gösterir. “Tamam,
+gördüm” deyince şimdiki liste yeni karşılaştırma noktası olur. Arka planda
+çalışmaz; yalnız paket adları, son güncelleme zamanı ve hassas izin adları
+saklanır. İlk açılışta hiçbir uygulama “yeni” sayılmaz.
+
+### Kod incelemesi (yüklü uygulamalar ve APK dosyaları)
+Uygulamanın içindeki derlenmiş kod (`classes*.dex`) telefonda, internetsiz
+okunur. DEX “metin tablosunda” Android'in hangi özelliklerinin geçtiğine
+bakılır (ör. `SmsManager.sendTextMessage`, `AccessibilityService.dispatchGesture`,
+`content://sms`, `DexClassLoader`, `MediaProjection`). Kod karıştırılmış olsa
+da Android'in kendi adları değişmediği için bu yöntem karıştırmaya dayanıklıdır.
+Ekranı kontrol etme + SMS okuma/üstte pencere, simge gizleme + SMS/ekran okuma,
+telefonu kilitleme + ekran kontrolü gibi birleşimler **kırmızı** işaretlenir.
+Yüklü uygulamalarda ayrıntı ekranında, APK dosyalarında dosya kontrolünde çalışır.
+**Ölçmez:** kodun gerçekte ne yaptığını, şifrelenmiş ya da sonradan indirilen
+kodu; meşru kütüphaneler de bu adları içerebilir.
+
 ### Dosya kontrolü
 **Ölçer:** dosyanın ilk baytlarından **gerçek türü** (PDF, APK, Office, ZIP,
 EXE, ELF, DEX, resim, video, HTML…) ve uzantıyla uyumu; çift uzantı

@@ -28,6 +28,8 @@ object UygulamaDegerlendirici {
         /** Bilinmeyen kaynaklardan yükleme izni açık mı? Okunamadıysa null. */
         val bilinmeyenKaynakIzni: Boolean? = null,
         val surum: String? = null,
+        /** Son yükleme/güncelleme zamanı (ms). Yeni uygulama takibi için. */
+        val sonGuncelleme: Long = 0,
     )
 
     /** ApplicationInfo.category karşılığı (Android 8+ uygulamalar kendisi bildirir). */

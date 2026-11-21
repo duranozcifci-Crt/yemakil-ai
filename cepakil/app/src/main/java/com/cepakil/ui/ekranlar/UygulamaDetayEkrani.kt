@@ -134,6 +134,9 @@ fun UygulamaDetayEkrani(paket: String, geri: () -> Unit, kaldirmayaGit: () -> Un
                         items(s.bulgular) { BulguKarti(it, Baglam.UYGULAMA) }
                     }
 
+                    item { BolumBasligi("Kod incelemesi") }
+                    item { KodIncelemesiBolumu(u.paket) }
+
                     item { BolumBasligi("Yükleme bilgisi") }
                     item {
                         val yukleyen = when {
@@ -192,6 +195,44 @@ fun UygulamaDetayEkrani(paket: String, geri: () -> Unit, kaldirmayaGit: () -> Un
                 }
             }
         }
+    }
+}
+
+/** Uygulamanın kodunu telefonda inceler (internetsiz) ve sonucu gösterir. */
+@Composable
+private fun KodIncelemesiBolumu(paket: String) {
+    val context = LocalContext.current
+    var sonuc by remember(paket) { mutableStateOf<List<com.cepakil.analiz.Bulgu>?>(null) }
+    LaunchedEffect(paket) {
+        sonuc = withContext(Dispatchers.IO) {
+            val dosyalar = UygulamaKaynagi(context.applicationContext).apkDosyalari(paket)
+            if (dosyalar.isEmpty()) {
+                listOf(com.cepakil.analiz.Bulgu(Seviye.BILGI, "Kod okunamadı", "Android bu uygulamanın dosyasını okumaya izin vermedi."))
+            } else {
+                try {
+                    com.cepakil.analiz.KodIncelemesi.bulgular(
+                        com.cepakil.analiz.KodIncelemesi.incele(dosyalar.map { f -> { f.inputStream() } }),
+                    )
+                } catch (e: OutOfMemoryError) {
+                    listOf(com.cepakil.analiz.Bulgu(Seviye.BILGI, "Kod incelenemedi", "Uygulama bu telefonda incelenemeyecek kadar büyük."))
+                }
+            }
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val s = sonuc
+        if (s == null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 3.dp)
+                Spacer(Modifier.width(12.dp))
+                Text("Uygulamanın kodu inceleniyor…", style = MaterialTheme.typography.bodyLarge)
+            }
+        } else if (s.isEmpty()) {
+            Text("Kodda dikkat çeken bir yetenek bulunamadı.", style = MaterialTheme.typography.bodyLarge)
+        } else {
+            s.forEach { BulguKarti(it, Baglam.UYGULAMA) }
+        }
+        Text(com.cepakil.analiz.KodIncelemesi.SINIR_NOTU, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

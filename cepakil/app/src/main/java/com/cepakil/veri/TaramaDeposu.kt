@@ -3,6 +3,7 @@ package com.cepakil.veri
 import android.content.Context
 import com.cepakil.analiz.Bulgu
 import com.cepakil.analiz.Seviye
+import com.cepakil.analiz.YeniUygulamaTakibi
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -43,7 +44,27 @@ class TaramaDeposu(context: Context) {
     }
 
     fun sil() {
-        prefs.edit().remove("son_tarama").apply()
+        prefs.edit().remove("son_tarama").remove("uygulama_izi").apply()
+    }
+
+    /** Yeni uygulama takibi için son görülen uygulama listesi. İlk açılışta null. */
+    fun uygulamaIzi(): Map<String, YeniUygulamaTakibi.Iz>? = try {
+        prefs.getString("uygulama_izi", null)?.let { m ->
+            val o = JSONObject(m)
+            o.keys().asSequence().associateWith { k ->
+                val a = o.getJSONArray(k)
+                val izinler = a.getJSONArray(1)
+                YeniUygulamaTakibi.Iz(a.getLong(0), (0 until izinler.length()).map { izinler.getString(it) }.toSet())
+            }
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    fun uygulamaIziKaydet(iz: Map<String, YeniUygulamaTakibi.Iz>) {
+        val o = JSONObject()
+        iz.forEach { (p, v) -> o.put(p, JSONArray().put(v.guncelleme).put(JSONArray(v.hassasIzinler.toList()))) }
+        prefs.edit().putString("uygulama_izi", o.toString()).apply()
     }
 
     private fun bulgularYaz(b: List<Bulgu>) = JSONArray().apply {

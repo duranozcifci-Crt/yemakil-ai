@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cepakil.analiz.Bulgu
 import com.cepakil.analiz.Seviye
+import com.cepakil.analiz.YeniUygulamaTakibi
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.cepakil.ui.TaramaViewModel
 import com.cepakil.ui.bilesenler.Baglam
 import com.cepakil.ui.bilesenler.BolumBasligi
@@ -47,6 +50,8 @@ fun AnaEkran(vm: TaramaViewModel, uygulamayaGit: (String) -> Unit, onerilereGit:
     val d by vm.durum.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val kayit = d.kayit
+    // CepAkıl her ön plana geldiğinde: son açılıştan beri yeni yüklenen uygulamalar.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.degisiklikleriDenetle() }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -81,6 +86,28 @@ fun AnaEkran(vm: TaramaViewModel, uygulamayaGit: (String) -> Unit, onerilereGit:
                 )
             }
             DurumKarti(seviye, baslik, aciklama, if (kayit == null) Baglam.GENEL else Baglam.UYGULAMA)
+        }
+
+        if (d.degisiklikler.isNotEmpty()) {
+            item { BolumBasligi("Son açılıştan beri") }
+            items(d.degisiklikler, key = { "d-" + it.sonuc.bilgi.paket }) { o ->
+                val s = o.sonuc
+                val riskli = s.seviye == Seviye.KIRMIZI || s.seviye == Seviye.SARI
+                val bulgu = when (o.tur) {
+                    YeniUygulamaTakibi.Tur.YENI -> Bulgu(
+                        if (riskli) s.seviye else Seviye.BILGI,
+                        "Yeni yüklendi" + if (riskli) " · ${s.bulgular.first().baslik}" else "",
+                        if (riskli) "Ayrıntılar ve kod incelemesi için dokun." else "Dikkat çeken işaret yok. Ayrıntılar ve kod incelemesi için dokun.",
+                    )
+                    YeniUygulamaTakibi.Tur.YENI_IZIN -> Bulgu(
+                        maxOf(Seviye.SARI, s.seviye, compareBy<Seviye> { it.agirlik }),
+                        "Güncellemeyle yeni izin istedi: ${YeniUygulamaTakibi.izinGruplari(o.yeniIzinler)}",
+                        "Gerekli mi diye düşün; izni uygulama ayarlarından kaldırabilirsin. Ayrıntı için dokun.",
+                    )
+                }
+                BulguKarti(bulgu, ust = s.bilgi.ad, onClick = { uygulamayaGit(s.bilgi.paket) })
+            }
+            item { IkincilDugme("Tamam, gördüm", vm::degisiklikleriGordum) }
         }
 
         item {

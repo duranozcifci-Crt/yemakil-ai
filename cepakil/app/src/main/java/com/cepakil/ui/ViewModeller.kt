@@ -8,6 +8,7 @@ import com.cepakil.analiz.CihazDegerlendirici
 import com.cepakil.analiz.DosyaDenetleyici
 import com.cepakil.analiz.Seviye
 import com.cepakil.analiz.UygulamaDegerlendirici
+import com.cepakil.analiz.YeniUygulamaTakibi
 import com.cepakil.veri.CihazKaynagi
 import com.cepakil.veri.DosyaKaynagi
 import com.cepakil.veri.TaramaDeposu
@@ -28,7 +29,67 @@ import kotlinx.coroutines.withContext
  */
 class TaramaViewModel(app: Application) : AndroidViewModel(app) {
 
-    data class Durum(val kayit: TaramaKaydi? = null, val taraniyor: Boolean = false, val hata: String? = null)
+    data class Durum(
+        val kayit: TaramaKaydi? = null,
+        val taraniyor: Boolean = false,
+        val hata: String? = null,
+        /** Son açılıştan beri yeni yüklenen / yeni hassas izin isteyen uygulamalar. */
+        val degisiklikler: List<DegisiklikOzeti> = emptyList(),
+    )
+
+    data class DegisiklikOzeti(val sonuc: UygulamaDegerlendirici.Sonuc, val tur: YeniUygulamaTakibi.Tur, val yeniIzinler: Set<String>)
+
+    private var bekleyenIz: Map<String, YeniUygulamaTakibi.Iz>? = null
+    private var degisiklikDenetleniyor = false
+
+    /**
+     * CepAkıl açıldığında (ön plana geldiğinde) çağrılır. Arka planda çalışmaz.
+     * İlk açılışta yalnız mevcut liste kaydedilir; hiçbir şey "yeni" sayılmaz.
+     */
+    fun degisiklikleriDenetle() {
+        if (degisiklikDenetleniyor) return
+        degisiklikDenetleniyor = true
+        viewModelScope.launch {
+            try {
+                val sonuc = withContext(Dispatchers.Default) {
+                    val liste = uygulamalar.tumUygulamalar(sistemDahil = false)
+                    val simdiki = liste.associate { it.paket to YeniUygulamaTakibi.izCikar(it) }
+                    val onceki = depo.uygulamaIzi()
+                    if (onceki == null) {
+                        depo.uygulamaIziKaydet(simdiki)
+                        return@withContext null
+                    }
+                    val degisenler = YeniUygulamaTakibi.karsilastir(onceki, simdiki)
+                    if (degisenler.isEmpty()) {
+                        depo.uygulamaIziKaydet(simdiki)
+                        return@withContext null
+                    }
+                    val bilgiler = liste.associateBy { it.paket }
+                    simdiki to degisenler.mapNotNull { d ->
+                        bilgiler[d.paket]?.let { DegisiklikOzeti(UygulamaDegerlendirici.degerlendir(it), d.tur, d.yeniIzinler) }
+                    }.sortedByDescending { it.sonuc.seviye.agirlik }
+                }
+                if (sonuc == null) {
+                    bekleyenIz = null
+                    _durum.update { it.copy(degisiklikler = emptyList()) }
+                } else {
+                    bekleyenIz = sonuc.first
+                    _durum.update { it.copy(degisiklikler = sonuc.second) }
+                }
+            } catch (e: Exception) {
+                // Liste alınamadıysa sessizce geç; tam tarama hatayı ayrıca gösterir.
+            } finally {
+                degisiklikDenetleniyor = false
+            }
+        }
+    }
+
+    /** "Tamam, gördüm": şimdiki liste yeni karşılaştırma noktası olur. */
+    fun degisiklikleriGordum() {
+        bekleyenIz?.let { depo.uygulamaIziKaydet(it) }
+        bekleyenIz = null
+        _durum.update { it.copy(degisiklikler = emptyList()) }
+    }
 
     private val depo = TaramaDeposu(app)
     private val uygulamalar = UygulamaKaynagi(app)
@@ -59,7 +120,7 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
                     )
                 }
                 depo.kaydet(kayit)
-                _durum.value = Durum(kayit = kayit)
+                _durum.update { it.copy(kayit = kayit, taraniyor = false, hata = null) }
             } catch (e: Exception) {
                 _durum.update { it.copy(taraniyor = false, hata = "Tarama tamamlanamadı. Lütfen tekrar dene. (${e.javaClass.simpleName})") }
             }
@@ -68,7 +129,7 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Ayarlar'dan kayıt silindiğinde ekranı güncellemek için. */
     fun yenidenYukle() {
-        _durum.value = Durum(kayit = depo.sonTarama())
+        _durum.update { it.copy(kayit = depo.sonTarama()) }
     }
 }
 

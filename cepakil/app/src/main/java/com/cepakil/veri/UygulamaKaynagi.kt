@@ -76,6 +76,19 @@ class UygulamaKaynagi(private val context: Context) {
         return bilgiOlustur(ai, ortam())
     }
 
+    /**
+     * Uygulamanın APK dosyaları (ana dosya + bölünmüş parçalar). Android bu
+     * dosyaları diğer uygulamaların okumasına izin verir; kod incelemesi için.
+     */
+    fun apkDosyalari(paket: String): List<java.io.File> {
+        val ai = guvenli(null) {
+            if (Build.VERSION.SDK_INT >= 33) pm.getApplicationInfo(paket, PackageManager.ApplicationInfoFlags.of(0))
+            else @Suppress("DEPRECATION") pm.getApplicationInfo(paket, 0)
+        } ?: return emptyList()
+        return (listOfNotNull(ai.sourceDir) + (ai.splitSourceDirs?.toList() ?: emptyList()))
+            .map { java.io.File(it) }.filter { it.canRead() }
+    }
+
     fun simge(paket: String): Drawable? = guvenli(null) { pm.getApplicationIcon(paket) }
 
     /** Ek bilgiler (yalnız ayrıntı ekranında gösterilir). */
@@ -134,6 +147,7 @@ class UygulamaKaynagi(private val context: Context) {
             varsayilanSmsUygulamasi = paket == o.varsayilanSms,
             bilinmeyenKaynakIzni = bilinmeyenKaynak,
             surum = pi.versionName,
+            sonGuncelleme = pi.lastUpdateTime,
         )
     }
 

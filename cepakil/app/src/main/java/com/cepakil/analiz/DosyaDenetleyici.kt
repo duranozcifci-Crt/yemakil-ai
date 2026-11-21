@@ -274,6 +274,8 @@ object DosyaDenetleyici {
                     "Bu dosya açılırsa telefona uygulama yükler. Mesaj, e-posta ya da WhatsApp ile gelen APK'lar bankacılık dolandırıcılığında sık kullanılır. Yalnız güvendiğin kaynaktan yükle; mümkünse uygulamayı Google Play'den indir.",
                 )
                 if (apk != null) b += apkBulgulari(apk)
+                // Kodun içindeki yetenekler (telefonda, internetsiz).
+                b += KodIncelemesi.bulgular(KodIncelemesi.incele(listOf(ac)))
             }
             Tur.EXE, Tur.ELF, Tur.DEX, Tur.JAR -> b += Bulgu(
                 Seviye.SARI, "Çalıştırılabilir program: ${tur.ad}",
