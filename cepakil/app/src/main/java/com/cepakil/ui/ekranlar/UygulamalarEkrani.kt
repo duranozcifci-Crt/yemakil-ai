@@ -32,7 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -202,8 +202,9 @@ private fun UygulamaSatiri(s: UygulamaDegerlendirici.Sonuc, onClick: () -> Unit)
 fun UygulamaSimgesi(paket: String, boyutDp: Int) {
     val context = LocalContext.current
     val kaynak = remember { UygulamaKaynagi(context.applicationContext) }
-    val resim by produceState<ImageBitmap?>(null, paket) {
-        value = withContext(Dispatchers.IO) {
+    var resim by remember(paket) { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(paket) {
+        resim = withContext(Dispatchers.IO) {
             try { kaynak.simge(paket)?.toBitmap(boyutDp * 3, boyutDp * 3)?.asImageBitmap() } catch (e: Exception) { null }
         }
     }

@@ -27,7 +27,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,8 +65,9 @@ private data class IzinSatiri(val grup: IzinSozlugu.Grup, val durum: String, val
 @Composable
 fun UygulamaDetayEkrani(paket: String, geri: () -> Unit) {
     val context = LocalContext.current
-    val durum by produceState<DetayDurumu>(DetayDurumu.Yukleniyor, paket) {
-        value = withContext(Dispatchers.Default) {
+    var durum by remember(paket) { mutableStateOf<DetayDurumu>(DetayDurumu.Yukleniyor) }
+    LaunchedEffect(paket) {
+        durum = withContext(Dispatchers.Default) {
             val k = UygulamaKaynagi(context.applicationContext)
             val bilgi = k.uygulama(paket)
             if (bilgi == null) DetayDurumu.Bulunamadi
