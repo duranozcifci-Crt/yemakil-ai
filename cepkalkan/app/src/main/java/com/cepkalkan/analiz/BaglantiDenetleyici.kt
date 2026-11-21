@@ -121,7 +121,9 @@ object BaglantiDenetleyici {
         }
         if (girdi.any { it.isWhitespace() }) {
             // Mesajın tamamı yapıştırılmış olabilir: içindeki ilk bağlantıyı al.
+            // Cümle sonundaki noktalama bağlantıya dahil değildir ("…/ode." → "…/ode").
             val ilk = Regex("""(?i)\b(?:https?://|www\.)\S+""").find(girdi)?.value
+                ?.trimEnd('.', ',', ';', ':', '!', '?', ')', ']', '"', '\'', '»')
             if (ilk != null && ilk != girdi) return denetle(ilk)
         }
 

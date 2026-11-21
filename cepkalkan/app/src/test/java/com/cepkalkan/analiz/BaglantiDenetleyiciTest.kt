@@ -88,6 +88,12 @@ class BaglantiDenetleyiciTest {
         assertEquals(Seviye.KIRMIZI, s.seviye)
     }
 
+    @Test fun cumleSonuNoktalamasiAtilir() {
+        val s = BaglantiDenetleyici.denetle("Bilgi için: https://www.turkiye.gov.tr.")
+        assertEquals("www.turkiye.gov.tr", s.alanAdi)
+        assertEquals(Seviye.BILGI, s.seviye)
+    }
+
     @Test fun protokolsuzAdres() {
         val s = BaglantiDenetleyici.denetle("www.ornek.com.tr/sayfa")
         assertEquals(Seviye.BILGI, s.seviye)
