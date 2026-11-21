@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -176,6 +177,8 @@ fun Satir(
     ust: String? = null,
     onClick: (() -> Unit)? = null,
     aciklamaSatiri: Int = Int.MAX_VALUE,
+    /** Açıklamanın altında gösterilecek ek (ör. durum rozeti); dar ekranda adın bölünmesini önler. */
+    alt: (@Composable () -> Unit)? = null,
 ) {
     Row(
         Modifier
@@ -199,6 +202,10 @@ fun Satir(
                     aciklama, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = aciklamaSatiri, overflow = TextOverflow.Ellipsis,
                 )
+            }
+            if (alt != null) {
+                Spacer(Modifier.size(6.dp))
+                alt()
             }
         }
         if (son != null) {
@@ -343,6 +350,26 @@ fun SinirNotu(metin: String, baslik: String = "Bu kontrolün sınırları", acik
             )
         }
     }
+}
+
+/**
+ * Tek satıra sığana kadar kendiliğinden küçülen yazı (alt menü gibi dar yerler için).
+ * Telefonun büyük yazı ayarında kesilmek yerine küçülür; ekran okuyucu tam metni okur.
+ */
+@Composable
+fun SigdirilanMetin(metin: String, stil: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
+    var olcek by androidx.compose.runtime.remember(metin) { mutableStateOf(1f) }
+    var hazir by androidx.compose.runtime.remember(metin) { mutableStateOf(false) }
+    Text(
+        metin,
+        style = stil.copy(fontSize = stil.fontSize * olcek),
+        maxLines = 1,
+        softWrap = false,
+        modifier = modifier.then(if (hazir) Modifier else Modifier.graphicsLayer { alpha = 0f }),
+        onTextLayout = { r ->
+            if (r.didOverflowWidth && olcek > 0.5f) olcek *= 0.9f else hazir = true
+        },
+    )
 }
 
 @Composable

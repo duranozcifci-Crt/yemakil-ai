@@ -180,7 +180,7 @@ fun AnaEkranIcerik(
                                 baslik = u.ad,
                                 aciklama = u.bulgular.first().baslik + if (u.bulgular.size > 1) " · +${u.bulgular.size - 1}" else "",
                                 bas = { UygulamaSimgesi(u.paket, 40) },
-                                son = { DurumRozeti(u.seviye, Baglam.UYGULAMA) },
+                                alt = { DurumRozeti(u.seviye, Baglam.UYGULAMA) },
                                 onClick = { uygulamayaGit(u.paket) },
                                 aciklamaSatiri = 2,
                             )

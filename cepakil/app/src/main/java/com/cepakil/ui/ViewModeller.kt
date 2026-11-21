@@ -50,6 +50,7 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
         if (degisiklikDenetleniyor) return
         degisiklikDenetleniyor = true
         viewModelScope.launch {
+            kaldirilanlariTemizle()
             try {
                 val sonuc = withContext(Dispatchers.Default) {
                     val liste = uygulamalar.tumUygulamalar(sistemDahil = false)
@@ -81,6 +82,17 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
             } finally {
                 degisiklikDenetleniyor = false
             }
+        }
+    }
+
+    /** Son tarama kaydından, o günden beri kaldırılmış uygulamaları çıkarır. */
+    private suspend fun kaldirilanlariTemizle() {
+        val k = _durum.value.kayit ?: return
+        val kalan = withContext(Dispatchers.Default) { k.uygulamalar.filter { uygulamalar.uygulama(it.paket) != null } }
+        if (kalan.size != k.uygulamalar.size) {
+            val yeni = k.copy(uygulamalar = kalan)
+            depo.kaydet(yeni)
+            _durum.update { it.copy(kayit = yeni) }
         }
     }
 
@@ -156,6 +168,24 @@ class UygulamalarViewModel(app: Application) : AndroidViewModel(app) {
         depo.sistemUygulamalariDahil = v
         _sistemDahil.value = v
         yukle()
+    }
+
+    /**
+     * Ekrana her dönüldüğünde (ör. bir uygulama kaldırıldıktan sonra) listeyi
+     * yükleme göstergesi olmadan yeniler.
+     */
+    fun sessizYenile() {
+        if (_durum.value !is Durum.Hazir) return
+        viewModelScope.launch {
+            try {
+                val sonuc = withContext(Dispatchers.Default) {
+                    kaynak.tumUygulamalar(_sistemDahil.value).map { UygulamaDegerlendirici.degerlendir(it) }
+                }
+                _durum.value = Durum.Hazir(sonuc)
+            } catch (e: Exception) {
+                // Eski liste kalır.
+            }
+        }
     }
 
     fun yukle() {

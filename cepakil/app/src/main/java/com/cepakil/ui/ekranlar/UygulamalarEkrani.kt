@@ -70,6 +70,8 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
     val sistemDahil by vm.sistemDahil.collectAsStateWithLifecycle()
     var arama by rememberSaveable { mutableStateOf("") }
     var yalnizIncelenecek by rememberSaveable { mutableStateOf(false) }
+    // Bir uygulama kaldırılıp geri dönüldüğünde liste güncel olsun.
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) { vm.sessizYenile() }
 
     Column(Modifier.fillMaxSize()) {
         UstCubuk("Uygulamalar")
@@ -181,7 +183,7 @@ private fun UygulamaSatiri(s: UygulamaDegerlendirici.Sonuc, onClick: () -> Unit)
             baslik = s.bilgi.ad,
             aciklama = if (hassasSayisi == 0) "Hassas izin istemiyor" else "$hassasSayisi hassas izin",
             bas = { UygulamaSimgesi(s.bilgi.paket, 40) },
-            son = { DurumRozeti(s.seviye, Baglam.UYGULAMA) },
+            alt = { DurumRozeti(s.seviye, Baglam.UYGULAMA) },
             onClick = onClick,
         )
     }
