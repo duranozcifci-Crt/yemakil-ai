@@ -3,11 +3,13 @@ package com.cepakil.ui
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -17,7 +19,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -35,7 +36,7 @@ import com.cepakil.ui.ekranlar.UygulamaDetayEkrani
 import com.cepakil.ui.ekranlar.UygulamalarEkrani
 
 private enum class Sekme(val rota: String, val etiket: String, val ikon: ImageVector) {
-    ANA("ana", "Ana sayfa", Icons.Filled.Home),
+    ANA("ana", "Ana sayfa", Icons.Filled.Shield),
     UYGULAMALAR("uygulamalar", "Uygulamalar", Icons.Filled.Apps),
     DOSYA("dosya", "Dosya", Icons.AutoMirrored.Filled.InsertDriveFile),
     BAGLANTI("baglanti", "Bağlantı", Icons.Filled.Link),
@@ -61,7 +62,7 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 0.dp) {
                 Sekme.entries.forEach { s ->
                     val secili = rota == s.rota ||
                         (s == Sekme.UYGULAMALAR && (rota?.startsWith("uygulama/") == true || rota?.startsWith("kaldir/") == true)) ||
@@ -70,7 +71,7 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
                         selected = secili,
                         onClick = { sekmeyeGit(nav, s.rota) },
                         icon = { Icon(s.ikon, contentDescription = null) },
-                        label = { Text(s.etiket, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        label = { Text(s.etiket, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false) },
                     )
                 }
             }
@@ -78,7 +79,13 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
     ) { ic ->
         NavHost(nav, startDestination = Sekme.ANA.rota, modifier = Modifier.padding(ic)) {
             composable(Sekme.ANA.rota) {
-                AnaEkran(taramaVm, uygulamayaGit = { nav.navigate("uygulama/$it") }, onerilereGit = { nav.navigate("oneriler") })
+                AnaEkran(
+                    taramaVm,
+                    uygulamayaGit = { nav.navigate("uygulama/$it") },
+                    onerilereGit = { nav.navigate("oneriler") },
+                    dosyayaGit = { sekmeyeGit(nav, Sekme.DOSYA.rota) },
+                    baglantiyaGit = { sekmeyeGit(nav, Sekme.BAGLANTI.rota) },
+                )
             }
             composable(Sekme.UYGULAMALAR.rota) {
                 UygulamalarEkrani(uygulamalarVm) { nav.navigate("uygulama/$it") }

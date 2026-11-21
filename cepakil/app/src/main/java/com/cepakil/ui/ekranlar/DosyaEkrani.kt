@@ -135,7 +135,7 @@ fun DosyaEkrani(vm: DosyaViewModel) {
                     }
                     if (s.bulgular.isNotEmpty()) {
                         item { BolumBasligi("Bulunan işaretler") }
-                        items(s.bulgular) { BulguKarti(it, Baglam.DOSYA) }
+                        item { com.cepakil.ui.bilesenler.BulguGrubu(s.bulgular, Baglam.DOSYA) }
                     }
                     item { BolumBasligi("Dosyanın parmak izi (SHA-256)") }
                     item {

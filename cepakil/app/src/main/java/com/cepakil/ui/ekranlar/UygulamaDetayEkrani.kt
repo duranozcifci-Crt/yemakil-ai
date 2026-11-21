@@ -2,53 +2,77 @@ package com.cepakil.ui.ekranlar
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Accessibility
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.InstallMobile
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MonitorHeart
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.QueryStats
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Shop
+import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.cepakil.analiz.Bulgu
 import com.cepakil.analiz.IzinSozlugu
+import com.cepakil.analiz.KodIncelemesi
 import com.cepakil.analiz.Seviye
 import com.cepakil.analiz.UygulamaDegerlendirici
 import com.cepakil.ui.bilesenler.Baglam
 import com.cepakil.ui.bilesenler.BilgiDurumu
 import com.cepakil.ui.bilesenler.BolumBasligi
-import com.cepakil.ui.bilesenler.BulguKarti
-import com.cepakil.ui.bilesenler.BuyukDugme
+import com.cepakil.ui.bilesenler.BulguGrubu
 import com.cepakil.ui.bilesenler.DurumKarti
-import com.cepakil.ui.bilesenler.IkincilDugme
+import com.cepakil.ui.bilesenler.DurumRozeti
+import com.cepakil.ui.bilesenler.Etiket
+import com.cepakil.ui.bilesenler.Grup
+import com.cepakil.ui.bilesenler.GrupAyraci
+import com.cepakil.ui.bilesenler.Satir
 import com.cepakil.ui.bilesenler.SinirNotu
+import com.cepakil.ui.bilesenler.TonluSimge
 import com.cepakil.ui.bilesenler.UstCubuk
 import com.cepakil.veri.AyarYonlendirici
 import com.cepakil.veri.UygulamaKaynagi
@@ -62,21 +86,34 @@ private sealed interface DetayDurumu {
 }
 
 /** Ekranda gösterilecek tek izin grubu satırı. */
-private data class IzinSatiri(val grup: IzinSozlugu.Grup, val durum: String, val teknik: List<String>)
+data class IzinSatiri(val grup: IzinSozlugu.Grup, val durum: String, val acik: Boolean, val teknik: List<String>)
 
 @Composable
 fun UygulamaDetayEkrani(paket: String, geri: () -> Unit, kaldirmayaGit: () -> Unit) {
     val context = LocalContext.current
     var durum by remember(paket) { mutableStateOf<DetayDurumu>(DetayDurumu.Yukleniyor) }
+    var kod by remember(paket) { mutableStateOf<List<Bulgu>?>(null) }
     LaunchedEffect(paket) {
+        val k = UygulamaKaynagi(context.applicationContext)
         durum = withContext(Dispatchers.Default) {
-            val k = UygulamaKaynagi(context.applicationContext)
             val bilgi = k.uygulama(paket)
             if (bilgi == null) DetayDurumu.Bulunamadi
             else DetayDurumu.Hazir(UygulamaDegerlendirici.degerlendir(bilgi), k.ayrinti(paket, bilgi.yukleyen))
         }
+        // Kod incelemesi ayrıca, arka iş parçacığında (birkaç saniye sürebilir).
+        kod = withContext(Dispatchers.IO) {
+            val dosyalar = k.apkDosyalari(paket)
+            if (dosyalar.isEmpty()) {
+                listOf(Bulgu(Seviye.BILGI, "Kod okunamadı", "Android bu uygulamanın dosyasını okumaya izin vermedi."))
+            } else {
+                try {
+                    KodIncelemesi.bulgular(KodIncelemesi.incele(dosyalar.map { f -> { f.inputStream() } }))
+                } catch (e: OutOfMemoryError) {
+                    listOf(Bulgu(Seviye.BILGI, "Kod incelenemedi", "Uygulama bu telefonda incelenemeyecek kadar büyük."))
+                }
+            }
+        }
     }
-    var teknikAcik by rememberSaveable { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
         UstCubuk("Uygulama ayrıntısı", geri)
@@ -87,156 +124,191 @@ fun UygulamaDetayEkrani(paket: String, geri: () -> Unit, kaldirmayaGit: () -> Un
             DetayDurumu.Bulunamadi -> Column(Modifier.padding(16.dp)) {
                 BilgiDurumu(Icons.Filled.SearchOff, "Uygulama bulunamadı", "Bu uygulama kaldırılmış ya da Android bilgisini vermiyor olabilir.", "Geri dön", geri)
             }
-            is DetayDurumu.Hazir -> {
-                val s = d.sonuc
-                val u = s.bilgi
-                val satirlar = izinSatirlari(u)
-                val digerIzinler = u.izinler.keys.filter { IzinSozlugu.tanim(it)?.grup?.hassas != true }.sorted()
-
-                LazyColumn(
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    item {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            UygulamaSimgesi(u.paket, 56)
-                            Spacer(Modifier.width(14.dp))
-                            Column {
-                                Text(u.ad, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                                Text(u.paket, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                if (u.surum != null) Text("Sürüm ${u.surum}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                    }
-                    item {
-                        when (s.seviye) {
-                            Seviye.KIRMIZI -> DurumKarti(Seviye.KIRMIZI, "Öncelikli incelemen önerilir", "Aşağıdaki işaretlere bak. Uygulamayı tanımıyorsan ayarlarından kaldırmayı düşün.")
-                            Seviye.SARI -> DurumKarti(Seviye.SARI, "İncelemen önerilir", "Bu işaretler uygulamanın zararlı olduğunu göstermez; amacına uygun olup olmadığını düşün.")
-                            else -> DurumKarti(s.seviye, "Dikkat çeken işaret yok", "CepAkıl'ın kurallarına göre beklenmedik bir durum bulunmadı. Bu, uygulamanın kesinlikle zararsız olduğu anlamına gelmez.", Baglam.UYGULAMA)
-                        }
-                    }
-                    item {
-                        BuyukDugme("Uygulama ayarlarını aç", { AyarYonlendirici.uygulamaAyarlari(context, u.paket) }, ikon = Icons.Filled.Settings)
-                        if (!u.sistemUygulamasi) {
-                            Spacer(Modifier.size(8.dp))
-                            IkincilDugme("Tamamen kaldır (iz bırakmadan)", kaldirmayaGit, ikon = Icons.Filled.DeleteForever)
-                        }
-                        Text(
-                            "İzinleri kaldırmak, uygulamayı durdurmak ya da kaldırmak için Android'in kendi ekranı açılır. CepAkıl hiçbir uygulamayı kendisi silmez veya devre dışı bırakmaz.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 6.dp),
-                        )
-                    }
-
-                    if (s.bulgular.isNotEmpty()) {
-                        item { BolumBasligi("Neden işaretlendi?") }
-                        items(s.bulgular) { BulguKarti(it, Baglam.UYGULAMA) }
-                    }
-
-                    item { BolumBasligi("Kod incelemesi") }
-                    item { KodIncelemesiBolumu(u.paket) }
-
-                    item { BolumBasligi("Yükleme bilgisi") }
-                    item {
-                        val yukleyen = when {
-                            u.sistemUygulamasi -> "Telefonla birlikte gelen sistem uygulaması"
-                            u.yukleyen == null -> "Bilinmiyor (Android bildirmiyor)"
-                            else -> (d.ayrinti?.yukleyenAdi ?: u.yukleyen) +
-                                if (UygulamaDegerlendirici.magazadanMi(u.yukleyen)) " (bilinen mağaza)" else " (mağaza değil)"
-                        }
-                        BilgiSatirlari(
-                            listOfNotNull(
-                                "Yükleyen" to yukleyen,
-                                d.ayrinti?.let { "İlk yükleme" to tarihYaz(it.ilkYukleme) },
-                                d.ayrinti?.let { "Son güncelleme" to tarihYaz(it.sonGuncelleme) },
-                                "Hedef Android API" to u.hedefSdk.toString(),
-                            ),
-                        )
-                    }
-
-                    item { BolumBasligi("İstediği hassas izinler") }
-                    if (satirlar.isEmpty()) {
-                        item { Text("Bu uygulama hassas sayılan bir izin istemiyor.", style = MaterialTheme.typography.bodyLarge) }
-                    }
-                    items(satirlar) { IzinKarti(it) }
-
-                    item {
-                        Text(
-                            "Ayrıca ${digerIzinler.size} izin daha istiyor (internet, titreşim gibi). Bunlar Android'in kullanıcıya sormadığı, düşük riskli sayılan izinlerdir.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        if (digerIzinler.isNotEmpty()) {
-                            TextButton(onClick = { teknikAcik = !teknikAcik }) {
-                                Icon(if (teknikAcik) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore, contentDescription = null)
-                                Spacer(Modifier.width(6.dp))
-                                Text(if (teknikAcik) "Teknik listeyi gizle" else "Teknik listeyi göster")
-                            }
-                        }
-                    }
-                    if (teknikAcik) {
-                        item {
-                            Text(
-                                digerIzinler.joinToString("\n") { IzinSozlugu.kisaAd(it) },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-
-                    item {
-                        SinirNotu(
-                            "Bu değerlendirme uygulamanın istediği izinlere, nereden yüklendiğine ve açık özel hizmetlerine dayanır. " +
-                                "Uygulamanın ne yaptığını (kodunu, internet trafiğini) incelemez. Özel izinlerin (ör. üstte gösterme) " +
-                                "verilip verilmediği her telefonda okunamaz; kesin durum için uygulama ayarlarına bak.",
-                        )
-                    }
-                }
-            }
+            is DetayDurumu.Hazir -> UygulamaDetayIcerik(
+                s = d.sonuc,
+                ayrinti = d.ayrinti,
+                kodBulgulari = kod,
+                ayarlariAc = { AyarYonlendirici.uygulamaAyarlari(context, paket) },
+                kaldir = kaldirmayaGit,
+            )
         }
     }
 }
 
-/** Uygulamanın kodunu telefonda inceler (internetsiz) ve sonucu gösterir. */
+/** Durumdan bağımsız görünüm (ekran görüntüsü testlerinde de kullanılır). */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun KodIncelemesiBolumu(paket: String) {
-    val context = LocalContext.current
-    var sonuc by remember(paket) { mutableStateOf<List<com.cepakil.analiz.Bulgu>?>(null) }
-    LaunchedEffect(paket) {
-        sonuc = withContext(Dispatchers.IO) {
-            val dosyalar = UygulamaKaynagi(context.applicationContext).apkDosyalari(paket)
-            if (dosyalar.isEmpty()) {
-                listOf(com.cepakil.analiz.Bulgu(Seviye.BILGI, "Kod okunamadı", "Android bu uygulamanın dosyasını okumaya izin vermedi."))
-            } else {
-                try {
-                    com.cepakil.analiz.KodIncelemesi.bulgular(
-                        com.cepakil.analiz.KodIncelemesi.incele(dosyalar.map { f -> { f.inputStream() } }),
-                    )
-                } catch (e: OutOfMemoryError) {
-                    listOf(com.cepakil.analiz.Bulgu(Seviye.BILGI, "Kod incelenemedi", "Uygulama bu telefonda incelenemeyecek kadar büyük."))
+fun UygulamaDetayIcerik(
+    s: UygulamaDegerlendirici.Sonuc,
+    ayrinti: UygulamaKaynagi.Ayrinti?,
+    kodBulgulari: List<Bulgu>?,
+    ayarlariAc: () -> Unit,
+    kaldir: () -> Unit,
+) {
+    val u = s.bilgi
+    val satirlar = izinSatirlari(u)
+    val digerIzinler = u.izinler.keys.filter { IzinSozlugu.tanim(it)?.grup?.hassas != true }.sorted()
+    val magaza = UygulamaDegerlendirici.magazadanMi(u.yukleyen)
+
+    LazyColumn(
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        // Üst kart: simge, ad, etiketler, eylemler
+        item {
+            Grup {
+                Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    UygulamaSimgesi(u.paket, 64)
+                    Spacer(Modifier.size(12.dp))
+                    Text(u.ad, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+                    Text(u.paket, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Spacer(Modifier.size(10.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        DurumRozeti(s.seviye, Baglam.UYGULAMA)
+                        when {
+                            u.sistemUygulamasi -> Etiket("Sistem uygulaması", Icons.Filled.Settings)
+                            magaza -> Etiket(ayrinti?.yukleyenAdi ?: "Bilinen mağaza", Icons.Filled.Shop)
+                            else -> Etiket("Mağaza dışı", Icons.Filled.Warning)
+                        }
+                        if (u.surum != null) Etiket("Sürüm ${u.surum}")
+                    }
+                    Spacer(Modifier.size(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Button(onClick = ayarlariAc, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = MaterialTheme.shapes.medium) {
+                            Icon(Icons.Filled.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Ayarlar", style = MaterialTheme.typography.labelLarge)
+                        }
+                        if (!u.sistemUygulamasi) {
+                            OutlinedButton(onClick = kaldir, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = MaterialTheme.shapes.medium) {
+                                Icon(Icons.Filled.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Tamamen kaldır", style = MaterialTheme.typography.labelLarge)
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        val s = sonuc
-        if (s == null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 3.dp)
-                Spacer(Modifier.width(12.dp))
-                Text("Uygulamanın kodu inceleniyor…", style = MaterialTheme.typography.bodyLarge)
+
+        item {
+            when (s.seviye) {
+                Seviye.KIRMIZI -> DurumKarti(Seviye.KIRMIZI, "Öncelikli incelemen önerilir", "Uygulamayı tanımıyorsan kaldırmayı düşün.")
+                Seviye.SARI -> DurumKarti(Seviye.SARI, "İncelemen önerilir", "İşaretler zararlı olduğu anlamına gelmez; amacına uygun mu, düşün.")
+                else -> DurumKarti(s.seviye, "Dikkat çeken işaret yok", "CepAkıl'ın kurallarına göre beklenmedik bir durum bulunmadı.", Baglam.UYGULAMA)
             }
-        } else if (s.isEmpty()) {
-            Text("Kodda dikkat çeken bir yetenek bulunamadı.", style = MaterialTheme.typography.bodyLarge)
-        } else {
-            s.forEach { BulguKarti(it, Baglam.UYGULAMA) }
         }
-        Text(com.cepakil.analiz.KodIncelemesi.SINIR_NOTU, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        if (s.bulgular.isNotEmpty()) {
+            item { BolumBasligi("Neden işaretlendi?") }
+            item { BulguGrubu(s.bulgular, Baglam.UYGULAMA) }
+        }
+
+        item { BolumBasligi("Kod incelemesi") }
+        item {
+            when {
+                kodBulgulari == null -> Grup {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
+                        Spacer(Modifier.width(14.dp))
+                        Text("Uygulamanın kodu inceleniyor…", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+                kodBulgulari.isEmpty() -> BulguGrubu(listOf(Bulgu(Seviye.YESIL, "Kodda dikkat çeken yetenek yok", "SMS, ekran kontrolü, gizli kod yükleme gibi yetenekler bulunmadı.")), Baglam.UYGULAMA)
+                else -> BulguGrubu(kodBulgulari, Baglam.UYGULAMA)
+            }
+        }
+
+        item { BolumBasligi("İzinler") }
+        item {
+            Grup {
+                if (satirlar.isEmpty()) {
+                    Satir("Hassas izin istemiyor", "SMS, konum, mikrofon gibi izinlerden hiçbirini istemiyor.")
+                }
+                satirlar.forEachIndexed { i, r ->
+                    if (i > 0) GrupAyraci()
+                    Satir(
+                        baslik = r.grup.ad,
+                        aciklama = r.grup.aciklama,
+                        bas = {
+                            TonluSimge(
+                                grupSimgesi(r.grup),
+                                if (r.acik) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                if (r.acik) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        son = {
+                            Text(
+                                r.durum, style = MaterialTheme.typography.labelMedium,
+                                color = if (r.acik) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        aciklamaSatiri = 3,
+                    )
+                }
+                if (digerIzinler.isNotEmpty()) {
+                    GrupAyraci()
+                    Satir(
+                        "Diğer ${digerIzinler.size} izin",
+                        "İnternet, titreşim gibi Android'in sormadığı düşük riskli izinler: " +
+                            digerIzinler.joinToString(", ") { IzinSozlugu.kisaAd(it) },
+                        bas = { TonluSimge(Icons.Filled.Apps, MaterialTheme.colorScheme.surfaceContainerHigh, MaterialTheme.colorScheme.onSurfaceVariant) },
+                        aciklamaSatiri = 3,
+                    )
+                }
+            }
+        }
+
+        item { BolumBasligi("Yükleme bilgisi") }
+        item {
+            Grup {
+                val yukleyen = when {
+                    u.sistemUygulamasi -> "Telefonla birlikte gelen sistem uygulaması"
+                    u.yukleyen == null -> "Bilinmiyor (Android bildirmiyor)"
+                    else -> (ayrinti?.yukleyenAdi ?: u.yukleyen) + if (magaza) " · bilinen mağaza" else " · mağaza değil"
+                }
+                Satir("Yükleyen", yukleyen)
+                ayrinti?.let {
+                    GrupAyraci(16.dp); Satir("İlk yükleme", tarihYaz(it.ilkYukleme))
+                    GrupAyraci(16.dp); Satir("Son güncelleme", tarihYaz(it.sonGuncelleme))
+                }
+                GrupAyraci(16.dp); Satir("Hedef Android sürümü", "API ${u.hedefSdk}")
+            }
+        }
+
+        item {
+            SinirNotu(
+                "Bu değerlendirme uygulamanın istediği izinlere, nereden yüklendiğine, açık özel hizmetlerine ve kodunda geçen Android özelliklerine dayanır. " +
+                    "Uygulamanın gerçekte ne yaptığını (ağ trafiğini, sunucuya ne gönderdiğini) göremez. " +
+                    "Özel izinlerin (ör. üstte gösterme) durumu her telefonda okunamaz; kesin durum için uygulama ayarlarına bak. " +
+                    KodIncelemesi.SINIR_NOTU,
+            )
+        }
     }
 }
 
-private fun izinSatirlari(u: UygulamaDegerlendirici.UygulamaBilgisi): List<IzinSatiri> {
+private fun grupSimgesi(g: IzinSozlugu.Grup): ImageVector = when (g) {
+    IzinSozlugu.Grup.SMS -> Icons.Filled.Sms
+    IzinSozlugu.Grup.KISILER -> Icons.Filled.Contacts
+    IzinSozlugu.Grup.ARAMA_KAYITLARI -> Icons.Filled.Call
+    IzinSozlugu.Grup.TELEFON -> Icons.Filled.Phone
+    IzinSozlugu.Grup.KONUM, IzinSozlugu.Grup.ARKA_PLAN_KONUM -> Icons.Filled.LocationOn
+    IzinSozlugu.Grup.MIKROFON -> Icons.Filled.Mic
+    IzinSozlugu.Grup.KAMERA -> Icons.Filled.PhotoCamera
+    IzinSozlugu.Grup.TAKVIM -> Icons.Filled.CalendarMonth
+    IzinSozlugu.Grup.MEDYA -> Icons.Filled.Photo
+    IzinSozlugu.Grup.TUM_DOSYALAR -> Icons.Filled.Folder
+    IzinSozlugu.Grup.VUCUT -> Icons.Filled.MonitorHeart
+    IzinSozlugu.Grup.UST_KATMAN -> Icons.Filled.Layers
+    IzinSozlugu.Grup.UYGULAMA_YUKLEME -> Icons.Filled.InstallMobile
+    IzinSozlugu.Grup.KULLANIM_VERISI -> Icons.Filled.QueryStats
+    IzinSozlugu.Grup.ERISILEBILIRLIK -> Icons.Filled.Accessibility
+    IzinSozlugu.Grup.CIHAZ_YONETICISI -> Icons.Filled.AdminPanelSettings
+    IzinSozlugu.Grup.BILDIRIM_ERISIMI -> Icons.Filled.Notifications
+    IzinSozlugu.Grup.UYGULAMA_LISTESI -> Icons.Filled.Apps
+}
+
+fun izinSatirlari(u: UygulamaDegerlendirici.UygulamaBilgisi): List<IzinSatiri> {
     val gruplar = linkedMapOf<IzinSozlugu.Grup, MutableList<Pair<String, IzinSozlugu.Tanim>>>()
     u.izinler.keys.forEach { izin ->
         val t = IzinSozlugu.tanim(izin) ?: return@forEach
@@ -245,55 +317,28 @@ private fun izinSatirlari(u: UygulamaDegerlendirici.UygulamaBilgisi): List<IzinS
     }
     val satirlar = gruplar.entries.sortedBy { it.key.ordinal }.map { (grup, izinler) ->
         val tur = izinler.first().second.tur
-        val durum = when {
-            grup == IzinSozlugu.Grup.UYGULAMA_YUKLEME && u.bilinmeyenKaynakIzni == true -> "İstiyor · açık"
-            grup == IzinSozlugu.Grup.UYGULAMA_YUKLEME && u.bilinmeyenKaynakIzni == false -> "İstiyor · kapalı"
+        val (durum, acik) = when {
+            grup == IzinSozlugu.Grup.UYGULAMA_YUKLEME && u.bilinmeyenKaynakIzni == true -> "Açık" to true
+            grup == IzinSozlugu.Grup.UYGULAMA_YUKLEME && u.bilinmeyenKaynakIzni == false -> "Kapalı" to false
             tur == IzinSozlugu.Tur.CALISMA_ZAMANI ->
-                if (izinler.any { u.izinler[it.first] == true }) "Verilmiş" else "İstiyor · verilmemiş"
-            else -> "İstiyor · durumu ayarlardan kontrol et"
+                if (izinler.any { u.izinler[it.first] == true }) "Verilmiş" to true else "Verilmemiş" to false
+            else -> "Ayarlara bak" to false
         }
-        IzinSatiri(grup, durum, izinler.map { IzinSozlugu.kisaAd(it.first) })
+        IzinSatiri(grup, durum, acik, izinler.map { IzinSozlugu.kisaAd(it.first) })
     }.toMutableList()
     // Hizmet izinleri "istenen izin" listesinde görünmez; açık olduklarını ayrıca biliyoruz.
-    if (u.erisilebilirlikAcik) satirlar.add(0, IzinSatiri(IzinSozlugu.Grup.ERISILEBILIRLIK, "Açık", emptyList()))
-    if (u.cihazYoneticisiAcik) satirlar.add(0, IzinSatiri(IzinSozlugu.Grup.CIHAZ_YONETICISI, "Etkin", emptyList()))
-    if (u.bildirimErisimiAcik) satirlar.add(0, IzinSatiri(IzinSozlugu.Grup.BILDIRIM_ERISIMI, "Açık", emptyList()))
+    if (u.erisilebilirlikAcik) satirlar.add(0, IzinSatiri(IzinSozlugu.Grup.ERISILEBILIRLIK, "Açık", true, emptyList()))
+    if (u.cihazYoneticisiAcik) satirlar.add(0, IzinSatiri(IzinSozlugu.Grup.CIHAZ_YONETICISI, "Etkin", true, emptyList()))
+    if (u.bildirimErisimiAcik) satirlar.add(0, IzinSatiri(IzinSozlugu.Grup.BILDIRIM_ERISIMI, "Açık", true, emptyList()))
     return satirlar
 }
 
 @Composable
-private fun IzinKarti(s: IzinSatiri) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
-        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(s.grup.ad, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Text(
-                    s.durum,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (s.durum == "Verilmiş" || s.durum.startsWith("Açık") || s.durum == "Etkin" || s.durum.endsWith("açık"))
-                        MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.size(4.dp))
-            Text(s.grup.aciklama, style = MaterialTheme.typography.bodyMedium)
-            if (s.teknik.isNotEmpty()) {
-                Text(s.teknik.joinToString(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-            }
-        }
-    }
-}
-
-@Composable
 fun BilgiSatirlari(satirlar: List<Pair<String, String>>) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        satirlar.forEach { (etiket, deger) ->
-            Row(Modifier.semantics(mergeDescendants = true) {}) {
-                Text(etiket, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.4f))
-                Text(deger, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(0.6f))
-            }
+    Grup {
+        satirlar.forEachIndexed { i, (etiket, deger) ->
+            if (i > 0) GrupAyraci(16.dp)
+            Satir(etiket, deger)
         }
     }
 }

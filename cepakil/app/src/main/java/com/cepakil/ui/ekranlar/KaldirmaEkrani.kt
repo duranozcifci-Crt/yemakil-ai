@@ -170,7 +170,8 @@ private fun KalanIzler(baslangic: Int, riskli: Boolean) {
 @Composable
 private fun Adim(no: Int, baslik: String, aciklama: String, eylemler: @Composable () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp)) {

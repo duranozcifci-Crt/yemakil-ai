@@ -140,7 +140,7 @@ fun BaglantiEkrani(paylasilan: String?, paylasilanKullanildi: () -> Unit) {
                 }
                 if (s.bulgular.isNotEmpty()) {
                     item { BolumBasligi("Bulunan işaretler") }
-                    items(s.bulgular) { BulguKarti(it, Baglam.BAGLANTI) }
+                    item { com.cepakil.ui.bilesenler.BulguGrubu(s.bulgular, Baglam.BAGLANTI) }
                 }
                 item {
                     SinirNotu(

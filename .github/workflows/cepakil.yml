@@ -35,8 +35,16 @@ jobs:
       - name: APK'yı dala ekle
         if: github.event_name == 'workflow_dispatch'
         run: |
-          mkdir -p indir
+          mkdir -p indir ekran
           cp app/build/outputs/apk/debug/app-debug.apk indir/CepAkil.apk
+          # Tasarım ekran görüntüleri (başarısız olsa da APK eklenir)
+          if ./gradlew --no-daemon recordPaparazziDebug -Pgoruntu; then
+            rm -f ekran/*.png; cp app/src/test/snapshots/images/*.png ekran/ || true
+            git add ekran
+          else
+            echo "::warning::Ekran görüntüleri üretilemedi"
+          fi
+          git clean -fdq app/src/test/snapshots || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add indir/CepAkil.apk

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -74,7 +75,7 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
         UstCubuk("Uygulamalar")
         LazyColumn(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
                 Text(
@@ -88,8 +89,10 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
                 OutlinedTextField(
                     value = arama,
                     onValueChange = { arama = it },
-                    label = { Text("Uygulama ara") },
+                    placeholder = { Text("Uygulama ara") },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     singleLine = true,
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -173,33 +176,27 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
 @Composable
 private fun UygulamaSatiri(s: UygulamaDegerlendirici.Sonuc, onClick: () -> Unit) {
     val hassasSayisi = s.bilgi.izinler.keys.count { com.cepakil.analiz.IzinSozlugu.tanim(it)?.grup?.hassas == true }
-    Card(
-        onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
-        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-            stateDescription = "${s.bulgular.count { it.seviye.agirlik >= Seviye.SARI.agirlik }} işaret"
-        },
-    ) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            UygulamaSimgesi(s.bilgi.paket, 44)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(s.bilgi.ad, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(
-                    if (hassasSayisi == 0) "Hassas izin istemiyor" else "$hassasSayisi hassas izin istiyor",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.size(6.dp))
-                DurumRozeti(s.seviye, Baglam.UYGULAMA)
-            }
-        }
+    com.cepakil.ui.bilesenler.Grup {
+        com.cepakil.ui.bilesenler.Satir(
+            baslik = s.bilgi.ad,
+            aciklama = if (hassasSayisi == 0) "Hassas izin istemiyor" else "$hassasSayisi hassas izin",
+            bas = { UygulamaSimgesi(s.bilgi.paket, 40) },
+            son = { DurumRozeti(s.seviye, Baglam.UYGULAMA) },
+            onClick = onClick,
+        )
     }
 }
 
 /** Uygulama simgesini arka planda yükler; yüklenemezse genel bir simge gösterir. */
 @Composable
 fun UygulamaSimgesi(paket: String, boyutDp: Int) {
+    if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        // Önizleme / ekran görüntüsü testi: gerçek simge yok.
+        Box(Modifier.size(boyutDp.dp), contentAlignment = Alignment.Center) {
+            com.cepakil.ui.bilesenler.TonluSimge(Icons.Filled.Android, MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.secondary, boyutDp.dp)
+        }
+        return
+    }
     val context = LocalContext.current
     val kaynak = remember { UygulamaKaynagi(context.applicationContext) }
     var resim by remember(paket) { mutableStateOf<ImageBitmap?>(null) }

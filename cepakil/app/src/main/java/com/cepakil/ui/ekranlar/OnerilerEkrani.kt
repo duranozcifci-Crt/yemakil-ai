@@ -126,7 +126,7 @@ fun OnerilerEkrani(geri: () -> Unit, baglantiKontrolunaGit: () -> Unit) {
             }
             items(oneriler) { o ->
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(Modifier.padding(16.dp)) {
