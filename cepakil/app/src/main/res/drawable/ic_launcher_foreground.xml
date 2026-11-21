@@ -1,18 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Kalkan ve onay işareti. Uyarlanabilir simgenin güvenli alanı (66dp) içinde. -->
+<!-- CepAkıl simgesi: telefon ekranında yanan ampul ("cepteki akıl").
+     Uyarlanabilir simgenin güvenli alanı (merkezden 33dp) içinde çizildi. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Telefon gövdesi -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M54,28 L76,36 L76,52 C76,66 66.5,77.5 54,82 C41.5,77.5 32,66 32,52 L32,36 Z" />
+        android:pathData="M43,24 H65 A7,7 0 0 1 72,31 V77 A7,7 0 0 1 65,84 H43 A7,7 0 0 1 36,77 V31 A7,7 0 0 1 43,24 Z" />
+    <!-- Ekran -->
     <path
-        android:fillColor="#00000000"
+        android:fillColor="#FF0B4F6C"
+        android:pathData="M42,32 H66 A2,2 0 0 1 68,34 V70 A2,2 0 0 1 66,72 H42 A2,2 0 0 1 40,70 V34 A2,2 0 0 1 42,32 Z" />
+    <!-- Hoparlör ve düğme -->
+    <path
         android:strokeColor="#FF0B4F6C"
-        android:strokeWidth="5"
+        android:strokeWidth="2"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M43,54 L51,62 L66,46" />
+        android:pathData="M50,28 H58" />
+    <path
+        android:fillColor="#FF0B4F6C"
+        android:pathData="M54,75.8 A2.2,2.2 0 1 1 54,80.2 A2.2,2.2 0 1 1 54,75.8 Z" />
+    <!-- Ampul -->
+    <path
+        android:fillColor="#FFF2C14E"
+        android:pathData="M45,47 A9,9 0 1 1 63,47 C63,51 60.5,53 59,55.5 L49,55.5 C47.5,53 45,51 45,47 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M49.5,57.5 H58.5 V60 H49.5 Z M51,61.5 H57 A1.2,1.2 0 0 1 57,64 H51 A1.2,1.2 0 0 1 51,61.5 Z" />
+    <!-- Işık çizgileri -->
+    <path
+        android:strokeColor="#FFF2C14E"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M54,34.5 V36.3 M44.2,39.6 L45.6,40.8 M63.8,39.6 L62.4,40.8" />
 </vector>
