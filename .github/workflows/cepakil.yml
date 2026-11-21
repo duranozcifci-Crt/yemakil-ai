@@ -54,8 +54,7 @@ jobs:
           working-directory: cepakil
           script: |
             adb install -r ornek/build/outputs/apk/debug/ornek-debug.apk
-            ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
-            mkdir -p cihaz-ekran && (adb exec-out run-as com.cepakil tar -c -C files ekran > cihaz-ekran.tar && tar -xf cihaz-ekran.tar -C cihaz-ekran) || true
+            ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true; S=$?; mkdir -p cihaz-ekran; (adb exec-out run-as com.cepakil tar -c -C files ekran > cihaz-ekran.tar && tar -xf cihaz-ekran.tar -C cihaz-ekran) || true; exit $S
       # Yalnız elle başlatılınca: APK'yı aynı dala ekler (sohbetten doğrudan göndermek için).
       - name: APK'yı dala ekle
         if: github.event_name == 'workflow_dispatch'

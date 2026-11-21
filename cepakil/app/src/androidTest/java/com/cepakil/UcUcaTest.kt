@@ -3,7 +3,9 @@ package com.cepakil
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -77,9 +79,12 @@ class UcUcaTest {
         bekle(deneme)
         foto("3_uygulamalar")
         k.onNodeWithText(deneme).performClick()
-        bekle("Bilinen bir mağazadan yüklenmemiş")
         bekle("Mağaza dışı")
         foto("4_uygulama_ayrintisi")
+        // Bulgular listenin aşağısında olabilir: önce oraya kaydır.
+        k.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("Bilinen bir mağazadan yüklenmemiş", substring = true))
+        bekle("Bilinen bir mağazadan yüklenmemiş")
+        foto("4b_neden_isaretlendi")
     }
 
     @Test fun t3_kaldirilanUygulamaListedenDuser() {
