@@ -221,7 +221,8 @@ fun BulguKarti(bulgu: Bulgu, baglam: Baglam = Baglam.GENEL, onClick: (() -> Unit
 /** Bir bulguyu grup içinde satır olarak gösterir. */
 @Composable
 fun BulguSatiri(bulgu: Bulgu, baglam: Baglam = Baglam.GENEL, onClick: (() -> Unit)? = null, ust: String? = null) {
-    val g = durumGorunumu(bulgu.seviye, baglam)
+    // Bilgi notları her yerde gri "bilgi" simgesiyle gösterilir; yeşil onay "sorun yok" sanılmasın.
+    val g = durumGorunumu(bulgu.seviye, if (bulgu.seviye == Seviye.BILGI) Baglam.GENEL else baglam)
     Satir(
         baslik = bulgu.baslik,
         aciklama = bulgu.aciklama,

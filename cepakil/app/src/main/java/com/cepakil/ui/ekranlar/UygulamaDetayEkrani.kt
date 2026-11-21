@@ -177,13 +177,13 @@ fun UygulamaDetayIcerik(
                         Button(onClick = ayarlariAc, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = MaterialTheme.shapes.medium) {
                             Icon(Icons.Filled.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Ayarlar", style = MaterialTheme.typography.labelLarge)
+                            Text("Ayarlar", style = MaterialTheme.typography.labelLarge, maxLines = 1)
                         }
                         if (!u.sistemUygulamasi) {
                             OutlinedButton(onClick = kaldir, modifier = Modifier.weight(1f).heightIn(min = 48.dp), shape = MaterialTheme.shapes.medium) {
                                 Icon(Icons.Filled.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
-                                Text("Tamamen kaldır", style = MaterialTheme.typography.labelLarge)
+                                Text("Kaldır", style = MaterialTheme.typography.labelLarge, maxLines = 1)
                             }
                         }
                     }
