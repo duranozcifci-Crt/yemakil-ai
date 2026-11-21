@@ -9,6 +9,8 @@ on:
       - "cepakil/**"
       - ".github/workflows/cepakil.yml"
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   derle:
     runs-on: ubuntu-latest
@@ -29,6 +31,17 @@ jobs:
         run: ./gradlew --no-daemon assembleDebug
       - name: Android Lint
         run: ./gradlew --no-daemon lintDebug
+      # Yalnız elle başlatılınca: APK'yı aynı dala ekler (sohbetten doğrudan göndermek için).
+      - name: APK'yı dala ekle
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p indir
+          cp app/build/outputs/apk/debug/app-debug.apk indir/CepAkil.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add indir/CepAkil.apk
+          git commit -m "CepAkıl APK (otomatik)"
+          git push origin HEAD:${{ github.ref_name }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
