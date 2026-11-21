@@ -9,12 +9,11 @@
         android:strokeColor="#FFFFFFFF"
         android:strokeWidth="3.5"
         android:pathData="M43,25.75 H65 A5.25,5.25 0 0 1 70.25,31 V77 A5.25,5.25 0 0 1 65,82.25 H43 A5.25,5.25 0 0 1 37.75,77 V31 A5.25,5.25 0 0 1 43,25.75 Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M45,47 A9,9 0 1 1 63,47 C63,51 60.5,53 59,55.5 L49,55.5 C47.5,53 45,51 45,47 Z M49.5,57.5 H58.5 V60 H49.5 Z M51,61.5 H57 A1.2,1.2 0 0 1 57,64 H51 A1.2,1.2 0 0 1 51,61.5 Z" />
+    <!-- Beyin ("akıl") -->
     <path
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="2"
+        android:strokeWidth="2.2"
         android:strokeLineCap="round"
-        android:pathData="M54,34.5 V36.3 M44.2,39.6 L45.6,40.8 M63.8,39.6 L62.4,40.8" />
+        android:strokeLineJoin="round"
+        android:pathData="M54,41 C51,37.5 46,38.5 46,42.5 C43,42.5 42,46.5 44,48.5 C42,50.5 43,55 46.5,55 C47,59 51,60.5 54,58.5 M54,41 C57,37.5 62,38.5 62,42.5 C65,42.5 66,46.5 64,48.5 C66,50.5 65,55 61.5,55 C61,59 57,60.5 54,58.5 M54,41 V58.5 M48.5,46 C50.5,45 52,47 50.5,49 M59.5,46 C57.5,45 56,47 57.5,49 M47.5,52 C49.5,52.5 51,51.5 51,53.5 M60.5,52 C58.5,52.5 57,51.5 57,53.5" />
 </vector>
