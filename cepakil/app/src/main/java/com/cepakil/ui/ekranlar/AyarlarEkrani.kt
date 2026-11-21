@@ -95,8 +95,14 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             item {
                 Madde(
                     "Uygulama listesini görme (QUERY_ALL_PACKAGES)",
-                    "CepAkıl'ın istediği tek izin budur. Android 11 ve sonrasında telefondaki uygulamaları listeleyip izinlerini göstermek için gerekir. " +
+                    "Android 11 ve sonrasında telefondaki uygulamaları listeleyip izinlerini göstermek için gerekir. " +
                         "Yükleme sırasında verilir, ayrıca sorulmaz. Bu izinle uygulamaların yalnız adı, sürümü, nereden yüklendiği ve istediği izinler okunur; uygulamaların içindeki verilere erişilemez.",
+                )
+            }
+            item {
+                Madde(
+                    "Uygulama kaldırma penceresini açma (REQUEST_DELETE_PACKAGES)",
+                    "\"Tamamen kaldır\" düğmesinin Android'in kaldırma onay penceresini açabilmesi için. Yükleme sırasında verilir. Bu izinle hiçbir uygulama sessizce silinemez; Android her seferinde sana sorar.",
                 )
             }
             item {

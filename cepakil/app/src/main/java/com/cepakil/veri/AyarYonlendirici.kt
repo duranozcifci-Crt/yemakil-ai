@@ -81,6 +81,29 @@ object AyarYonlendirici {
         Intent(Settings.ACTION_DEVICE_INFO_SETTINGS),
     )
 
+    /** Android'in kaldırma onay penceresini açar; kaldırma kararı kullanıcınındır. */
+    fun kaldir(context: Context, paket: String) = ac(
+        context,
+        Intent(Intent.ACTION_DELETE, Uri.fromParts("package", paket, null)),
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", paket, null)),
+    )
+
+    /** Uygulamayı açar (ör. hesabını silmek için). Açılamazsa false. */
+    fun uygulamayiAc(context: Context, paket: String): Boolean {
+        val i = context.packageManager.getLaunchIntentForPackage(paket) ?: return false
+        return try { context.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true } catch (e: Exception) { false }
+    }
+
+    fun playSayfasi(context: Context, paket: String) = ac(
+        context,
+        Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$paket")),
+        Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$paket")),
+    )
+
+    fun hesaplar(context: Context) = ac(context, Intent(Settings.ACTION_SYNC_SETTINGS))
+
+    fun indirilenler(context: Context) = ac(context, Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS))
+
     fun gizlilik(context: Context) = ac(
         context,
         Intent("android.settings.PRIVACY_SETTINGS"),

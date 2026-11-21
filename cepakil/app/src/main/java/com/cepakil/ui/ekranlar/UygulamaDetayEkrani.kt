@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.SearchOff
@@ -46,6 +47,7 @@ import com.cepakil.ui.bilesenler.BolumBasligi
 import com.cepakil.ui.bilesenler.BulguKarti
 import com.cepakil.ui.bilesenler.BuyukDugme
 import com.cepakil.ui.bilesenler.DurumKarti
+import com.cepakil.ui.bilesenler.IkincilDugme
 import com.cepakil.ui.bilesenler.SinirNotu
 import com.cepakil.ui.bilesenler.UstCubuk
 import com.cepakil.veri.AyarYonlendirici
@@ -63,7 +65,7 @@ private sealed interface DetayDurumu {
 private data class IzinSatiri(val grup: IzinSozlugu.Grup, val durum: String, val teknik: List<String>)
 
 @Composable
-fun UygulamaDetayEkrani(paket: String, geri: () -> Unit) {
+fun UygulamaDetayEkrani(paket: String, geri: () -> Unit, kaldirmayaGit: () -> Unit) {
     val context = LocalContext.current
     var durum by remember(paket) { mutableStateOf<DetayDurumu>(DetayDurumu.Yukleniyor) }
     LaunchedEffect(paket) {
@@ -115,6 +117,10 @@ fun UygulamaDetayEkrani(paket: String, geri: () -> Unit) {
                     }
                     item {
                         BuyukDugme("Uygulama ayarlarını aç", { AyarYonlendirici.uygulamaAyarlari(context, u.paket) }, ikon = Icons.Filled.Settings)
+                        if (!u.sistemUygulamasi) {
+                            Spacer(Modifier.size(8.dp))
+                            IkincilDugme("Tamamen kaldır (iz bırakmadan)", kaldirmayaGit, ikon = Icons.Filled.DeleteForever)
+                        }
                         Text(
                             "İzinleri kaldırmak, uygulamayı durdurmak ya da kaldırmak için Android'in kendi ekranı açılır. CepAkıl hiçbir uygulamayı kendisi silmez veya devre dışı bırakmaz.",
                             style = MaterialTheme.typography.bodySmall,

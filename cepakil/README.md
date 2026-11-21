@@ -11,7 +11,7 @@ dosya ve bağlantıları fark etmesine yardımcı olur.
 
 - Dil: Kotlin · Arayüz: Jetpack Compose (Material 3)
 - En düşük Android: **8.0 (API 26)** · Hedef: **Android 15 (API 35)**
-- Uygulamanın istediği izin sayısı: **1** (`QUERY_ALL_PACKAGES`) — ayrıntı aşağıda
+- Uygulamanın istediği izinler: **2** (`QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`) — ikisi de yükleme sırasında verilir; ayrıntı aşağıda
 - İnternet izni: **yok**
 
 ---
@@ -101,9 +101,20 @@ her cihazda okunamaz; o zaman ekranda “durumu ayarlardan kontrol et” yazar.
 Yükleyen bilgisi uygulamanın beyanına dayanır; üretici ön yüklemelerinde boş
 olabilir.
 
-**Eylem:** CepAkıl hiçbir uygulamayı silmez, durdurmaz, devre dışı
+**Eylem:** CepAkıl hiçbir uygulamayı kendisi silmez, durdurmaz, devre dışı
 bırakmaz. “Uygulama ayarlarını aç” düğmesi Android'in kendi uygulama bilgisi
 ekranını açar; karar kullanıcınındır.
+
+**Tamamen kaldır (iz bırakmadan):** ayrıntı ekranındaki bu düğme adım adım
+bir rehber açar: (gerekirse) cihaz yöneticisi yetkisini kaldırma → uygulamayı
+açıp hesabı silme (şirketin sunucusundaki veriler kaldırmakla silinmez) →
+Android'in kaldırma onay penceresi (`ACTION_DELETE`; uygulamanın telefondaki
+özel verilerini Android siler) → geride kalabilecek izler: ortak klasörlerdeki
+dosyalar (İndirilenler), Ayarlar > Hesaplar'daki hesap, girilen şifre/kart
+bilgileri için öneriler. Ekran, onay penceresinden dönünce uygulamanın
+gerçekten kaldırılıp kaldırılmadığını yeniden denetler. Sınır: başka
+uygulamaların ortak klasörlere bıraktığı dosyalar depolama izni olmadan
+listelenemez; sunucudaki verileri yalnız şirket silebilir.
 
 ### Dosya kontrolü
 **Ölçer:** dosyanın ilk baytlarından **gerçek türü** (PDF, APK, Office, ZIP,
@@ -158,6 +169,7 @@ o da yoksa genel Ayarlar açılır.
 | **Dosyalar** | Depolama izni istenmez. Storage Access Framework (`ACTION_OPEN_DOCUMENT`) yalnız kullanıcının seçtiği dosyaya geçici okuma yetkisi verir. Arka planda dosya taranamaz; bu bilinçli bir tercihtir. |
 | **APK incelemesi** | `PackageManager.getPackageArchiveInfo` dosya yolu istediği için seçilen APK uygulamanın kendi önbelleğine kopyalanır, okunur ve hemen silinir. Uygulama açılışında da eski kopyalar temizlenir. |
 | **Pano** | Android 12+ pano okunduğunda bildirim gösterir. CepAkıl panoyu yalnız “Panodan yapıştır” düğmesine basılınca okur. |
+| **Uygulama kaldırma** | `REQUEST_DELETE_PACKAGES` (yükleme sırasında verilir) yalnız Android'in kaldırma onay penceresini açmaya yarar; Android 9+ bu izni ister. Sessiz kaldırma normal uygulamalara kapalıdır. |
 | **Erişilebilirlik / cihaz yöneticisi** | CepAkıl bu yetkileri **istemez**. Yalnız hangi uygulamalarda açık olduğunu herkese açık arayüzlerden okur. |
 | **Ayar ekranlarına yönlendirme** | `Settings.ACTION_*` niyetleri kullanılır. Üreticiler bazı ekranları kaldırabildiği için her yönlendirmenin yedeği vardır. Sistem güncelleme ekranının herkese açık bir niyeti yoktur; `android.settings.SYSTEM_UPDATE_SETTINGS` denenir, yoksa “Telefon hakkında” açılır. |
 | **Android 15 kenardan kenara** | Hedef API 35 olduğundan ekran içeriği sistem çubuklarının altına uzanır; Compose `Scaffold` boşlukları bırakır. |

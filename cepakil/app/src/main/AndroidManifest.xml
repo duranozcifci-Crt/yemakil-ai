@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-        CepAkıl'ın TEK izni.
+        CepAkıl'ın İLK izni.
         Android 11 ve sonrasında telefondaki uygulamaları listelemek için gerekir.
         Yükleme sırasında verilir; kullanıcıya ayrıca sorulmaz. Yalnız uygulama adları,
         sürümleri, yükleyen mağaza ve istedikleri izinler okunur.
@@ -13,6 +13,13 @@
     <uses-permission
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+
+    <!--
+        "Tamamen kaldır" düğmesinin Android'in kaldırma onay penceresini açabilmesi için.
+        Yükleme sırasında verilir. Bu izinle hiçbir uygulama sessizce silinemez:
+        Android her kaldırmada kullanıcıya ayrıca sorar.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <application
         android:allowBackup="false"

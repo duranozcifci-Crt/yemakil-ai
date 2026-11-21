@@ -29,6 +29,7 @@ import com.cepakil.ui.ekranlar.AnaEkran
 import com.cepakil.ui.ekranlar.AyarlarEkrani
 import com.cepakil.ui.ekranlar.BaglantiEkrani
 import com.cepakil.ui.ekranlar.DosyaEkrani
+import com.cepakil.ui.ekranlar.KaldirmaEkrani
 import com.cepakil.ui.ekranlar.OnerilerEkrani
 import com.cepakil.ui.ekranlar.UygulamaDetayEkrani
 import com.cepakil.ui.ekranlar.UygulamalarEkrani
@@ -63,7 +64,7 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
             NavigationBar {
                 Sekme.entries.forEach { s ->
                     val secili = rota == s.rota ||
-                        (s == Sekme.UYGULAMALAR && rota?.startsWith("uygulama/") == true) ||
+                        (s == Sekme.UYGULAMALAR && (rota?.startsWith("uygulama/") == true || rota?.startsWith("kaldir/") == true)) ||
                         (s == Sekme.ANA && rota == "oneriler")
                     NavigationBarItem(
                         selected = secili,
@@ -83,7 +84,11 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
                 UygulamalarEkrani(uygulamalarVm) { nav.navigate("uygulama/$it") }
             }
             composable("uygulama/{paket}") { e ->
-                UygulamaDetayEkrani(e.arguments?.getString("paket").orEmpty()) { nav.popBackStack() }
+                val paket = e.arguments?.getString("paket").orEmpty()
+                UygulamaDetayEkrani(paket, geri = { nav.popBackStack() }, kaldirmayaGit = { nav.navigate("kaldir/$paket") })
+            }
+            composable("kaldir/{paket}") { e ->
+                KaldirmaEkrani(e.arguments?.getString("paket").orEmpty()) { nav.popBackStack() }
             }
             composable(Sekme.DOSYA.rota) { DosyaEkrani(dosyaVm) }
             composable(Sekme.BAGLANTI.rota) { BaglantiEkrani(paylasilanMetin, paylasilanKullanildi) }
