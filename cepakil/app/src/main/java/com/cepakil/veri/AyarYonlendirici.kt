@@ -100,6 +100,37 @@ object AyarYonlendirici {
         Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$paket")),
     )
 
+    /** Google Play "Veri güvenliği" sayfası: hesap açtıran uygulamaların hesap silme bağlantısı burada olur. */
+    fun veriGuvenligiSayfasi(context: Context, paket: String) = ac(
+        context,
+        Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/datasafety?id=$paket")),
+        Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$paket")),
+    )
+
+    /**
+     * KVKK 11. madde kapsamında hazır bir veri silme talebi e-postası açar.
+     * Gönderen kullanıcıdır; CepAkıl hiçbir şey göndermez (internet izni yok).
+     */
+    fun silmeTalebiEpostasi(context: Context, uygulamaAdi: String, paket: String): Boolean {
+        val konu = "Kişisel verilerimin silinmesi talebi – $uygulamaAdi"
+        val metin = """Merhaba,
+
+$uygulamaAdi ($paket) uygulamasındaki hesabımın ve bana ait tüm kişisel verilerin silinmesini, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun 7. ve 11. maddeleri (AB'de yerleşik şirketler için GDPR 17. madde) uyarınca talep ediyorum.
+
+Hesabımda kayıtlı e-posta / telefon: ______________
+
+Silme işleminin tamamlandığını tarafıma yazılı olarak bildirmenizi rica ederim. Kanun gereği talebimin en geç 30 gün içinde sonuçlandırılması gerekmektedir.
+
+Ad Soyad: ______________
+"""
+        val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:"))
+            .putExtra(Intent.EXTRA_SUBJECT, konu)
+            .putExtra(Intent.EXTRA_TEXT, metin)
+        return try {
+            context.startActivity(Intent.createChooser(i, "E-posta uygulaması seç").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); true
+        } catch (e: Exception) { false }
+    }
+
     fun hesaplar(context: Context) = ac(context, Intent(Settings.ACTION_SYNC_SETTINGS))
 
     fun indirilenler(context: Context) = ac(context, Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS))

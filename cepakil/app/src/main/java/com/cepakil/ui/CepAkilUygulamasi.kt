@@ -10,6 +10,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -37,7 +39,7 @@ import com.cepakil.ui.ekranlar.UygulamalarEkrani
 
 private enum class Sekme(val rota: String, val etiket: String, val ikon: ImageVector) {
     ANA("ana", "Ana sayfa", Icons.Filled.Shield),
-    UYGULAMALAR("uygulamalar", "Uygulamalar", Icons.Filled.Apps),
+    UYGULAMALAR("uygulamalar", "Uygulama", Icons.Filled.Apps),
     DOSYA("dosya", "Dosya", Icons.AutoMirrored.Filled.InsertDriveFile),
     BAGLANTI("baglanti", "Bağlantı", Icons.Filled.Link),
     AYARLAR("ayarlar", "Ayarlar", Icons.Filled.Settings),
@@ -71,7 +73,15 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
                         selected = secili,
                         onClick = { sekmeyeGit(nav, s.rota) },
                         icon = { Icon(s.ikon, contentDescription = null) },
-                        label = { Text(s.etiket, style = MaterialTheme.typography.labelSmall, maxLines = 1, softWrap = false) },
+                        // Büyük yazı ayarında etiketler kesilmesin: menü yazısı en fazla 1,15 katına büyür
+                        // (simgeler ve ekran okuyucu adı her zaman tam).
+                        label = {
+                            val olcek = LocalDensity.current.fontScale
+                            Text(
+                                s.etiket, maxLines = 1, softWrap = false,
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = (11f * minOf(1f, 1.15f / olcek)).sp),
+                            )
+                        },
                     )
                 }
             }

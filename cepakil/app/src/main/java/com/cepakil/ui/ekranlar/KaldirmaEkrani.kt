@@ -110,12 +110,14 @@ fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
                 }
                 val n2 = no++
                 item {
-                    Adim(n2, "Hesabını sil (isteğe bağlı, önce yapılmalı)",
-                        "Uygulamaya üye olduysan bilgilerin şirketin sunucusunda da durur; kaldırmak bunları silmez. " +
-                            "Silmek için uygulamayı açıp \"Hesabımı sil\" seçeneğini ara. Play Store sayfasındaki \"Veri güvenliği\" bölümünde de silme bağlantısı olabilir.") {
+                    Adim(n2, "Hesabını sil (önce yapılmalı)",
+                        "Üye olduysan bilgilerin şirketin sunucusunda durur; uygulamayı kaldırmak bunları silmez ve hiçbir uygulama bunu senin yerine yapamaz. " +
+                            "En kolay yollar: uygulamada \"Hesabımı sil\" seçeneği, Google Play'in veri silme sayfası ya da şirkete hazır KVKK silme talebi göndermek.") {
                         IkincilDugme("Uygulamayı aç", { AyarYonlendirici.uygulamayiAc(context, paket) }, ikon = Icons.AutoMirrored.Filled.OpenInNew)
                         Spacer(Modifier.size(8.dp))
-                        IkincilDugme("Play Store sayfasını aç", { AyarYonlendirici.playSayfasi(context, paket) }, ikon = Icons.Filled.Shop)
+                        IkincilDugme("Veri silme sayfasını aç (Play)", { AyarYonlendirici.veriGuvenligiSayfasi(context, paket) }, ikon = Icons.Filled.Shop)
+                        Spacer(Modifier.size(8.dp))
+                        IkincilDugme("Silme talebi e-postası hazırla", { AyarYonlendirici.silmeTalebiEpostasi(context, ad, paket) }, ikon = Icons.Filled.AccountCircle)
                     }
                 }
                 val n3 = no++
