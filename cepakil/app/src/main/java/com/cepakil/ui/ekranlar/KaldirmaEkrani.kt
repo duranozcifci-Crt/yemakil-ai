@@ -147,7 +147,7 @@ fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
                                 Text("Şirketin e-posta adresi uygulamanın içinde aranıyor…", style = MaterialTheme.typography.bodyMedium)
                             }
                             liste.isEmpty() -> Text(
-                                "Uygulamanın içinde şirket adresi bulunamadı. Play Store sayfasındaki \"Uygulama desteği / Geliştirici iletişim\" bölümündeki e-postayı aşağıya yaz.",
+                                "Uygulamanın içinde güvenilir bir şirket adresi bulunamadı. Play Store sayfasındaki \"Uygulama desteği / Geliştirici iletişim\" bölümündeki e-postayı aşağıya yaz.",
                                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             liste.size > 1 -> FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -161,12 +161,12 @@ fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
                         OutlinedTextField(adSoyad, { adSoyad = it }, label = { Text("Ad soyad") }, singleLine = true,
                             modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium)
                         Spacer(Modifier.size(6.dp))
-                        OutlinedTextField(hesap, { hesap = it }, label = { Text("Hesaptaki e-posta ya da telefon") }, singleLine = true,
+                        OutlinedTextField(hesap, { hesap = it }, label = { Text("Hesaptaki e-postan (kopya sana da gelir)") }, singleLine = true,
                             modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium)
                         Spacer(Modifier.size(10.dp))
                         BuyukDugme("Silme talebini gönder", { AyarYonlendirici.silmeTalebiEpostasi(context, ad, paket, alici, adSoyad, hesap) }, ikon = Icons.Filled.Email)
                         Text(
-                            "E-posta uygulaman her şeyi doldurulmuş olarak açılır; kontrol edip Gönder'e bas. Talebin \"Gönderilenler\"de kanıt olarak kalır. Şirket 30 gün içinde yanıt vermek zorundadır. Yazdığın bilgiler CepAkıl'da saklanmaz.",
+                            "Talep ŞİRKETE gider; e-postanı yazdıysan bir kopyası sana da gelir. E-posta uygulaman her şeyi doldurulmuş olarak açılır; alıcıyı ve metni kontrol edip Gönder'e bas. Talebin \"Gönderilenler\"de kanıt olarak kalır. Şirket 30 gün içinde yanıt vermek zorundadır. Yazdığın bilgiler CepAkıl'da saklanmaz.",
                             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 6.dp),
                         )

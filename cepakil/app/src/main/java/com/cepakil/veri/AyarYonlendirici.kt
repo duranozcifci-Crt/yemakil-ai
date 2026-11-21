@@ -130,10 +130,20 @@ Silme işleminin tamamlandığını tarafıma yazılı olarak bildirmenizi rica 
 
 Ad Soyad: ${adSoyad.ifBlank { "______________" }}
 """
-        val i = Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + Uri.encode(alici.trim())))
+        // Kullanıcı kendi e-postasını yazdıysa kopya (CC) ona da gider.
+        val kopya = hesap.trim().takeIf { it.contains('@') && it.contains('.') }
+        // Gmail gibi uygulamalar konu/metni ek bilgilerden değil, mailto bağlantısının içinden okur.
+        val baglanti = buildString {
+            append("mailto:").append(Uri.encode(alici.trim(), "@"))
+            append("?subject=").append(Uri.encode(konu))
+            append("&body=").append(Uri.encode(metin))
+            if (kopya != null) append("&cc=").append(Uri.encode(kopya, "@"))
+        }
+        val i = Intent(Intent.ACTION_SENDTO, Uri.parse(baglanti))
             .putExtra(Intent.EXTRA_EMAIL, if (alici.isBlank()) emptyArray() else arrayOf(alici.trim()))
             .putExtra(Intent.EXTRA_SUBJECT, konu)
             .putExtra(Intent.EXTRA_TEXT, metin)
+            .apply { if (kopya != null) putExtra(Intent.EXTRA_CC, arrayOf(kopya)) }
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return try {
             context.startActivity(i); true

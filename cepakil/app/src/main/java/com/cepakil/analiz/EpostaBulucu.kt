@@ -103,11 +103,15 @@ object EpostaBulucu {
                     val tamAlan = e.contains('.') && !e.endsWith('.')
                     (if (tamAlan) alan == e || alan.endsWith(".$e") else alan.contains(e)) || a.substringBefore('@').contains(e)
                 } &&
-                    uzanti !in elenenUzantilar && !a.substringBefore('@').all { it.isDigit() }
+                    uzanti !in elenenUzantilar && !a.substringBefore('@').all { it.isDigit() } &&
+                    // Şifrelenmiş koddan gelen rastgele parçaları ("n@y.tc") ele: yerel kısım ≥ 2, alan adı ≥ 3 harf.
+                    a.substringBefore('@').length >= 2 && alan.substringBeforeLast('.').substringAfterLast('.').length >= 3 &&
+                    uzanti.all { it.isLetter() }
             }
             .distinct()
             .sortedByDescending { a -> puan(a, paketParcalari) }
-            .filter { puan(it, paketParcalari) > 0 }
+            // Yalnız güvenilir adaylar: uygulamanın kendi alan adı ya da adında iletişim/gizlilik kelimesi geçen adres.
+            .filter { puan(it, paketParcalari) >= 20 }
     }
 
     private fun puan(a: String, paketParcalari: List<String>): Int {

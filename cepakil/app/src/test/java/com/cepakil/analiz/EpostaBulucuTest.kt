@@ -37,8 +37,13 @@ class EpostaBulucuTest {
     }
 
     @Test fun gmailAdresiDeKabulAmaSonda() {
-        val s = EpostaBulucu.sirala(listOf("gelistirici@gmail.com", "info@firma.com"), "com.firma.oyun")
-        assertEquals(listOf("info@firma.com", "gelistirici@gmail.com"), s)
+        val s = EpostaBulucu.sirala(listOf("oyun.destek@gmail.com", "info@firma.com"), "com.firma.oyun")
+        assertEquals(listOf("info@firma.com", "oyun.destek@gmail.com"), s)
+    }
+
+    @Test fun rastgeleKodParcalariElenir() {
+        // Şifrelenmiş koddan gelen anlamsız parçalar ve ilgisiz kişisel adresler önerilmez.
+        assertTrue(EpostaBulucu.sirala(listOf("n@y.tc", "ab@c.de", "john.smith@randomlib.com"), "com.yalla.okey101yalla").isEmpty())
     }
 
     @Test fun ornekVeKutuphaneAdresleriElenir() {
