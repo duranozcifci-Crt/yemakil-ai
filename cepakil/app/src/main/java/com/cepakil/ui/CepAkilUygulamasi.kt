@@ -1,6 +1,7 @@
 package com.cepakil.ui
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Shield
@@ -84,7 +85,8 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
             }
         },
     ) { ic ->
-        NavHost(nav, startDestination = Sekme.ANA.rota, modifier = Modifier.padding(ic)) {
+        // consumeWindowInsets: alt menünün kapladığı alan, ekranlardaki klavye boşluğundan (imePadding) düşülsün.
+        NavHost(nav, startDestination = Sekme.ANA.rota, modifier = Modifier.padding(ic).consumeWindowInsets(ic)) {
             composable(Sekme.ANA.rota) {
                 AnaEkran(
                     taramaVm,

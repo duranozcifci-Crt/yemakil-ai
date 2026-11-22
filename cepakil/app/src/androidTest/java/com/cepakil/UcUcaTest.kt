@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.FixMethodOrder
@@ -86,6 +87,7 @@ class UcUcaTest {
         sekme("uygulamalar")
         k.waitUntil(60_000) { var_("uygulama ·") }
         k.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Deneme")
+        Espresso.closeSoftKeyboard()
         bekle(deneme)
         foto("3_uygulamalar")
         k.onNodeWithText(deneme).performClick()
@@ -101,6 +103,7 @@ class UcUcaTest {
         sekme("uygulamalar")
         k.waitUntil(60_000) { var_("uygulama ·") }
         k.onAllNodes(hasSetTextAction()).onFirst().performTextInput("Deneme")
+        Espresso.closeSoftKeyboard()
         bekle(deneme)
         kabuk("pm uninstall com.cepakil.ornek")
         // Kullanıcı başka uygulamadan dönmüş gibi: ekran önce arka plana, sonra öne.

@@ -71,6 +71,7 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
     val sistemDahil by vm.sistemDahil.collectAsStateWithLifecycle()
     var arama by rememberSaveable { mutableStateOf("") }
     var yalnizIncelenecek by rememberSaveable { mutableStateOf(false) }
+    val klavye = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     // Bir uygulama kaldırılıp geri dönüldüğünde liste güncel olsun.
     androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) { vm.sessizYenile() }
 
@@ -95,6 +96,8 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
                     value = arama,
                     onValueChange = { arama = it },
                     placeholder = { Text("Uygulama ara") },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Search),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { klavye?.hide() }),
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     singleLine = true,
                     shape = MaterialTheme.shapes.medium,
