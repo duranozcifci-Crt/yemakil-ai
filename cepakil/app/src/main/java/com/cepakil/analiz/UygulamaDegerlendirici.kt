@@ -30,6 +30,12 @@ object UygulamaDegerlendirici {
         val surum: String? = null,
         /** Son yükleme/güncelleme zamanı (ms). Yeni uygulama takibi için. */
         val sonGuncelleme: Long = 0,
+        /**
+         * Telefonun sistem uygulamalarıyla AYNI imzayı taşıyor: telefon üreticisinin
+         * (ör. Samsung) kendi uygulaması. İmza üreticinin gizli anahtarı olmadan
+         * taklit edilemez; bu yüzden güvenilir kaynak sayılır.
+         */
+        val ureticiUygulamasi: Boolean = false,
     )
 
     /** ApplicationInfo.category karşılığı (Android 8+ uygulamalar kendisi bildirir). */
@@ -53,6 +59,12 @@ object UygulamaDegerlendirici {
         "temizle", "cleaner", "booster", "hızlandır", "not defteri", "notepad", "zil sesi", "ringtone",
     )
 
+    /** Web uygulamalarını (WebAPK) ana ekrana ekleyen tarayıcılar. */
+    val tarayicilar = setOf(
+        "com.android.chrome", "com.chrome.beta", "com.chrome.dev", "com.sec.android.app.sbrowser",
+        "com.sec.android.app.sbrowser.beta", "org.mozilla.firefox", "com.microsoft.emmx", "com.opera.browser", "com.brave.browser",
+    )
+
     fun magazadanMi(yukleyen: String?): Boolean = yukleyen != null && yukleyen in bilinenMagazalar
 
     fun degerlendir(u: UygulamaBilgisi): Sonuc {
@@ -62,8 +74,17 @@ object UygulamaDegerlendirici {
             .filter { it.tur == IzinSozlugu.Tur.CALISMA_ZAMANI }
             .map { it.grup }.toSet()
         val istenenGruplar = u.izinler.keys.mapNotNull { IzinSozlugu.tanim(it)?.grup }.toSet()
-        val magazaDisi = !u.sistemUygulamasi && !magazadanMi(u.yukleyen)
+        // Sistem ve üretici uygulamalarına "mağaza dışı" ya da "beklenmedik izin" kuralları uygulanmaz.
+        val ozel = u.sistemUygulamasi || u.ureticiUygulamasi
+        val webUygulamasi = u.paket.startsWith("org.chromium.webapk.") || u.yukleyen in tarayicilar
+        val magazaDisi = !ozel && !webUygulamasi && !magazadanMi(u.yukleyen)
 
+        if (webUygulamasi && !ozel) {
+            b += Bulgu(
+                Seviye.BILGI, "Tarayıcıdan eklenmiş web uygulaması",
+                "Bir web sitesinin ana ekrana eklenmiş hâli. Tarayıcının içinde çalışır; uygulama mağazası denetiminden geçmez ama sıradan bir uygulamanın yetkilerine de sahip değildir.",
+            )
+        }
         if (magazaDisi) {
             b += Bulgu(
                 Seviye.SARI, "Bilinen bir mağazadan yüklenmemiş",
@@ -87,7 +108,7 @@ object UygulamaDegerlendirici {
             )
         }
 
-        if (u.bildirimErisimiAcik && !u.sistemUygulamasi) {
+        if (u.bildirimErisimiAcik && !ozel) {
             b += Bulgu(
                 if (magazaDisi) Seviye.SARI else Seviye.BILGI, "Bildirimlerini okuyabiliyor",
                 "Gelen bildirimleri, içindeki doğrulama kodlarıyla birlikte görebilir. Akıllı saat ya da otomasyon uygulamaları için normaldir.",
@@ -95,7 +116,7 @@ object UygulamaDegerlendirici {
         }
 
         val smsOkuma = listOf("READ_SMS", "RECEIVE_SMS").any { u.izinler["android.permission.$it"] == true }
-        if (smsOkuma && !u.varsayilanSmsUygulamasi && !u.sistemUygulamasi) {
+        if (smsOkuma && !u.varsayilanSmsUygulamasi && !ozel) {
             b += Bulgu(
                 if (magazaDisi) Seviye.KIRMIZI else Seviye.SARI, "SMS okuma izni var",
                 "Bu uygulama mesaj uygulaman değil ama SMS'lerini okuyabiliyor; bankaların gönderdiği tek kullanımlık şifreler dahil. Gerçekten gerekli mi?",
@@ -103,14 +124,14 @@ object UygulamaDegerlendirici {
         }
 
         val ustKatman = "android.permission.SYSTEM_ALERT_WINDOW" in u.izinler
-        if (ustKatman && !u.sistemUygulamasi && (magazaDisi || u.erisilebilirlikAcik)) {
+        if (ustKatman && !ozel && (magazaDisi || u.erisilebilirlikAcik)) {
             b += Bulgu(
                 Seviye.SARI, "Diğer uygulamaların üzerinde gösterme istiyor",
                 "Başka uygulamaların üstüne pencere çizebilir. Mağaza dışı bir uygulamada sahte giriş ekranı için kullanılabilir. Durumunu uygulama ayarlarından kontrol et.",
             )
         }
 
-        if ("android.permission.REQUEST_INSTALL_PACKAGES" in u.izinler && !u.sistemUygulamasi) {
+        if ("android.permission.REQUEST_INSTALL_PACKAGES" in u.izinler && !ozel) {
             val acik = u.bilinmeyenKaynakIzni == true
             b += Bulgu(
                 when {
@@ -124,12 +145,12 @@ object UygulamaDegerlendirici {
             )
         }
 
-        if (!u.sistemUygulamasi && IzinSozlugu.Grup.ARKA_PLAN_KONUM in verilenGruplar) {
+        if (!ozel && IzinSozlugu.Grup.ARKA_PLAN_KONUM in verilenGruplar) {
             b += Bulgu(Seviye.SARI, "Arka planda konum izni verilmiş", "Uygulama kapalıyken de konumunu alabilir. Navigasyon ya da aile takip uygulamaları dışında nadiren gerekir.")
         }
 
         val kisiselVerilen = verilenGruplar.intersect(IzinSozlugu.kisiselVeriGruplari)
-        if (!u.sistemUygulamasi && kisiselVerilen.size >= 4) {
+        if (!ozel && kisiselVerilen.size >= 4) {
             b += Bulgu(
                 Seviye.SARI, "Çok sayıda hassas izin verilmiş",
                 "${kisiselVerilen.joinToString { it.ad.lowercase(Locale("tr")) }} izinleri verilmiş. Her birinin bu uygulama için gerçekten gerekli olup olmadığını düşün.",
@@ -140,23 +161,23 @@ object UygulamaDegerlendirici {
         val adKucuk = u.ad.lowercase(Locale("tr"))
         val basit = u.kategori == Kategori.OYUN || basitUygulamaSozcukleri.any { adKucuk.contains(it) }
         val beklenmedik = verilenGruplar.intersect(setOf(IzinSozlugu.Grup.SMS, IzinSozlugu.Grup.KISILER, IzinSozlugu.Grup.ARAMA_KAYITLARI, IzinSozlugu.Grup.MIKROFON))
-        if (!u.sistemUygulamasi && basit && beklenmedik.isNotEmpty()) {
+        if (!ozel && basit && beklenmedik.isNotEmpty()) {
             b += Bulgu(
                 Seviye.SARI, "Bu tür bir uygulama için beklenmedik izin",
                 "${if (u.kategori == Kategori.OYUN) "Bir oyun" else "Basit bir araç uygulaması"} için ${beklenmedik.joinToString { it.ad.lowercase(Locale("tr")) }} izni alışılmadık. Uygulama ayarlarından izni kaldırabilirsin.",
             )
         }
 
-        if (!u.sistemUygulamasi && u.hedefSdk in 1..22) {
+        if (!ozel && u.hedefSdk in 1..22) {
             b += Bulgu(
                 Seviye.SARI, "Çok eski Android için yapılmış",
                 "Bu uygulama Android 6 öncesi kurallara göre hazırlanmış (hedef API ${u.hedefSdk}). Bu tür uygulamalar izinleri yükleme anında toplu alabilir. Uzun süredir güncellenmemiş olabilir.",
             )
-        } else if (!u.sistemUygulamasi && u.hedefSdk in 23..28) {
+        } else if (!ozel && u.hedefSdk in 23..28) {
             b += Bulgu(Seviye.BILGI, "Eski Android sürümünü hedefliyor", "Hedef API ${u.hedefSdk}. Uzun süredir güncellenmemiş olabilir; yeni Android'in bazı gizlilik korumaları bu uygulamaya tam uygulanmaz.")
         }
 
-        if (!u.sistemUygulamasi && IzinSozlugu.Grup.TUM_DOSYALAR in istenenGruplar) {
+        if (!ozel && IzinSozlugu.Grup.TUM_DOSYALAR in istenenGruplar) {
             b += Bulgu(Seviye.BILGI, "Tüm dosyalara erişim istiyor", "Dosya yöneticisi ve yedekleme uygulamaları için normaldir. Başka bir uygulamaysa izin durumunu ayarlardan kontrol et.")
         }
 

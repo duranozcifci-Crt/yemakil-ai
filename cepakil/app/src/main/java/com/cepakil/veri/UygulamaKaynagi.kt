@@ -33,6 +33,8 @@ class UygulamaKaynagi(private val context: Context) {
         val cihazYoneticileri: Set<String>,
         val bildirimDinleyiciler: Set<String>,
         val varsayilanSms: String?,
+        /** Sistem (önceden yüklü) uygulamaların imza özetleri: üretici uygulamalarını tanımak için. */
+        val sistemImzalari: Set<String>,
     )
 
     private fun ortam(): Ortam {
@@ -45,7 +47,7 @@ class UygulamaKaynagi(private val context: Context) {
         val yoneticiler = guvenli(emptySet()) { dpm?.activeAdmins?.map { it.packageName }?.toSet() ?: emptySet() }
         val dinleyiciler = guvenli(emptySet()) { NotificationManagerCompat.getEnabledListenerPackages(context) }
         val sms = guvenli(null) { Telephony.Sms.getDefaultSmsPackage(context) }
-        return Ortam(erisilebilirlik, yoneticiler, dinleyiciler, sms)
+        return Ortam(erisilebilirlik, yoneticiler, dinleyiciler, sms, sistemImzalari())
     }
 
     /**
@@ -106,6 +108,39 @@ class UygulamaKaynagi(private val context: Context) {
         return Ayrinti(pi.firstInstallTime, pi.lastUpdateTime, yukleyenAdi)
     }
 
+    /**
+     * Önceden yüklü sistem uygulamalarının imza özetleri (SHA-256). Telefonun
+     * yazılımı herkese açık "test" anahtarlarıyla imzalanmışsa (bazı özel
+     * ROM'lar) bu güven kullanılmaz; çünkü o anahtarla herkes imza atabilir.
+     */
+    private fun sistemImzalari(): Set<String> {
+        if (!Build.TAGS.orEmpty().contains("release-keys")) return emptySet()
+        onbellek?.let { return it }
+        val uygulamalar = guvenli(emptyList()) {
+            if (Build.VERSION.SDK_INT >= 33) pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0))
+            else @Suppress("DEPRECATION") pm.getInstalledApplications(0)
+        }
+        val sonuc = uygulamalar.asSequence()
+            .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) != 0 }
+            .flatMap { imzalar(it.packageName).asSequence() }
+            .toSet()
+        onbellek = sonuc
+        return sonuc
+    }
+
+    /** Bir uygulamanın imza sertifikalarının SHA-256 özetleri. */
+    private fun imzalar(paket: String): Set<String> = guvenli(emptySet()) {
+        val sertifikalar = if (Build.VERSION.SDK_INT >= 28) {
+            val si = paketBilgisi(paket, PackageManager.GET_SIGNING_CERTIFICATES)?.signingInfo ?: return emptySet()
+            if (si.hasMultipleSigners()) si.apkContentsSigners else si.signingCertificateHistory
+        } else {
+            @Suppress("DEPRECATION") paketBilgisi(paket, PackageManager.GET_SIGNATURES)?.signatures
+        } ?: return emptySet()
+        sertifikalar.map { s ->
+            java.security.MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString("") { "%02x".format(it) }
+        }.toSet()
+    }
+
     private fun sistemMi(ai: ApplicationInfo) =
         (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0 || (ai.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
 
@@ -148,6 +183,7 @@ class UygulamaKaynagi(private val context: Context) {
             bilinmeyenKaynakIzni = bilinmeyenKaynak,
             surum = pi.versionName,
             sonGuncelleme = pi.lastUpdateTime,
+            ureticiUygulamasi = !sistemMi(ai) && o.sistemImzalari.isNotEmpty() && imzalar(paket).any { it in o.sistemImzalari },
         )
     }
 
@@ -176,6 +212,9 @@ class UygulamaKaynagi(private val context: Context) {
     }
 
     companion object {
+        /** Sistem imzaları uygulama açık kaldığı sürece bir kez hesaplanır. */
+        @Volatile private var onbellek: Set<String>? = null
+
         fun degerlendir(liste: List<UygulamaBilgisi>) = liste.map { UygulamaDegerlendirici.degerlendir(it) }
     }
 }

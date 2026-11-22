@@ -79,3 +79,28 @@ class UygulamaVeCihazTest {
         assertEquals(Seviye.SARI, CihazDegerlendirici.degerlendir(cihaz(usb = true)).enYuksekSeviye())
     }
 }
+
+class UreticiVeWebTest {
+    private val p = "android.permission."
+    private fun u(paket: String = "com.samsung.android.app.watchmanager", yukleyen: String? = null, uretici: Boolean = false, izinler: Map<String, Boolean> = emptyMap()) =
+        UygulamaDegerlendirici.UygulamaBilgisi(
+            paket = paket, ad = "Galaxy Wearable", sistemUygulamasi = false, yukleyen = yukleyen, hedefSdk = 34,
+            izinler = izinler, bildirimErisimiAcik = true, ureticiUygulamasi = uretici,
+        )
+
+    @org.junit.Test fun ureticiUygulamasiIsaretlenmez() {
+        val sms = mapOf("${p}READ_SMS" to true, "${p}RECEIVE_SMS" to true)
+        org.junit.Assert.assertEquals(Seviye.KIRMIZI, UygulamaDegerlendirici.degerlendir(u(izinler = sms)).seviye)
+        org.junit.Assert.assertEquals(Seviye.YESIL, UygulamaDegerlendirici.degerlendir(u(uretici = true, izinler = sms)).seviye)
+    }
+
+    @org.junit.Test fun ureticiDeOlsaErisilebilirlikBildirilir() {
+        val x = u(uretici = true).copy(erisilebilirlikAcik = true)
+        org.junit.Assert.assertEquals(Seviye.SARI, UygulamaDegerlendirici.degerlendir(x).seviye)
+    }
+
+    @org.junit.Test fun webUygulamasiYalnizBilgi() {
+        val w = u(paket = "org.chromium.webapk.a1b2c3", yukleyen = "com.android.chrome").copy(bildirimErisimiAcik = false)
+        org.junit.Assert.assertEquals(Seviye.BILGI, UygulamaDegerlendirici.degerlendir(w).seviye)
+    }
+}

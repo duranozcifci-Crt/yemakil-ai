@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shop
 import androidx.compose.material.icons.filled.Sms
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -167,6 +168,7 @@ fun UygulamaDetayIcerik(
                         DurumRozeti(s.seviye, Baglam.UYGULAMA)
                         when {
                             u.sistemUygulamasi -> Etiket("Sistem uygulaması", Icons.Filled.Settings)
+                            u.ureticiUygulamasi -> Etiket("Telefon üreticisinin", Icons.Filled.Verified)
                             magaza -> Etiket(ayrinti?.yukleyenAdi ?: "Bilinen mağaza", Icons.Filled.Shop)
                             else -> Etiket("Mağaza dışı", Icons.Filled.Warning)
                         }
@@ -264,6 +266,7 @@ fun UygulamaDetayIcerik(
             Grup {
                 val yukleyen = when {
                     u.sistemUygulamasi -> "Telefonla birlikte gelen sistem uygulaması"
+                    u.ureticiUygulamasi -> "Telefon üreticisinin uygulaması (imzası sistem uygulamalarıyla aynı)"
                     u.yukleyen == null -> "Bilinmiyor (Android bildirmiyor)"
                     else -> (ayrinti?.yukleyenAdi ?: u.yukleyen) + if (magaza) " · bilinen mağaza" else " · mağaza değil"
                 }
