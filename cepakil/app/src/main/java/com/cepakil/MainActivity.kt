@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    /** "Paylaş > CepAkıl" ile ya da mesaj uyarısı bildiriminden gelen metin. */
+    /** "Paylaş > CepAkıl" ile gelen metin. */
     private var paylasilan by mutableStateOf<String?>(null)
 
     /** Anlık koruma bildiriminden gelen uygulama paketi. */
@@ -51,7 +51,6 @@ class MainActivity : ComponentActivity() {
         if (i.action == Intent.ACTION_SEND && i.type == "text/plain") {
             i.getStringExtra(Intent.EXTRA_TEXT)?.take(4000)?.let { paylasilan = it }
         }
-        i.getStringExtra(Bildirimler.EK_MESAJ)?.take(4000)?.let { paylasilan = it }
         i.getStringExtra(Bildirimler.EK_PAKET)?.let { acilacakPaket = it }
     }
 

@@ -2,11 +2,8 @@ package com.cepakil.ui.ekranlar
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import android.net.VpnService
 import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +33,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.cepakil.analiz.TehditKaynagi
@@ -51,14 +47,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Bildirim erişimi (mesaj taraması için) CepAkıl'a verilmiş mi? */
-fun bildirimErisimiVar(context: Context): Boolean =
-    NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
-
 /**
- * Ayarlar > Koruma: dört güçlü özellik. Her biri kullanıcı açınca çalışır; açılırken neden izin
- * gerektiği yazılıdır. Durumlar ekran her öne geldiğinde yeniden okunur (ör. kullanıcı Android
- * ayarlarından bildirim erişimini verip geri döndüğünde).
+ * Ayarlar > Koruma: üç koruma özelliği. Her biri kullanıcı açınca çalışır; açılırken neden izin
+ * gerektiği yazılıdır. Durumlar ekran her öne geldiğinde yeniden okunur.
+ *
+ * Bildirimden mesaj taraması (NotificationListenerService) bilerek YOKTUR: Google Play Protect,
+ * dosyadan kurulan ve bildirim okuyabilen uygulamaların kurulumunu dolandırıcılık önlemi olarak
+ * engelliyor. Mesajlar "Paylaş > CepAkıl" ile denetlenir.
  */
 @Composable
 fun KorumaBolumu() {
@@ -69,9 +64,6 @@ fun KorumaBolumu() {
     var guncelleniyor by remember { mutableStateOf(false) }
     var guncellemeSonucu by remember { mutableStateOf<String?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        // Kullanıcı Android ayarlarında bildirim erişimini verdiyse mesaj taramasını aç.
-        if (bildirimErisimiVar(context) && !a.mesajTarama && bekleyenMesajIzni) { a.mesajTarama = true }
-        bekleyenMesajIzni = false
         tazele++
     }
     if (tazele < 0) return // durum okumaları "tazele" değişince yeniden yapılır
@@ -143,38 +135,6 @@ fun KorumaBolumu() {
         }
         GrupAyraci(16.dp)
 
-        val erisim = bildirimErisimiVar(context)
-        val mesajAcik = a.mesajTarama && erisim
-        Anahtar(
-            "Gelen mesajları otomatik tara",
-            "SMS, WhatsApp ve Telegram bildirimleri geldiği anda telefonda dolandırıcılık kalıplarına göre incelenir; şüpheliyse seni uyarır. " +
-                "Bunun için Android'in \"Bildirim erişimi\" iznini senin açman gerekir. Mesajlar saklanmaz, hiçbir yere gönderilmez; " +
-                "yalnız mesajlaşma uygulamalarının bildirimlerine bakılır." +
-                if (a.mesajTarama && !erisim) "\nBildirim erişimi kapalı: açmak için anahtara dokun." else "",
-            mesajAcik, "koruma_mesaj",
-        ) { acik ->
-            if (acik) {
-                a.mesajTarama = true
-                if (!bildirimVar) bildirimIzniIste()
-                if (!erisim) {
-                    bekleyenMesajIzni = true
-                    try {
-                        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    } catch (_: Exception) { }
-                }
-            } else {
-                a.mesajTarama = false
-                if (erisim) {
-                    // İzni tamamen geri almak için Android ayarı açılır; kapalıyken dinleyici zaten hiçbir şey yapmaz.
-                    try {
-                        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    } catch (_: Exception) { }
-                }
-            }
-            tazele++
-        }
-        GrupAyraci(16.dp)
-
         val vpnAcik = a.webKoruma && CepAkilVpn.aktifMi(context)
         Anahtar(
             "Web koruması",
@@ -200,19 +160,9 @@ fun KorumaBolumu() {
             }
             tazele++
         }
-        if (a.yakalananMesajSayisi > 0) {
-            Text(
-                "Uyarı verilen şüpheli mesaj: ${a.yakalananMesajSayisi}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-            )
-        }
     }
 }
 
-/** Kullanıcı mesaj taraması için Android ayarına gönderildi mi? Geri dönünce izin verildiyse özellik açılır. */
-private var bekleyenMesajIzni = false
 
 @Composable
 private fun Anahtar(baslik: String, aciklama: String, acik: Boolean, etiket: String, degisti: (Boolean) -> Unit) {

@@ -15,10 +15,6 @@ class KorumaAyarlari(context: Context) {
         get() = p.getBoolean("anlik", false)
         set(v) = p.edit().putBoolean("anlik", v).apply()
 
-    var mesajTarama: Boolean
-        get() = p.getBoolean("mesaj", false)
-        set(v) = p.edit().putBoolean("mesaj", v).apply()
-
     var webKoruma: Boolean
         get() = p.getBoolean("web", false)
         set(v) = p.edit().putBoolean("web", v).apply()
@@ -36,7 +32,4 @@ class KorumaAyarlari(context: Context) {
         get() = p.getInt("engellenen", 0)
         set(v) = p.edit().putInt("engellenen", v).apply()
 
-    var yakalananMesajSayisi: Int
-        get() = p.getInt("mesaj_sayi", 0)
-        set(v) = p.edit().putInt("mesaj_sayi", v).apply()
 }

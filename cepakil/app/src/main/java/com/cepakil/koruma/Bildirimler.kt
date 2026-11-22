@@ -17,19 +17,14 @@ import com.cepakil.R
 /** CepAkıl'ın gönderdiği uyarı bildirimleri. */
 object Bildirimler {
     const val KANAL_UYGULAMA = "uygulama"
-    const val KANAL_MESAJ = "mesaj"
     const val KANAL_WEB = "web"
     const val EK_PAKET = "cepakil.paket"
-    const val EK_MESAJ = "cepakil.mesaj"
 
     fun kanallariKur(context: Context) {
         if (Build.VERSION.SDK_INT < 26) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         nm.createNotificationChannel(NotificationChannel(KANAL_UYGULAMA, "Riskli uygulama uyarıları", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "Yeni yüklenen ya da güncellenen bir uygulama riskli göründüğünde"
-        })
-        nm.createNotificationChannel(NotificationChannel(KANAL_MESAJ, "Dolandırıcılık mesajı uyarıları", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Gelen bir mesaj dolandırıcılık kurgusuna benzediğinde"
         })
         nm.createNotificationChannel(NotificationChannel(KANAL_WEB, "Engellenen siteler", NotificationManager.IMPORTANCE_DEFAULT).apply {
             description = "Web koruması zararlı bir siteyi engellediğinde"
@@ -60,20 +55,6 @@ object Bildirimler {
             .setAutoCancel(true)
             .setContentIntent(ac(context, paket.hashCode()) { putExtra(EK_PAKET, paket) })
         gonder(context, paket.hashCode(), b)
-    }
-
-    fun mesajUyarisi(context: Context, kaynak: String, metin: String, ozet: String) {
-        kanallariKur(context)
-        val kisa = metin.replace('\n', ' ').take(90)
-        val b = NotificationCompat.Builder(context, KANAL_MESAJ)
-            .setSmallIcon(R.drawable.ic_bildirim)
-            .setContentTitle("Şüpheli mesaj ($kaynak)")
-            .setContentText(ozet)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$ozet\n\n\"$kisa…\"\n\nBağlantıya dokunma, kod paylaşma. Ayrıntı için dokun."))
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(ac(context, metin.hashCode()) { putExtra(EK_MESAJ, metin.take(4000)) })
-        gonder(context, metin.hashCode(), b)
     }
 
     fun siteEngellendi(context: Context, host: String) {

@@ -88,7 +88,6 @@ fun AnaEkran(
         korumaSayisi = listOf(
             a.tehditListeleri,
             a.anlikKoruma,
-            a.mesajTarama && bildirimErisimiVar(context),
             a.webKoruma && CepAkilVpn.aktifMi(context),
         ).count { it }
     }
@@ -118,7 +117,7 @@ fun AnaEkranIcerik(
     dosyayaGit: () -> Unit,
     baglantiyaGit: () -> Unit,
     cihazEylemi: (Bulgu) -> (() -> Unit)? = { null },
-    /** Açık koruma sayısı (4 üzerinden) ve Ayarlar'a gitme eylemi. */
+    /** Açık koruma sayısı (3 üzerinden) ve Ayarlar'a gitme eylemi. */
     koruma: Pair<Int, () -> Unit>? = null,
 ) {
     val kayit = d.kayit
@@ -214,11 +213,11 @@ fun AnaEkranIcerik(
         koruma?.let { (sayi, git) ->
             item {
                 Grup {
-                    val tam = sayi == 4
+                    val tam = sayi == 3
                     Satir(
-                        "Koruma: $sayi / 4 açık",
-                        if (tam) "Tehdit listeleri, anlık koruma, mesaj taraması ve web koruması çalışıyor."
-                        else "Anlık koruma, mesaj taraması ve web korumasını Ayarlar'dan açabilirsin.",
+                        "Koruma: $sayi / 3 açık",
+                        if (tam) "Tehdit listeleri, anlık uygulama koruması ve web koruması çalışıyor."
+                        else "Anlık uygulama korumasını ve web korumasını Ayarlar'dan açabilirsin.",
                         bas = {
                             TonluSimge(
                                 Icons.Filled.Shield,

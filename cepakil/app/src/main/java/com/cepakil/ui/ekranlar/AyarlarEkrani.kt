@@ -95,7 +95,7 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             item {
                 Madde(
                     "Arka planda yalnız senin açtıkların çalışır",
-                    "Liste güncellemesi, anlık uygulama koruması, mesaj taraması ve web koruması yukarıdaki anahtarlarla açılıp kapatılır. " +
+                    "Liste güncellemesi, anlık uygulama koruması ve web koruması yukarıdaki anahtarlarla açılıp kapatılır. " +
                         "Gizli izleme ya da otomatik silme yoktur; uyarılar bildirim olarak gelir, kararı sen verirsin.",
                 )
             }
@@ -130,13 +130,7 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             item {
                 Madde(
                     "Bildirim gösterme (POST_NOTIFICATIONS)",
-                    "Anlık koruma, mesaj taraması ve web koruması seni uyarabilsin diye. Android 13 ve sonrasında yalnız bu özelliklerden birini açtığında sorulur.",
-                )
-            }
-            item {
-                Madde(
-                    "Bildirim erişimi (isteğe bağlı)",
-                    "Yalnız \"Gelen mesajları otomatik tara\" açıksa ve sen Android ayarlarından verirsen. SMS okuma izni istenmez; yalnız mesajlaşma uygulamalarının bildirim metnine bakılır.",
+                    "Anlık koruma ve web koruması seni uyarabilsin diye. Android 13 ve sonrasında yalnız bu özelliklerden birini açtığında sorulur.",
                 )
             }
             item {
@@ -148,7 +142,7 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             item {
                 Madde(
                     "İstenmeyen izinler",
-                    "SMS, kişiler, arama kayıtları, konum, mikrofon, kamera, depolama, erişilebilirlik ve cihaz yöneticisi izinleri bilerek istenmez.",
+                    "SMS, kişiler, arama kayıtları, konum, mikrofon, kamera, depolama, erişilebilirlik, bildirim okuma ve cihaz yöneticisi izinleri bilerek istenmez. Bu sayede Google Play Protect kurulumu engellemez.",
                 )
             }
 

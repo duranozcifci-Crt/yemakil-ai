@@ -78,17 +78,6 @@
             </intent-filter>
         </service>
 
-        <!-- Gelen mesaj taraması: kullanıcı Ayarlar > Bildirim erişimi'nden açarsa çalışır. -->
-        <service
-            android:name=".koruma.BildirimDinleyici"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
-
         <receiver android:name=".koruma.IzinVerAlici" android:exported="false" />
     </application>
 </manifest>
