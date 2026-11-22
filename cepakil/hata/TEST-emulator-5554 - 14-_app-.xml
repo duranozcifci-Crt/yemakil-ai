@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.cepakil.UcUcaTest" tests="5" failures="1" errors="0" skipped="0" time="47.047" timestamp="2026-11-22T06:15:58" hostname="localhost">
+  <properties>
+    <property name="device" value="emulator-5554 - 14" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="t1_anaSayfaTaramasi" classname="com.cepakil.UcUcaTest" time="5.12" />
+  <testcase name="t2_magazaDisiUygulamaYakalanir" classname="com.cepakil.UcUcaTest" time="5.916" />
+  <testcase name="t3_kaldirilanUygulamaListedenDuser" classname="com.cepakil.UcUcaTest" time="32.199">
+    <failure>androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 30000 ms
+at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+at com.cepakil.UcUcaTest.bekle(UcUcaTest.kt:65)
+at com.cepakil.UcUcaTest.bekle$default(UcUcaTest.kt:65)
+at com.cepakil.UcUcaTest.t3_kaldirilanUygulamaListedenDuser(UcUcaTest.kt:104)
+</failure>
+  </testcase>
+  <testcase name="t4_dolandiricilikMesaji" classname="com.cepakil.UcUcaTest" time="1.771" />
+  <testcase name="t5_dosyaVeAyarlar" classname="com.cepakil.UcUcaTest" time="1.593" />
+</testsuite>
