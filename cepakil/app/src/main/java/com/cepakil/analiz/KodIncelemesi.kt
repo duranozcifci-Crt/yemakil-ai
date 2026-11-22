@@ -68,8 +68,8 @@ object KodIncelemesi {
         ),
         EKRAN_KAYDI(
             "Ekran kaydı",
-            "Ekranda gördüklerini kaydedebilir ya da yayınlayabilir.",
-            Seviye.SARI,
+            "Ekranda gördüklerini kaydedebilir ya da yayınlayabilir. Görüntülü görüşme ve ekran paylaşımı uygulamalarında normaldir.",
+            Seviye.BILGI,
             listOf(listOf("Landroid/media/projection/MediaProjection")),
         ),
         SIMGE_GIZLEME(
@@ -136,6 +136,39 @@ object KodIncelemesi {
     private val dexAdi = Regex("""^classes\d*\.dex$""")
 
     private val tumParcalar: List<String> = Yetenek.entries.flatMap { y -> y.kaliplar.flatten() }.distinct()
+
+    /**
+     * Yüklü uygulamalar için: APK dosyaları ZipFile ile okunur (dizin tablosundan doğrudan
+     * classes*.dex'e atlar; 1–2 GB'lık oyunlarda bile hızlıdır). [devam] false dönerse
+     * (ör. kullanıcı ekrandan çıktı) okuma bırakılır.
+     */
+    fun inceleDosyalar(dosyalar: List<java.io.File>, devam: () -> Boolean = { true }): Sonuc {
+        val bulunan = HashSet<String>()
+        var dexSayisi = 0
+        var okunamadi = false
+        var kismi = false
+        var toplam = 0L
+        for (f in dosyalar) {
+            if (!devam()) { kismi = true; break }
+            try {
+                java.util.zip.ZipFile(f).use { z ->
+                    val girdiler = z.entries().asSequence().filter { dexAdi.matches(it.name) }.toList()
+                    for (e in girdiler) {
+                        if (!devam() || toplam >= TOPLAM_SINIR) { kismi = true; break }
+                        if (e.size > DEX_SINIRI) { kismi = true; continue }
+                        val dex = z.getInputStream(e).use { it.readBytes() }
+                        toplam += dex.size
+                        dexSayisi++
+                        if (!metinTablosunuTara(dex, bulunan)) okunamadi = true
+                    }
+                }
+            } catch (e: Exception) {
+                okunamadi = true
+            }
+        }
+        val yetenekler = Yetenek.entries.filter { y -> y.kaliplar.any { grup -> grup.all { it in bulunan } } }.toSet()
+        return Sonuc(yetenekler, dexSayisi, okunamadi && dexSayisi == 0, kismi)
+    }
 
     /** Her açıcı bir APK (ZIP) dosyası döndürmelidir (ör. base.apk ve bölünmüş parçalar). */
     fun incele(apklar: List<() -> InputStream>): Sonuc {
@@ -208,17 +241,27 @@ object KodIncelemesi {
     }
 
     /** Bulunan yetenekleri, birleşimleri de dikkate alarak bulgulara çevirir. */
-    fun bulgular(s: Sonuc): List<Bulgu> {
+    /**
+     * @param guvenilir Sistem, üretici ya da denetleyen mağazadan (Play…) gelen uygulama:
+     *   bulgular yalnız bilgi notu olur (meşru kütüphaneler de bu adları içerir).
+     * @param erisilebilirlikHizmetiVar Uygulamanın manifestinde gerçekten erişilebilirlik
+     *   hizmeti tanımlı mı? false ise "ekranı kontrol" yeteneği sayılmaz (ör. şifre yöneticisi
+     *   kütüphanesinde geçen adlar). null = bilinmiyor.
+     */
+    fun bulgular(s: Sonuc, guvenilir: Boolean = false, erisilebilirlikHizmetiVar: Boolean? = null): List<Bulgu> {
         val b = mutableListOf<Bulgu>()
         if (s.okunamadi) {
-            b += Bulgu(Seviye.BILGI, "Kod okunamadı", "Uygulamanın kod dosyası açılamadı ya da tanınmayan biçimde. Kod incelemesi yapılamadı.")
+            b += Bulgu(
+                if (guvenilir) Seviye.BILGI else Seviye.SARI, "Paket yapısı olağandışı",
+                "Uygulamanın kod dosyası açılamadı ya da bozuk biçimde. Bazı zararlılar incelemeden kaçmak için paketlerini bilerek bozar. Kod incelemesi yapılamadı.",
+            )
             return b
         }
         if (s.dexSayisi == 0) {
             b += Bulgu(Seviye.BILGI, "Kod dosyası bulunamadı", "Bu pakette derlenmiş kod yok ya da kod ayrı parçalarda. Kod incelemesi yapılamadı.")
             return b
         }
-        val y = s.yetenekler
+        val y = if (erisilebilirlikHizmetiVar == false) s.yetenekler - Yetenek.EKRAN_KONTROLU else s.yetenekler
         val kontrol = Yetenek.EKRAN_KONTROLU in y
         val sms = Yetenek.SMS_OKUMA in y || Yetenek.SMS_ENGELLEME in y
         if (kontrol && (sms || Yetenek.UST_KATMAN in y)) {
@@ -226,12 +269,6 @@ object KodIncelemesi {
                 Seviye.KIRMIZI, "Kodda bankacılık truva atı kalıbı",
                 "Kod, ekranı okuyup senin adına dokunma ile birlikte ${if (sms) "SMS okuma/gizleme" else "diğer uygulamaların üstünde pencere açma"} yeteneği içeriyor. " +
                     "Bu birleşim banka bilgisi ve doğrulama kodu çalan zararlılarda çok sık görülür. Kesin kanıt değildir; uygulamayı tanımıyorsan kaldır.",
-            )
-        }
-        if (Yetenek.SIMGE_GIZLEME in y && (sms || kontrol)) {
-            b += Bulgu(
-                Seviye.KIRMIZI, "Kendini gizleyip mesaj ya da ekran okuma",
-                "Kod hem simgesini gizleyebiliyor hem de ${if (sms) "SMS'leri" else "ekranı"} okuyabiliyor. Zararlıların kendini kullanıcıdan saklamak için kullandığı bir birleşim.",
             )
         }
         if (Yetenek.CIHAZ_KILITLEME in y && kontrol) {
@@ -246,6 +283,8 @@ object KodIncelemesi {
             b += Bulgu(Seviye.BILGI, "Koddaki diğer yetenekler", diger.joinToString("; ") { "${it.ad}: ${it.aciklama}" })
         }
         if (s.kismi) b += Bulgu(Seviye.BILGI, "Kodun bir kısmı incelendi", "Uygulama çok büyük olduğu için kodun tamamı okunamadı.")
-        return b.oneminGoreSirala()
+        // Güvenilir kaynaktan gelen uygulamada koddaki adlar çoğunlukla hazır kütüphanelerdendir: yalnız bilgi.
+        val sonuc = if (guvenilir) b.map { if (it.seviye.agirlik > Seviye.BILGI.agirlik) it.copy(seviye = Seviye.BILGI) else it } else b
+        return sonuc.oneminGoreSirala()
     }
 }

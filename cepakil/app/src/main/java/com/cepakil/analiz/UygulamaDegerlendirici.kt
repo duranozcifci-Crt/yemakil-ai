@@ -36,6 +36,12 @@ object UygulamaDegerlendirici {
          * taklit edilemez; bu yüzden güvenilir kaynak sayılır.
          */
         val ureticiUygulamasi: Boolean = false,
+        /** Ana ekranda simgesi yok (başlatıcı etkinliği tanımlamıyor). */
+        val simgesiz: Boolean = false,
+        /** Android 13+: Android bu uygulamanın bir dosyadan (APK) yüklendiğini bildiriyor. */
+        val dosyadanYuklendi: Boolean = false,
+        /** Eski telefondan taşıma aracıyla (Smart Switch, Mi Mover…) aktarılmış; asıl kaynağı bilinmiyor. */
+        val tasindi: Boolean = false,
     )
 
     /** ApplicationInfo.category karşılığı (Android 8+ uygulamalar kendisi bildirir). */
@@ -65,6 +71,12 @@ object UygulamaDegerlendirici {
         "com.sec.android.app.sbrowser.beta", "org.mozilla.firefox", "com.microsoft.emmx", "com.opera.browser", "com.brave.browser",
     )
 
+    /** Uygulamaları yayından önce inceleyen mağazalar: hassas izinleri bu mağazalar kendisi denetler. */
+    val denetleyenMagazalar = setOf(
+        "com.android.vending", "com.sec.android.app.samsungapps", "com.huawei.appmarket",
+        "com.xiaomi.market", "com.xiaomi.mipicks", "com.heytap.market", "com.oppo.market", "com.amazon.venezia",
+    )
+
     fun magazadanMi(yukleyen: String?): Boolean = yukleyen != null && yukleyen in bilinenMagazalar
 
     fun degerlendir(u: UygulamaBilgisi): Sonuc {
@@ -77,9 +89,25 @@ object UygulamaDegerlendirici {
         // Sistem ve üretici uygulamalarına "mağaza dışı" ya da "beklenmedik izin" kuralları uygulanmaz.
         val ozel = u.sistemUygulamasi || u.ureticiUygulamasi
         val webUygulamasi = u.paket.startsWith("org.chromium.webapk.") || u.yukleyen in tarayicilar
-        val magazaDisi = !ozel && !webUygulamasi && !magazadanMi(u.yukleyen)
+        val magazaDisi = !ozel && !webUygulamasi && (u.dosyadanYuklendi || (!u.tasindi && !magazadanMi(u.yukleyen)))
         // Google Play hassas izinleri (SMS, arama kaydı, arka plan konum…) yayından önce kendisi denetler.
-        val playden = u.yukleyen == "com.android.vending"
+        val playden = u.yukleyen in denetleyenMagazalar
+        val smsVerilmis = listOf("READ_SMS", "RECEIVE_SMS").any { u.izinler["android.permission.$it"] == true }
+
+        if (u.simgesiz && !ozel && !webUygulamasi && (u.erisilebilirlikAcik || smsVerilmis || u.cihazYoneticisiAcik || u.bildirimErisimiAcik)) {
+            b += Bulgu(
+                Seviye.KIRMIZI, "Simgesi gizli ama hassas yetkileri var",
+                "Bu uygulamanın ana ekranda simgesi yok, ama ${listOfNotNull(
+                    "erişilebilirlik".takeIf { u.erisilebilirlikAcik }, "SMS okuma".takeIf { smsVerilmis },
+                    "cihaz yöneticisi".takeIf { u.cihazYoneticisiAcik }, "bildirim erişimi".takeIf { u.bildirimErisimiAcik },
+                ).joinToString()} yetkisi var. Zararlılar kendini gizlemek için simgesini kaldırır. Tanımıyorsan ayarlarından kaldır.",
+            )
+        } else if (u.simgesiz && magazaDisi) {
+            b += Bulgu(Seviye.SARI, "Mağaza dışından ve simgesi yok", "Ana ekranda simgesi olmayan, mağaza dışından yüklenmiş bir uygulama. Tanımıyorsan incele.")
+        }
+        if (u.tasindi && !ozel) {
+            b += Bulgu(Seviye.BILGI, "Eski telefondan taşınmış", "Bu uygulama telefon değiştirirken aktarılmış; ilk nereden yüklendiği bilinmiyor. Mağazadan güncellendiğinde bu not kalkar.")
+        }
 
         if (webUygulamasi && !ozel) {
             b += Bulgu(
@@ -91,6 +119,7 @@ object UygulamaDegerlendirici {
             b += Bulgu(
                 Seviye.SARI, "Bilinen bir mağazadan yüklenmemiş",
                 if (u.yukleyen == null) "Android bu uygulamayı neyin yüklediğini bildirmiyor. Bir dosyadan (APK) ya da bilgisayardan yüklenmiş olabilir. Tanıdığın bir uygulama değilse incele."
+                else if (u.dosyadanYuklendi) "Android bu uygulamanın bir dosyadan (APK) yüklendiğini bildiriyor. Tanıdığın bir uygulama değilse incele."
                 else "Yükleyen: ${u.yukleyen}. Google Play gibi bilinen bir mağaza değil. Dosyadan ya da başka bir uygulama aracılığıyla yüklenmiş olabilir.",
             )
         }
@@ -105,7 +134,7 @@ object UygulamaDegerlendirici {
 
         if (u.cihazYoneticisiAcik) {
             b += Bulgu(
-                if (magazaDisi) Seviye.KIRMIZI else Seviye.SARI, "Cihaz yöneticisi olarak etkin",
+                when { magazaDisi -> Seviye.KIRMIZI; ozel -> Seviye.BILGI; else -> Seviye.SARI }, "Cihaz yöneticisi olarak etkin",
                 "Ekranı kilitleyebilir ve kaldırılmasını zorlaştırabilir. İş telefonu yönetimi ya da \"cihazımı bul\" gibi uygulamalar bunu kullanır; tanımıyorsan güvenlik ayarlarından yetkisini kaldır.",
             )
         }
@@ -162,8 +191,14 @@ object UygulamaDegerlendirici {
 
         // Beklenmedik izinler: oyun ya da basit araç uygulamasında kişisel veri izinleri.
         val adKucuk = u.ad.lowercase(Locale("tr"))
-        val basit = u.kategori == Kategori.OYUN || basitUygulamaSozcukleri.any { adKucuk.contains(it) }
-        val beklenmedik = verilenGruplar.intersect(setOf(IzinSozlugu.Grup.SMS, IzinSozlugu.Grup.KISILER, IzinSozlugu.Grup.ARAMA_KAYITLARI, IzinSozlugu.Grup.MIKROFON))
+        // Sözcükler tam sözcük olarak aranır: "fener" ≠ "Fenerbahçe", "pil" ≠ "Pilates".
+        val basitAd = basitUygulamaSozcukleri.any { w -> Regex("""(^|[^\p{L}\p{N}])${Regex.escape(w)}($|[^\p{L}\p{N}])""").containsMatchIn(adKucuk) }
+        val oyun = u.kategori == Kategori.OYUN
+        val basit = oyun || basitAd
+        // Oyunlarda mikrofon (sesli sohbet) normaldir; basit araçlarda değildir.
+        val beklenenDisi = if (oyun && !basitAd) setOf(IzinSozlugu.Grup.SMS, IzinSozlugu.Grup.KISILER, IzinSozlugu.Grup.ARAMA_KAYITLARI)
+        else setOf(IzinSozlugu.Grup.SMS, IzinSozlugu.Grup.KISILER, IzinSozlugu.Grup.ARAMA_KAYITLARI, IzinSozlugu.Grup.MIKROFON)
+        val beklenmedik = verilenGruplar.intersect(beklenenDisi)
         if (!ozel && basit && beklenmedik.isNotEmpty()) {
             b += Bulgu(
                 Seviye.SARI, "Bu tür bir uygulama için beklenmedik izin",

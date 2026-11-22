@@ -167,6 +167,11 @@ yeni kurguları ve Türkçe dışındaki kalıpları tanımayabilir.
 Google Play Hizmetleri'nin hazır kod okuyucusu kullanılır; CepAkıl kamera
 izni istemez. Okunan adres açılmaz, mesaj/bağlantı kurallarıyla denetlenir.
 
+### Elle eklenmiş sertifikalar ve klavyeler
+Taramada, telefona kullanıcı tarafından eklenmiş güvenlik (CA) sertifikaları
+(`AndroidCAStore` içindeki `user:` kayıtları) ve açık olan, mağaza dışından
+yüklenmiş klavyeler **sarı** bildirilir. İkisi de izin gerektirmez.
+
 ### Wi-Fi kontrolü
 Android 12+ cihazlarda bağlı ağın şifreleme türü okunur: şifresiz ağ ve WEP
 **sarı**, “Enhanced Open” bilgi notu. Ağ adı ve konum okunmaz. Android 11 ve

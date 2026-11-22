@@ -19,6 +19,10 @@ object CihazDegerlendirici {
         val bugun: LocalDate,
         /** Bağlı Wi-Fi ağının şifreleme türü; Wi-Fi'ye bağlı değilse YOK. */
         val wifi: WifiGuvenlik = WifiGuvenlik.YOK,
+        /** Kullanıcının elle eklediği güvenlik (CA) sertifikası sayısı. */
+        val kullaniciSertifikalari: Int = 0,
+        /** Açık olan ve mağaza dışından yüklenmiş klavyelerin adları. */
+        val magazaDisiKlavyeler: List<String> = emptyList(),
     )
 
     enum class WifiGuvenlik { YOK, ACIK, OWE, WEP, WPA_KISISEL, WPA3, KURUMSAL, BILINMIYOR }
@@ -76,6 +80,20 @@ object CihazDegerlendirici {
                 "Trafiğin şifrelenir ama ağa herkes katılabilir. Ağın gerçekten beklediğin yer olduğundan emin ol.",
             )
             else -> Unit
+        }
+
+        if (c.kullaniciSertifikalari > 0) {
+            b += Bulgu(
+                Seviye.SARI, "Telefona elle güvenlik sertifikası eklenmiş (${c.kullaniciSertifikalari})",
+                "Bu tür bir sertifika, internet trafiğinin (şifreli olsa bile) başkası tarafından görülmesine olanak verebilir. " +
+                    "İş telefonu ya da şirket ağı için eklendiyse normaldir; tanımıyorsan Ayarlar > Güvenlik > Şifreleme ve kimlik bilgileri > Kullanıcı sertifikaları bölümünden kaldır.",
+            )
+        }
+        if (c.magazaDisiKlavyeler.isNotEmpty()) {
+            b += Bulgu(
+                Seviye.SARI, "Mağaza dışından yüklenmiş klavye açık",
+                "${c.magazaDisiKlavyeler.joinToString()} klavyesi açık. Klavyeler yazdığın her şeyi (şifreler dahil) görebilir; tanımıyorsan Ayarlar > Genel yönetim > Klavye listesinden kapat.",
+            )
         }
 
         if (c.usbHataAyiklama == true) {

@@ -2,6 +2,7 @@ package com.cepakil.ui.ekranlar
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,6 +77,8 @@ fun UygulamalarEkrani(vm: UygulamalarViewModel, ayrintiyaGit: (String) -> Unit) 
     Column(Modifier.fillMaxSize()) {
         UstCubuk("Uygulamalar")
         LazyColumn(
+            // Klavye açılınca alanlar ve düğmeler klavyenin altında kalmasın.
+            modifier = Modifier.imePadding(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {

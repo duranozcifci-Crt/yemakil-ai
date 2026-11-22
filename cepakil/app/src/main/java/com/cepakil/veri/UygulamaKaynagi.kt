@@ -91,6 +91,23 @@ class UygulamaKaynagi(private val context: Context) {
             .map { java.io.File(it) }.filter { it.canRead() }
     }
 
+    /**
+     * [anahtar] için son sorgudan bu yana bir uygulama yüklendi, güncellendi ya da
+     * kaldırıldı mı? (Android'in hazır sayacı; ucuz.) İlk çağrıda her zaman true.
+     */
+    fun degisiklikVarMi(anahtar: String): Boolean {
+        val onceki = siraNumaralari[anahtar]
+        val degisen = guvenli(null) { pm.getChangedPackages(onceki ?: 0) }
+        if (degisen != null) siraNumaralari[anahtar] = degisen.sequenceNumber
+        return onceki == null || degisen != null
+    }
+
+    /** Manifestte gerçekten bir erişilebilirlik hizmeti tanımlı mı? Okunamazsa null. */
+    fun erisilebilirlikHizmetiTanimli(paket: String): Boolean? {
+        val pi = paketBilgisi(paket, PackageManager.GET_SERVICES) ?: return null
+        return pi.services.orEmpty().any { it.permission == android.Manifest.permission.BIND_ACCESSIBILITY_SERVICE }
+    }
+
     fun simge(paket: String): Drawable? = guvenli(null) { pm.getApplicationIcon(paket) }
 
     /** Ek bilgiler (yalnız ayrıntı ekranında gösterilir). */
@@ -135,7 +152,7 @@ class UygulamaKaynagi(private val context: Context) {
      * dosya yöneticileri ve bilgisayar (adb) da sayılmaz.
      */
     private fun sistemYukleyicisiMi(yukleyen: String?): Boolean {
-        if (yukleyen == null || yukleyen in genelYukleyiciler) return false
+        if (yukleyen == null || yukleyen in genelYukleyiciler || yukleyen in tasimaAraclari) return false
         if (yukleyen in com.cepakil.analiz.UygulamaDegerlendirici.tarayicilar) return false
         return guvenli(false) {
             val ai = if (Build.VERSION.SDK_INT >= 33) pm.getApplicationInfo(yukleyen, PackageManager.ApplicationInfoFlags.of(0))
@@ -180,6 +197,13 @@ class UygulamaKaynagi(private val context: Context) {
             if (Build.VERSION.SDK_INT >= 30) pm.getInstallSourceInfo(paket).installingPackageName
             else @Suppress("DEPRECATION") pm.getInstallerPackageName(paket)
         }
+        // Android 13+: Android'in kendi kaydı — uygulama bir dosyadan mı yüklendi?
+        val dosyadan = if (Build.VERSION.SDK_INT >= 33) guvenli(false) {
+            val kaynak = pm.getInstallSourceInfo(paket).packageSource
+            kaynak == android.content.pm.PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE ||
+                kaynak == android.content.pm.PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE
+        } else false
+        val tasindi = yukleyen in tasimaAraclari
         val bilinmeyenKaynak = if ("android.permission.REQUEST_INSTALL_PACKAGES" in izinler) {
             islemIzniAcikMi("android:request_install_packages", ai.uid, paket)
         } else null
@@ -201,8 +225,11 @@ class UygulamaKaynagi(private val context: Context) {
             sonGuncelleme = pi.lastUpdateTime,
             ureticiUygulamasi = !sistemMi(ai) && (
                 (o.sistemImzalari.isNotEmpty() && imzalar(paket).any { it in o.sistemImzalari }) ||
-                    sistemYukleyicisiMi(yukleyen)
+                    (!dosyadan && !tasindi && sistemYukleyicisiMi(yukleyen))
                 ),
+            simgesiz = guvenli(false) { pm.getLaunchIntentForPackage(paket) == null && pm.getLeanbackLaunchIntentForPackage(paket) == null },
+            dosyadanYuklendi = dosyadan,
+            tasindi = tasindi,
         )
     }
 
@@ -234,12 +261,23 @@ class UygulamaKaynagi(private val context: Context) {
         /** Sistem imzaları uygulama açık kaldığı sürece bir kez hesaplanır. */
         @Volatile private var onbellek: Set<String>? = null
 
+        /** Telefon değiştirirken uygulamaları aktaran araçlar: asıl kaynak bilinmez, güven verilmez. */
+        private val tasimaAraclari = setOf(
+            "com.sec.android.easyMover", "com.sec.android.easyMover.Agent", "com.miui.huanji", "com.coloros.backuprestore",
+            "com.oplus.backuprestore", "com.google.android.apps.restore", "com.huawei.KoBackup", "com.huawei.phoneclone",
+            "com.hihonor.phoneclone", "com.vivo.easyshare", "com.motorola.migrate", "com.oneplus.backuprestore",
+        )
+
+        /** Son görülen paket değişiklik sıra numaraları (anahtar başına). */
+        private val siraNumaralari = java.util.concurrent.ConcurrentHashMap<String, Int>()
+
         /** Kullanıcının dosyadan/bilgisayardan kurduğu uygulamaları yükleyen genel bileşenler. */
         private val genelYukleyiciler = setOf(
             "com.google.android.packageinstaller", "com.android.packageinstaller", "com.samsung.android.packageinstaller",
             "com.miui.packageinstaller", "com.android.shell", "com.sec.android.app.myfiles",
             "com.google.android.apps.nbu.files", "com.google.android.documentsui", "com.android.documentsui",
             "com.mi.android.globalFileexplorer", "com.coloros.filemanager", "com.huawei.filemanager",
+            "com.android.fileexplorer", "com.huawei.hidisk", "com.android.filemanager", "com.oplus.filemanager",
         )
 
         fun degerlendir(liste: List<UygulamaBilgisi>) = liste.map { UygulamaDegerlendirici.degerlendir(it) }

@@ -50,7 +50,12 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
         if (degisiklikDenetleniyor) return
         degisiklikDenetleniyor = true
         viewModelScope.launch {
-            kaldirilanlariTemizle()
+            kaydiTazele()
+            // Son bakıştan beri hiçbir uygulama yüklenmedi/güncellenmedi/kaldırılmadıysa ağır okuma yapılmaz.
+            if (!withContext(Dispatchers.Default) { uygulamalar.degisiklikVarMi("ana") }) {
+                degisiklikDenetleniyor = false
+                return@launch
+            }
             try {
                 val sonuc = withContext(Dispatchers.Default) {
                     val liste = uygulamalar.tumUygulamalar(sistemDahil = false)
@@ -86,13 +91,29 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Son tarama kaydından, o günden beri kaldırılmış uygulamaları çıkarır. */
-    private suspend fun kaldirilanlariTemizle() {
+    /**
+     * Ana sayfaya her dönüşte son tarama kaydını tazeler: listedeki uygulamalar
+     * yeniden değerlendirilir (kaldırılan, izni geri alınan, artık sorun olmayan
+     * düşer) ve telefon ayarları yeniden okunur (ör. ekran kilidi kurulduysa).
+     * Arada yeni bir tarama bittiyse ona dokunulmaz.
+     */
+    private suspend fun kaydiTazele() {
         val k = _durum.value.kayit ?: return
-        val kalan = withContext(Dispatchers.Default) { k.uygulamalar.filter { uygulamalar.uygulama(it.paket) != null } }
-        if (kalan.size != k.uygulamalar.size) {
-            val yeni = k.copy(uygulamalar = kalan)
+        val yeni = try {
+            withContext(Dispatchers.Default) {
+                val uyg = k.uygulamalar.mapNotNull { eski ->
+                    val b = uygulamalar.uygulama(eski.paket) ?: return@mapNotNull null
+                    val s = UygulamaDegerlendirici.degerlendir(b)
+                    if (s.seviye == Seviye.KIRMIZI || s.seviye == Seviye.SARI) TaramaKaydi.UygulamaOzeti(b.paket, b.ad, s.seviye, s.bulgular) else null
+                }.sortedByDescending { it.seviye.agirlik }
+                k.copy(uygulamalar = uyg, cihazBulgulari = CihazDegerlendirici.degerlendir(cihaz.oku()))
+            }
+        } catch (e: Exception) {
+            return
+        }
+        if (yeni != k && _durum.value.kayit?.zaman == k.zaman) {
             depo.kaydet(yeni)
-            _durum.update { it.copy(kayit = yeni) }
+            _durum.update { if (it.kayit?.zaman == k.zaman) it.copy(kayit = yeni) else it }
         }
     }
 
@@ -177,6 +198,8 @@ class UygulamalarViewModel(app: Application) : AndroidViewModel(app) {
     fun sessizYenile() {
         if (_durum.value !is Durum.Hazir) return
         viewModelScope.launch {
+            // Uygulamalarda değişiklik yoksa (ör. yalnız ayrıntı ekranından geri dönüldü) yeniden okunmaz.
+            if (!withContext(Dispatchers.Default) { kaynak.degisiklikVarMi("liste") }) return@launch
             try {
                 val sonuc = withContext(Dispatchers.Default) {
                     kaynak.tumUygulamalar(_sistemDahil.value).map { UygulamaDegerlendirici.degerlendir(it) }
@@ -191,6 +214,7 @@ class UygulamalarViewModel(app: Application) : AndroidViewModel(app) {
     fun yukle() {
         _durum.value = Durum.Yukleniyor
         viewModelScope.launch {
+            withContext(Dispatchers.Default) { kaynak.degisiklikVarMi("liste") }
             _durum.value = try {
                 val sonuc = withContext(Dispatchers.Default) {
                     kaynak.tumUygulamalar(_sistemDahil.value).map { UygulamaDegerlendirici.degerlendir(it) }

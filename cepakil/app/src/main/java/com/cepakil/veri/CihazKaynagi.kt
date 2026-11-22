@@ -26,7 +26,26 @@ class CihazKaynagi(private val context: Context) {
             usbHataAyiklama = guvenli(null) { Settings.Global.getInt(cr, Settings.Global.ADB_ENABLED, 0) == 1 },
             bugun = LocalDate.now(),
             wifi = wifiGuvenligi(),
+            kullaniciSertifikalari = kullaniciSertifikalari(),
+            magazaDisiKlavyeler = magazaDisiKlavyeler(),
         )
+    }
+
+    /** Kullanıcının elle eklediği CA sertifikaları ("user:" ile başlayanlar). İzin gerekmez. */
+    private fun kullaniciSertifikalari(): Int = guvenli(0) {
+        val ks = java.security.KeyStore.getInstance("AndroidCAStore").apply { load(null) }
+        ks.aliases().toList().count { it.startsWith("user:") }
+    }
+
+    /** Açık klavyelerden sistem/üretici olmayan ve mağazadan gelmeyenler. */
+    private fun magazaDisiKlavyeler(): List<String> = guvenli(emptyList()) {
+        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+            ?: return emptyList()
+        val kaynak = UygulamaKaynagi(context)
+        imm.enabledInputMethodList.map { it.packageName }.distinct().mapNotNull { p ->
+            val u = kaynak.uygulama(p) ?: return@mapNotNull null
+            if (u.sistemUygulamasi || u.ureticiUygulamasi || com.cepakil.analiz.UygulamaDegerlendirici.magazadanMi(u.yukleyen)) null else u.ad
+        }
     }
 
     /** Bağlı Wi-Fi ağının şifreleme türü (Android 12+). Ağ adı ve konum okunmaz. */

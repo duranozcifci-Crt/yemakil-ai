@@ -77,8 +77,15 @@ object BaglantiDenetleyici {
 
     val kurumlar = listOf(
         Kurum("e-Devlet", listOf("edevlet", "turkiyegov"), setOf("turkiye.gov.tr")),
-        Kurum("Ziraat Bankası", listOf("ziraat"), setOf("ziraatbank.com.tr", "ziraatkatilim.com.tr", "ziraatyatirim.com.tr")),
-        Kurum("Garanti BBVA", listOf("garanti"), setOf("garantibbva.com.tr", "garanti.com.tr")),
+        // "=" ile başlayan anahtar yalnız adresin ayrı bir parçası olarak eşleşir ("ziraat" = tarım: ziraat.ankara.edu.tr).
+        Kurum("Ziraat Bankası", listOf("ziraatbank", "=ziraat"), setOf(
+            "ziraatbank.com.tr", "ziraatkatilim.com.tr", "ziraatyatirim.com.tr", "ziraatsigorta.com.tr",
+            "ziraatportfoy.com.tr", "ziraatemeklilik.com.tr", "ziraatteknoloji.com",
+        )),
+        Kurum("Garanti BBVA", listOf("garantibbva", "=garanti"), setOf(
+            "garantibbva.com.tr", "garanti.com.tr", "garantibbvaemeklilik.com.tr", "garantibbvayatirim.com.tr",
+            "garantibbvaportfoy.com.tr", "garantibbvafilo.com.tr", "garantibbvaleasing.com.tr", "garantibbvafaktoring.com.tr",
+        )),
         Kurum("Akbank", listOf("akbank"), setOf("akbank.com", "akbank.com.tr")),
         Kurum("İş Bankası", listOf("isbank", "isbankasi"), setOf("isbank.com.tr")),
         Kurum("Yapı Kredi", listOf("yapikredi"), setOf("yapikredi.com.tr")),
@@ -95,7 +102,10 @@ object BaglantiDenetleyici {
         Kurum("Hepsiburada", listOf("hepsiburada"), setOf("hepsiburada.com")),
         Kurum("Sahibinden", listOf("sahibinden"), setOf("sahibinden.com")),
         Kurum("n11", listOf("n11"), setOf("n11.com"), kisaAd = true),
-        Kurum("Yurtiçi Kargo", listOf("yurtici"), setOf("yurticikargo.com")),
+        Kurum("Yurtiçi Kargo", listOf("yurticikargo", "=yurtici"), setOf("yurticikargo.com")),
+        Kurum("Turkcell", listOf("turkcell"), setOf("turkcell.com.tr", "turkcell.com", "paycell.com.tr", "bip.com", "fizy.com")),
+        Kurum("Vodafone", listOf("vodafone"), setOf("vodafone.com.tr", "vodafone.com")),
+        Kurum("Türk Telekom", listOf("turktelekom"), setOf("turktelekom.com.tr", "ttnet.com.tr")),
         Kurum("Aras Kargo", listOf("araskargo"), setOf("araskargo.com.tr")),
         Kurum("MNG Kargo", listOf("mngkargo"), setOf("mngkargo.com.tr")),
         Kurum("PayPal", listOf("paypal"), setOf("paypal.com", "paypal.me")),
@@ -339,11 +349,26 @@ object BaglantiDenetleyici {
         return if (sonIki in ikiliUzantilar) e.takeLast(3).joinToString(".") else sonIki
     }
 
+    /**
+     * Belge ile alınabilen Türkiye uzantıları (devlet, üniversite, belediye, okul…):
+     * bunlar kurum taklidi sayılmaz; ör. ziraat.ankara.edu.tr bir üniversite fakültesidir.
+     */
+    private val belgeliUzantilar = listOf(".gov.tr", ".edu.tr", ".bel.tr", ".k12.tr", ".av.tr", ".pol.tr", ".tsk.tr")
+
+    fun belgeliUzantiMi(alan: String): Boolean = belgeliUzantilar.any { alan.endsWith(it) } || alan in setOf("gov.tr", "edu.tr")
+
     private fun kurumTaklidi(host: String, kayitliAd: String): Bulgu? {
+        if (belgeliUzantiMi(host)) return null
         val parcalar = host.split('.', '-', '_').toSet()
         val bitisik = host.replace("-", "").replace(".", "")
         for (k in kurumlar) {
-            val geciyor = k.anahtarlar.any { a -> if (k.kisaAd) a in parcalar else bitisik.contains(a) }
+            val geciyor = k.anahtarlar.any { a ->
+                when {
+                    a.startsWith("=") -> a.substring(1) in parcalar
+                    k.kisaAd -> a in parcalar
+                    else -> bitisik.contains(a)
+                }
+            }
             if (!geciyor) continue
             if (kayitliAd in k.resmi) return null
             val ad = kayitliAd.substringBefore('.')
@@ -370,7 +395,7 @@ object BaglantiDenetleyici {
 
     /** Resmi bir adrese çok benzeyen ama farklı olan alan adlarını yakalar (ör. "trendyoI", "z1raatbank"). */
     private fun harfBenzerligi(kayitliAd: String): Bulgu? {
-        if (kurumlar.any { kayitliAd in it.resmi }) return null
+        if (kurumlar.any { kayitliAd in it.resmi } || belgeliUzantiMi(kayitliAd)) return null
         val ad = kayitliAd.substringBefore('.')
         if (ad.length < 6) return null
         val normal = benzerHarfleriDuzelt(ad)

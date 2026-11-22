@@ -1,6 +1,7 @@
 package com.cepakil.ui.ekranlar
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -114,6 +115,8 @@ fun KaldirmaEkrani(paket: String, geri: () -> Unit) {
             return@Column
         }
         LazyColumn(
+            // Klavye açılınca alanlar ve düğmeler klavyenin altında kalmasın.
+            modifier = Modifier.imePadding(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {

@@ -295,7 +295,8 @@ fun IkincilDugme(metin: String, onClick: () -> Unit, ikon: ImageVector? = null, 
             Icon(ikon, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
         }
-        Text(metin, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        // Büyük yazıda kesilmesin: en fazla iki satır, ortalı.
+        Text(metin, style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 

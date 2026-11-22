@@ -45,8 +45,8 @@ object MesajDenetleyici {
             "turkcell", "vodafone", "turk telekom", "hgs", "ogs", "trafik cezasi", "masak", "bddk",
         )),
         KOD_ISTEME("Kod ya da şifre isteği", listOf(
-            "dogrulama kodu", "onay kodu", "sms kodu", "tek kullanimlik", "kodu paylas", "kodu ilet", "kodu gonder",
-            "sifreni", "sifrenizi", "parolani", "parolanizi", "kodu soyle", "gelen kodu",
+            "dogrulama kodu", "onay kodu", "sms kodu", "guvenlik kodu", "tek kullanimlik", "gelen kodu",
+            "sifreni", "sifrenizi", "parolani", "parolanizi", "sifre", "parola",
         )),
         YATIRIM("Yüksek kazanç ya da yatırım vaadi", listOf(
             "kripto", "bitcoin", "yatirim firsati", "garantili kazanc", "garanti getiri", "gunluk kazanc",
@@ -69,7 +69,32 @@ object MesajDenetleyici {
     private val riskliKaliplar = setOf(Kalip.PARA, Kalip.ODUL, Kalip.YATIRIM, Kalip.IS_TEKLIFI, Kalip.YAKIN_TAKLIDI, Kalip.UYGULAMA_YUKLE)
 
     private val ibanDeseni = Regex("""\bTR\s?\d{2}(?:\s?\d{4}){5}\s?\d{2}\b""", RegexOption.IGNORE_CASE)
-    private val baglantiDeseni = Regex("""(?i)\b(?:https?://|www\.)\S+|\b[a-z0-9][a-z0-9\-]{1,62}\.(?:com|net|org|info|xyz|top|click|link|site|online|shop|live|com\.tr|net\.tr|org\.tr|gov\.tr|tr|me|ly|co|io|app)(?:/\S*)?""")
+    private val baglantiDeseni = Regex(
+        """(?i:\b(?:https?://|www\.)\S+)""" +
+            """|(?<![@\w.\-])[a-z0-9][a-z0-9\-]{0,62}(?:\.[a-z0-9][a-z0-9\-]{0,62})*""" +
+            """\.(?:com\.tr|net\.tr|org\.tr|gov\.tr|edu\.tr|bel\.tr|k12\.tr|av\.tr|gen\.tr|biz\.tr|info\.tr|web\.tr|""" +
+            """com|net|org|info|xyz|top|click|link|site|online|shop|live|tr|me|ly|co|io|app)""" +
+            """(?![a-z0-9\-]|\.[a-z0-9])(?:/\S*)?""",
+    )
+
+    /** Kod istemi: "kodu paylaşır mısınız" evet; "kimseyle paylaşmayınız" hayır (olumsuz ek). */
+    private val istekFiili = Regex("""(paylas|ilet|gonder|soyle|bildir|yazar|okur|ver)(?!m[ae])(ir|in|ebilir|abilir|er|ar|\s|$|\b)""")
+    private val kodUyarisi = Regex("""(kimseyle|kimseye|hicbir|hic kimse)[^.!?]{0,40}(paylasma|verme|soyleme|iletme)|paylasmayiniz|paylasmayin""")
+
+    fun kodIstiyorMu(metin: String): Boolean {
+        val s = sadelestir(metin)
+        if (Kalip.KOD_ISTEME.sozcukler.none { s.contains(it) }) return false
+        // Uyarı cümlelerini çıkar, kalan metinde istek fiili ara.
+        val uyarisiz = kodUyarisi.replace(s, " ")
+        return istekFiili.containsMatchIn(uyarisiz)
+    }
+
+    private fun resmiAdresMi(b: BaglantiDenetleyici.Sonuc): Boolean {
+        val host = b.alanAdi ?: return false
+        val kayitli = BaglantiDenetleyici.kayitliAlanAdi(host)
+        if (kayitli in BaglantiDenetleyici.kisalticilar) return false
+        return BaglantiDenetleyici.kurumlar.any { kayitli in it.resmi } || BaglantiDenetleyici.belgeliUzantiMi(kayitli)
+    }
 
     /** Türkçe karakterleri sadeleştirir: "Ödemenizi Yapın" → "odemenizi yapin". */
     fun sadelestir(s: String): String = s.lowercase(Locale("tr"))
@@ -99,9 +124,13 @@ object MesajDenetleyici {
             return Sonuc(b.seviye, b.ozet, b.bulgular, listOf(b), mesajMi = false, girdi = metin)
         }
 
-        val k = bulunanKaliplar(metin)
+        val kodVar = Kalip.KOD_ISTEME in bulunanKaliplar(metin)
+        val kodIstegi = kodIstiyorMu(metin)
+        val k = bulunanKaliplar(metin) - Kalip.KOD_ISTEME + (if (kodIstegi) setOf(Kalip.KOD_ISTEME) else emptySet())
         val iban = ibanDeseni.containsMatchIn(metin)
-        val linkVar = baglantilar.isNotEmpty()
+        // Bağlantılar resmi adrese gidiyorsa (ör. turkcell.com.tr) "bağlantılı" kurallar kırmızı vermez.
+        val hepsiResmi = baglantiSonuclari.isNotEmpty() && baglantiSonuclari.all { resmiAdresMi(it) && it.seviye.agirlik < Seviye.SARI.agirlik }
+        val linkVar = baglantilar.isNotEmpty() && !hepsiResmi
         val linkSeviye = baglantiSonuclari.map { it.seviye }.maxByOrNull { it.agirlik } ?: Seviye.YESIL
         val b = mutableListOf<Bulgu>()
 
@@ -109,6 +138,16 @@ object MesajDenetleyici {
         if (Kalip.KOD_ISTEME in k) {
             b += Bulgu(Seviye.KIRMIZI, "Senden kod ya da şifre isteniyor",
                 "Bankalar, operatörler, kargo firmaları ve devlet kurumları SMS ile gelen kodu ya da şifreni ASLA istemez. Bu kodu kimseyle paylaşma.")
+        } else if (kodVar && linkVar) {
+            b += Bulgu(Seviye.KIRMIZI, "Kod ile birlikte bağlantı",
+                "Mesajda bir doğrulama kodu ve bir bağlantı birlikte var. Gerçek doğrulama mesajları seni bir siteye kod girmeye yönlendirmez; bağlantıyı açma.")
+        } else if (kodVar) {
+            b += Bulgu(Seviye.BILGI, "Normal bir doğrulama mesajına benziyor",
+                "Bu, bankanın ya da bir hizmetin gönderdiği tek kullanımlık kod mesajı gibi görünüyor. Kodu yalnız kendin, kendi başlattığın işlemde kullan; seni arayan ya da yazan kimseyle paylaşma.")
+        }
+        if (hepsiResmi) {
+            b += Bulgu(Seviye.BILGI, "Bağlantı resmi adrese gidiyor",
+                "Mesajdaki bağlantı ${baglantiSonuclari.mapNotNull { it.alanAdi }.joinToString()} adresine gidiyor; bu, kurumun bilinen resmi adresi. Yine de işlemi kurumun uygulamasından yapmak en güvenlisi.")
         }
         if (Kalip.KURUM in k && linkVar && (Kalip.PARA in k || Kalip.ACILIYET in k)) {
             b += Bulgu(Seviye.KIRMIZI, "Kurum adıyla bağlantılı ödeme/acele çağrısı",

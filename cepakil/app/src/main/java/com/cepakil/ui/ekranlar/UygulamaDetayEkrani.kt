@@ -79,6 +79,14 @@ import com.cepakil.veri.AyarYonlendirici
 import com.cepakil.veri.UygulamaKaynagi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+
+/** Aynı anda yalnız bir kod incelemesi (hızla birçok uygulama açılırsa bellek taşmasın). */
+private val kodKilidi = Mutex()
 
 private sealed interface DetayDurumu {
     data object Yukleniyor : DetayDurumu
@@ -94,27 +102,44 @@ fun UygulamaDetayEkrani(paket: String, geri: () -> Unit, kaldirmayaGit: () -> Un
     val context = LocalContext.current
     var durum by remember(paket) { mutableStateOf<DetayDurumu>(DetayDurumu.Yukleniyor) }
     var kod by remember(paket) { mutableStateOf<List<Bulgu>?>(null) }
-    LaunchedEffect(paket) {
-        val k = UygulamaKaynagi(context.applicationContext)
+    val k = remember { UygulamaKaynagi(context.applicationContext) }
+    suspend fun bilgiyiYukle() {
         durum = withContext(Dispatchers.Default) {
             val bilgi = k.uygulama(paket)
             if (bilgi == null) DetayDurumu.Bulunamadi
             else DetayDurumu.Hazir(UygulamaDegerlendirici.degerlendir(bilgi), k.ayrinti(paket, bilgi.yukleyen))
         }
-        // Kod incelemesi ayrıca, arka iş parçacığında (birkaç saniye sürebilir).
-        kod = withContext(Dispatchers.IO) {
-            val dosyalar = k.apkDosyalari(paket)
-            if (dosyalar.isEmpty()) {
-                listOf(Bulgu(Seviye.BILGI, "Kod okunamadı", "Android bu uygulamanın dosyasını okumaya izin vermedi."))
-            } else {
-                try {
-                    KodIncelemesi.bulgular(KodIncelemesi.incele(dosyalar.map { f -> { f.inputStream() } }))
-                } catch (e: OutOfMemoryError) {
-                    listOf(Bulgu(Seviye.BILGI, "Kod incelenemedi", "Uygulama bu telefonda incelenemeyecek kadar büyük."))
+    }
+    LaunchedEffect(paket) {
+        bilgiyiYukle()
+        val d = durum as? DetayDurumu.Hazir ?: return@LaunchedEffect
+        val u = d.sonuc.bilgi
+        // Sistem, üretici ya da denetleyen mağazadan gelen uygulamada koddaki adlar çoğunlukla hazır kütüphanelerdendir.
+        val guvenilir = u.sistemUygulamasi || u.ureticiUygulamasi || u.yukleyen in UygulamaDegerlendirici.denetleyenMagazalar
+        // Kod incelemesi arka planda ve aynı anda tek bir tane (büyük uygulamalarda birkaç saniye sürebilir).
+        kod = kodKilidi.withLock {
+            withContext(Dispatchers.IO) {
+                val dosyalar = k.apkDosyalari(paket)
+                if (dosyalar.isEmpty()) {
+                    listOf(Bulgu(Seviye.BILGI, "Kod okunamadı", "Android bu uygulamanın dosyasını okumaya izin vermedi."))
+                } else {
+                    try {
+                        KodIncelemesi.bulgular(
+                            KodIncelemesi.inceleDosyalar(dosyalar) { isActive },
+                            guvenilir = guvenilir,
+                            erisilebilirlikHizmetiVar = k.erisilebilirlikHizmetiTanimli(paket),
+                        )
+                    } catch (e: OutOfMemoryError) {
+                        listOf(Bulgu(Seviye.BILGI, "Kod incelenemedi", "Uygulama bu telefonda incelenemeyecek kadar büyük."))
+                    }
                 }
             }
         }
     }
+    // Android ayarlarından dönünce (ör. bir izin kaldırıldı) bilgiler tazelenir; kod incelemesi tekrarlanmaz.
+    var donus by remember { mutableStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { donus++ }
+    LaunchedEffect(donus) { if (donus > 1 && durum !is DetayDurumu.Yukleniyor) bilgiyiYukle() }
 
     Column(Modifier.fillMaxSize()) {
         UstCubuk("Uygulama ayrıntısı", geri)
@@ -266,7 +291,9 @@ fun UygulamaDetayIcerik(
             Grup {
                 val yukleyen = when {
                     u.sistemUygulamasi -> "Telefonla birlikte gelen sistem uygulaması"
-                    u.ureticiUygulamasi -> "Telefon üreticisinin uygulaması (imzası sistem uygulamalarıyla aynı)"
+                    u.ureticiUygulamasi -> "Telefon üreticisinin uygulaması (sistem imzası ya da sistem yükleyicisi)"
+                    u.dosyadanYuklendi -> "Bir dosyadan (APK) yüklenmiş"
+                    u.tasindi -> "Eski telefondan taşınmış (asıl kaynağı bilinmiyor)"
                     u.yukleyen == null -> "Bilinmiyor (Android bildirmiyor)"
                     else -> (ayrinti?.yukleyenAdi ?: u.yukleyen) + if (magaza) " · bilinen mağaza" else " · mağaza değil"
                 }

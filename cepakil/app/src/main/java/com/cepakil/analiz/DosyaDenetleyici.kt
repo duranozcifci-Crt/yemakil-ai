@@ -275,7 +275,7 @@ object DosyaDenetleyici {
                 )
                 if (apk != null) b += apkBulgulari(apk)
                 // Kodun içindeki yetenekler (telefonda, internetsiz).
-                b += KodIncelemesi.bulgular(KodIncelemesi.incele(listOf(ac)))
+                b += KodIncelemesi.bulgular(KodIncelemesi.incele(listOf(ac)), erisilebilirlikHizmetiVar = apk?.erisilebilirlikHizmeti)
             }
             Tur.EXE, Tur.ELF, Tur.DEX, Tur.JAR -> b += Bulgu(
                 Seviye.SARI, "Çalıştırılabilir program: ${tur.ad}",
