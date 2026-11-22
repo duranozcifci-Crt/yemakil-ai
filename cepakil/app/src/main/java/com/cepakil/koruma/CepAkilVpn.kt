@@ -38,6 +38,7 @@ class CepAkilVpn : VpnService() {
     private val havuz = Executors.newFixedThreadPool(4)
     private val kararlar = ConcurrentHashMap<String, Boolean>()
     private var sonBildirim = 0L
+    @Volatile private var kararVeritabani: com.cepakil.analiz.TehditVeritabani? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == DURDUR) {
@@ -106,7 +107,10 @@ class CepAkilVpn : VpnService() {
     private fun engelle(ad: String): Boolean {
         val a = KorumaAyarlari(this)
         if (a.izinliSiteler.any { ad == it || ad.endsWith(".$it") }) return false
-        return kararlar.getOrPut(ad) { TehditKaynagi.veritabani?.hostListede(ad) == true || sahteSiteMi(ad) }
+        // Liste yenilenince eski kararlar geçersiz olur.
+        val db = TehditKaynagi.veritabani
+        if (db !== kararVeritabani) { kararlar.clear(); kararVeritabani = db }
+        return kararlar.getOrPut(ad) { db?.hostListede(ad) == true || sahteSiteMi(ad) }
     }
 
     /**
