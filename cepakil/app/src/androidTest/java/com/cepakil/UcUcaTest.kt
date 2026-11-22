@@ -117,6 +117,7 @@ class UcUcaTest {
         sekme("baglanti")
         k.onAllNodes(hasSetTextAction()).onFirst()
             .performTextInput("PTT: Gönderiniz adres eksikliği nedeniyle teslim edilemedi. 24 saat içinde ödeme yapın: ptt-kargo.top/ode")
+        Espresso.closeSoftKeyboard()
         k.onNodeWithText("Kontrol et").performClick()
         bekle("Dolandırıcılık işaretleri var")
         foto("6_mesaj_kontrolu")
