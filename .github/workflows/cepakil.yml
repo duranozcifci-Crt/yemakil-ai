@@ -46,8 +46,9 @@ jobs:
       - name: Tehdit listeleri erişilebilir mi?
         continue-on-error: true
         run: |
-          for U in https://urlhaus.abuse.ch/downloads/text_online/ https://urlhaus.abuse.ch/downloads/hostfile/ \
-                   https://openphish.com/feed.txt https://bazaar.abuse.ch/export/txt/sha256/recent/; do
+          for U in https://www.usom.gov.tr/url-list.txt https://openphish.com/feed.txt \
+                   https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts.txt \
+                   https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt; do
             N=$(curl -sfL --max-time 60 "$U" | grep -vc '^#' || true)
             echo "$U -> $N satır"
             if [ "${N:-0}" -lt 5 ]; then echo "::warning::Tehdit listesi boş ya da erişilemiyor: $U"; fi

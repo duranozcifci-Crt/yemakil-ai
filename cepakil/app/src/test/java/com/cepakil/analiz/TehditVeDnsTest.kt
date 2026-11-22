@@ -10,10 +10,10 @@ import org.junit.Test
 class TehditVeDnsTest {
 
     private val vt = TehditVeritabani.ayristir(
-        urlhausUrl = "# URLhaus\nhttp://kotu-dagitim.example/indir/fatura.apk\nhttps://195.1.2.3/x.sh\n",
-        urlhausHost = "# hostfile\n127.0.0.1\tkotu-dagitim.example\n127.0.0.1\tsites.google.com\n127.0.0.1\t195.1.2.3\n",
-        openphish = "https://ziraat-giris-onay.example/login\nhttps://sites.google.com/view/sahte-banka\n",
-        bazaar = "# MalwareBazaar\n" + "a".repeat(64) + "\nGECERSIZ\n",
+        urlListesi = "# URLhaus\nhttp://kotu-dagitim.example/indir/fatura.apk\nhttps://195.1.2.3/x.sh\n",
+        hostListesi = "# hostfile\n127.0.0.1\tkotu-dagitim.example\n127.0.0.1\tsites.google.com\n127.0.0.1\t195.1.2.3\n",
+        sayfaListesi = "https://ziraat-giris-onay.example/login\nhttps://sites.google.com/view/sahte-banka\n",
+        hashListesi = "# MalwareBazaar\n" + "a".repeat(64) + "\nGECERSIZ\n",
         zaman = 1L,
     )
 
@@ -27,6 +27,34 @@ class TehditVeDnsTest {
         assertTrue("195.1.2.3" !in vt.hostlar)
         assertTrue("sites.google.com/view/sahte-banka" in vt.urller)
         assertEquals(1, vt.hashler.size)
+    }
+
+    @Test fun usomVeHostsBicimi() {
+        val v = TehditVeritabani.ayristir(
+            null,
+            "# malware-filter\n0.0.0.0 zararli-sunucu.example\n",
+            "edevlet-odeme-iade.example\nhttp://kargo-takip-ucret.example/odeme?id=5\nsites.google.com\n85.1.2.3\n",
+            null, 1L,
+        )
+        assertTrue(v.hostListede("zararli-sunucu.example"))
+        assertTrue(v.hostListede("www.edevlet-odeme-iade.example"))
+        assertTrue(v.hostListede("kargo-takip-ucret.example"))
+        assertTrue("kargo-takip-ucret.example/odeme?id=5" in v.urller)
+        // Yalın alan adı sunucu listesinde; ayrıca tam adres olarak tutulmaz.
+        assertTrue("edevlet-odeme-iade.example" !in v.urller)
+        assertTrue(!v.hostListede("sites.google.com"))
+        assertTrue(!v.hostListede("docs.google.com"))
+    }
+
+    @Test fun dosyadakiZararliBaglanti() {
+        TehditKaynagi.veritabani = vt
+        val pdf = "%PDF-1.4\n1 0 obj << /Type /Annot /A << /URI (https://ziraat-giris-onay.example/giris) >> >>\n%%EOF".toByteArray()
+        val s = DosyaDenetleyici.denetle("hesap.pdf", { pdf.inputStream() })
+        assertEquals(Seviye.KIRMIZI, s.seviye)
+        assertTrue(s.bulgular.any { it.baslik == "Dosyada bilinen zararlı bağlantı var" })
+        TehditKaynagi.veritabani = null
+        val t = DosyaDenetleyici.denetle("hesap.pdf", { pdf.inputStream() })
+        assertTrue(t.bulgular.none { it.baslik == "Dosyada bilinen zararlı bağlantı var" })
     }
 
     @Test fun altAlanAdiDaEslesir() {

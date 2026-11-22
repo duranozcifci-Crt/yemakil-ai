@@ -26,8 +26,8 @@ object BaglantiDenetleyici {
     )
 
     const val SINIR_NOTU =
-        "Bu kontrol bağlantıyı açmadan adresin yazılışına bakar ve telefona indirilmiş uluslararası tehdit listeleriyle " +
-            "(URLhaus, OpenPhish) karşılaştırır; adres hiçbir yere gönderilmez. Listeler günde bir güncellenir; birkaç saat önce " +
+        "Bu kontrol bağlantıyı açmadan adresin yazılışına bakar ve telefona indirilmiş tehdit listeleriyle " +
+            "(USOM, OpenPhish, URLhaus) karşılaştırır; adres hiçbir yere gönderilmez. Listeler günde bir güncellenir; birkaç saat önce " +
             "kurulmuş bir sahte site henüz listede olmayabilir. İşaret bulunmaması bağlantının güvenli olduğunu göstermez."
 
     private val tehlikeliProtokoller = setOf("javascript", "data", "vbscript", "file", "intent", "content")

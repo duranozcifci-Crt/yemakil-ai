@@ -4,8 +4,8 @@ Android telefonlar için Türkçe, sade bir **güvenlik farkındalık** uygulama
 Kullanıcının telefonundaki riskleri anlamasına, zararlı olabilecek uygulama,
 dosya ve bağlantıları fark etmesine yardımcı olur.
 
-> CepAkıl, bilinen tehditleri herkese açık uluslararası listelerle (URLhaus,
-> OpenPhish, MalwareBazaar) ve telefonda çalışan kurallarla arar. Listeler
+> CepAkıl, bilinen tehditleri herkese açık listelerle (Türkiye'nin resmi USOM
+> listesi, OpenPhish, URLhaus) ve telefonda çalışan kurallarla arar. Listeler
 > yalnız bilinen/bildirilmiş zararlıları içerir; bulduğu işaretler kesin hüküm
 > değil, **"incele"** önerisidir. Hiçbir ekranda
 > "telefonun tamamen korunuyor" gibi doğrulanamayan bir iddia yoktur.
@@ -20,7 +20,7 @@ dosya ve bağlantıları fark etmesine yardımcı olur.
 
 | Özellik | Nasıl çalışır | Varsayılan |
 |---|---|---|
-| **Çevrimiçi tehdit veritabanı** | `koruma/TehditGuncelleyici` günde bir (WorkManager, yalnız internet varken) URLhaus zararlı bağlantı + sunucu listesi, OpenPhish kimlik avı listesi ve MalwareBazaar son SHA-256 listesini `filesDir/tehdit` altına indirir. `analiz/TehditVeritabani` bağlantı, mesaj ve dosya kontrollerinde telefonda karşılaştırır. Ortak barındırma platformları (Google, GitHub, Firebase…) sunucu olarak engellenmez. | Açık |
+| **Çevrimiçi tehdit veritabanı** | `koruma/TehditGuncelleyici` günde bir (WorkManager, yalnız internet varken) anahtarsız, herkese açık listeleri `filesDir/tehdit` altına indirir: **USOM** zararlı bağlantı listesi (yedek: USOM-Blocklists kopyası), **OpenPhish** kimlik avı listesi, **URLhaus** ve **phishing-filter** sunucu listeleri (malware-filter projesinin kopyaları; her biri için yedek adresler denenir). HTML ya da boş yanıt liste sayılmaz. `analiz/TehditVeritabani` bağlantı, mesaj, açılan site ve dosya içindeki bağlantı kontrollerinde telefonda karşılaştırır. (abuse.ch'nin kendi indirmeleri ve MalwareBazaar Haziran 2025'ten beri üyelik anahtarı istediği için kullanılmaz; dosya parmak izi listesi yapısı boş durur.) Ortak barındırma platformları (Google, GitHub, Firebase…) sunucu olarak engellenmez. | Açık |
 | **Anlık uygulama koruması** | `koruma/KorumaIsi` ~15 dakikada bir (Android'in en sık periyodik aralığı) yeni yüklenen/güncellenen uygulamaları değerlendirir; değişiklik yoksa hiçbir şey okumaz. Riskliyse bildirim; dokununca uygulama ayrıntısı açılır. | Kapalı |
 | **Gelen mesajları otomatik tara** | `koruma/BildirimDinleyici` (NotificationListenerService) yalnız SMS/WhatsApp/Telegram vb. mesajlaşma uygulamalarının bildirim metnini `MesajDenetleyici` ile inceler; şüpheliyse uyarı bildirimi. Mesajlar saklanmaz. `READ_SMS` istenmez. | Kapalı |
 | **Web koruması** | `koruma/CepAkilVpn` yalnız DNS sorgularını yakalayan yerel VPN'dir (sanal DNS 10.111.222.2'ye giden UDP/53). Tehdit listesindeki ya da banka/e-Devlet taklidi alan adlarına NXDOMAIN döner, bildirim gösterir ("Bu siteye izin ver" eylemiyle). Diğer sorgular telefonun gerçek DNS sunucusuna `protect()` edilmiş soketle iletilir; trafik başka sunucuya yönlendirilmez. Özel DNS (DoH/DoT) kullanan tarayıcılarda devre dışı kalabilir; başka VPN açıkken çalışmaz. | Kapalı |

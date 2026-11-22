@@ -27,9 +27,9 @@ object DosyaDenetleyici {
     private const val ARSIV_KAYIT_SINIRI = 5000
 
     const val SINIR_NOTU =
-        "CepAkıl dosyanın türüne, adına, kodundaki yeteneklere ve içindeki bilinen risk işaretlerine bakar; parmak izini telefona " +
-            "indirilmiş MalwareBazaar zararlı dosya listesiyle karşılaştırır. Dosya hiçbir sunucuya gönderilmez. Liste son günlerin " +
-            "kayıtlarını içerdiği için bir dosyanın temiz olduğunu kesin olarak söyleyemez."
+        "CepAkıl dosyanın türüne, adına, kodundaki yeteneklere ve içindeki bilinen risk işaretlerine bakar; dosyanın içindeki " +
+            "bağlantıları telefondaki tehdit listeleriyle karşılaştırır. Dosya hiçbir sunucuya gönderilmez. Bu yüzden bir dosyanın " +
+            "temiz olduğunu kesin olarak söyleyemez."
 
     enum class Tur(val ad: String, val tehlikeli: Boolean = false) {
         PDF("PDF belgesi"),
@@ -235,7 +235,7 @@ object DosyaDenetleyici {
         val tur = if (boyut == 0L) Tur.BOS else turuBelirle(icerik, zipKayitlari)
         val uzanti = uzantisi(ad)
 
-        // Uluslararası zararlı dosya veritabanı (MalwareBazaar; telefona indirilmiş kopya).
+        // Zararlı dosya parmak izi listesi (telefona indirilmiş kopya; şu an kaynak yok, yapı hazır).
         TehditKaynagi.veritabani?.dosyaBulgusu(sha256)?.let { b += it }
 
         // 3) Ad hileleri
@@ -368,6 +368,18 @@ object DosyaDenetleyici {
         if (tur == Tur.RAR || tur == Tur.YEDIZ || tur == Tur.GZIP) {
             b += Bulgu(Seviye.BILGI, "Arşivin içi denetlenemedi", "CepAkıl şimdilik yalnız ZIP arşivlerinin içini listeleyebilir.")
         }
+        // 6) Dosyanın içindeki bağlantılar tehdit listesinde mi? (PDF, HTML, SVG, metin; dosya açılmaz, bağlantılara gidilmez.)
+        val vt = TehditKaynagi.veritabani
+        if (vt != null && tur in setOf(Tur.PDF, Tur.HTML, Tur.SVG, Tur.METIN, Tur.OFFICE_ESKI)) {
+            val kayitli = icerikBaglantilari(metin).firstOrNull { u -> vt.baglantiBulgusu(u, TehditVeritabani.hostOf(u)) != null }
+            if (kayitli != null) {
+                b += Bulgu(
+                    Seviye.KIRMIZI, "Dosyada bilinen zararlı bağlantı var",
+                    "Dosyanın içindeki \"${TehditVeritabani.hostOf(kayitli) ?: kayitli.take(60)}\" adresi tehdit listelerinde zararlı ya da sahte site olarak kayıtlı. Dosyadaki bağlantılara dokunma.",
+                )
+            }
+        }
+
         if (tur == Tur.BOS) b += Bulgu(Seviye.BILGI, "Dosya boş", "Dosyada hiç veri yok.")
         if (tur == Tur.BILINMIYOR) b += Bulgu(Seviye.BILGI, "Dosya türü tanınmadı", "Bu türe özgü bir kontrol yapılamadı; yalnız ad ve uzantı denetlendi.")
         if (kismi && tur in setOf(Tur.PDF, Tur.OFFICE_ESKI, Tur.HTML, Tur.SVG)) {
@@ -412,4 +424,10 @@ object DosyaDenetleyici {
         }
         return b
     }
+
+    private val icerikBaglantisi = Regex("""https?://[A-Za-z0-9._~:/?#@!$&'*+,;=%-]{4,300}""")
+
+    /** İçerikteki ilk 500 farklı http(s) bağlantısı. */
+    fun icerikBaglantilari(metin: String): List<String> =
+        icerikBaglantisi.findAll(metin).map { it.value.trimEnd('.', ',', ')', ';', '\'') }.distinct().take(500).toList()
 }

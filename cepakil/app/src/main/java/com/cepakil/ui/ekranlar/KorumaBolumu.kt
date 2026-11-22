@@ -98,8 +98,8 @@ fun KorumaBolumu() {
     Grup {
         Anahtar(
             "Çevrimiçi tehdit veritabanı",
-            "Herkese açık uluslararası listeler (URLhaus, OpenPhish, MalwareBazaar) günde bir telefona indirilir; " +
-                "bağlantılar, mesajlar ve dosyalar bunlarla karşılaştırılır. Senin hiçbir verin gönderilmez.\n$tehditDurumu",
+            "Herkese açık listeler (Türkiye'nin resmi USOM listesi, OpenPhish, URLhaus) günde bir telefona indirilir; " +
+                "bağlantılar, mesajlar ve açtığın siteler bunlarla karşılaştırılır. Senin hiçbir verin gönderilmez.\n$tehditDurumu",
             a.tehditListeleri, "koruma_tehdit",
         ) { acik ->
             a.tehditListeleri = acik

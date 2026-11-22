@@ -5,10 +5,12 @@ import java.util.Locale
 /**
  * Herkese açık, uluslararası tehdit listelerinin telefondaki kopyası.
  *
- * Kaynaklar (günde bir indirilir; bkz. veri/TehditGuncelleyici):
- *  - URLhaus (abuse.ch): zararlı yazılım dağıtan bağlantılar ve sunucular
+ * Kaynaklar (günde bir indirilir; bkz. koruma/TehditGuncelleyici; hepsi anahtarsız, herkese açık):
+ *  - USOM (Türkiye Ulusal Siber Olaylara Müdahale Merkezi): zararlı ve sahte bağlantılar
  *  - OpenPhish: güncel kimlik avı (sahte giriş) sayfaları
- *  - MalwareBazaar (abuse.ch): son günlerde bildirilen zararlı dosyaların SHA-256 parmak izleri
+ *  - URLhaus (abuse.ch, malware-filter kopyası): zararlı yazılım dağıtan sunucular
+ *  - phishing-filter (OpenPhish + IPThreat): kimlik avı sunucuları
+ * SHA-256 listesi şimdilik boştur (MalwareBazaar artık üyelik anahtarı istiyor); yapı hazır tutulur.
  *
  * Gizlilik: Listeler telefona İNDİRİLİR, karşılaştırma telefonda yapılır. Kullanıcının
  * açtığı adresler, dosyaları ya da uygulama listesi hiçbir yere gönderilmez.
@@ -26,14 +28,14 @@ class TehditVeritabani(
         if (urlNormal(url) in urller) {
             return Bulgu(
                 Seviye.KIRMIZI, "Bilinen zararlı bağlantı",
-                "Bu adres uluslararası tehdit listelerinde (URLhaus / OpenPhish) zararlı ya da sahte sayfa olarak kayıtlı. Açma.",
+                "Bu adres tehdit listelerinde (USOM / OpenPhish / URLhaus) zararlı ya da sahte sayfa olarak kayıtlı. Açma.",
             )
         }
         val h = host?.lowercase(Locale.ROOT)?.trimEnd('.') ?: return null
         if (hostListede(h)) {
             return Bulgu(
                 Seviye.KIRMIZI, "Bilinen zararlı site",
-                "\"$h\" sunucusu uluslararası tehdit listelerinde zararlı yazılım ya da kimlik avı için kullanılan bir site olarak kayıtlı. Açma.",
+                "\"$h\" sunucusu tehdit listelerinde (USOM / OpenPhish / URLhaus) zararlı yazılım ya da kimlik avı için kullanılan bir site olarak kayıtlı. Açma.",
             )
         }
         return null
@@ -53,7 +55,7 @@ class TehditVeritabani(
         if (sha256.lowercase(Locale.ROOT) in hashler) {
             Bulgu(
                 Seviye.KIRMIZI, "Bilinen zararlı dosya",
-                "Bu dosyanın parmak izi (SHA-256), MalwareBazaar zararlı yazılım veritabanında kayıtlı. Açma ve sil.",
+                "Bu dosyanın parmak izi (SHA-256), zararlı yazılım listesinde kayıtlı. Açma ve sil.",
             )
         } else null
 
@@ -73,7 +75,7 @@ class TehditVeritabani(
             .removePrefix("http://").removePrefix("https://").removePrefix("www.")
             .trimEnd('/')
 
-        private fun hostOf(u: String): String? {
+        fun hostOf(u: String): String? {
             val g = u.trim().lowercase(Locale.ROOT).substringAfter("://", u.trim().lowercase(Locale.ROOT))
             val h = g.substringBefore('/').substringBefore('?').substringBefore('#').substringAfterLast('@').substringBefore(':')
             return h.takeIf { it.contains('.') && it.length in 4..253 }
@@ -82,27 +84,40 @@ class TehditVeritabani(
         private fun satirlar(metin: String?): Sequence<String> =
             metin.orEmpty().lineSequence().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }
 
+        private val ipDeseni = Regex("""^\d+(\.\d+){3}$""")
+        private val bosluk = Regex("\\s+")
+        private val hashDeseni = Regex("^[0-9a-f]{64}$")
+
         /**
          * İndirilen ham metinlerden veritabanını kurar.
-         * @param urlhausUrl  "text_online" listesi: her satırda bir URL
-         * @param urlhausHost "hostfile": "127.0.0.1<TAB>sunucu" satırları
-         * @param openphish   her satırda bir URL
-         * @param bazaar      her satırda bir SHA-256
+         * @param urlListesi   her satırda bir zararlı URL (yalnız tam adres eşleşir)
+         * @param hostListesi  hosts biçimi: "0.0.0.0 sunucu" ya da yalnız "sunucu" satırları
+         * @param sayfaListesi sahte sayfa listeleri (OpenPhish, USOM): URL ya da yalın alan adı;
+         *                     tam adres ve sunucusu eklenir (ortak platformlarda yalnız tam adres)
+         * @param hashListesi  her satırda bir SHA-256
          */
-        fun ayristir(urlhausUrl: String?, urlhausHost: String?, openphish: String?, bazaar: String?, zaman: Long): TehditVeritabani {
+        fun ayristir(urlListesi: String?, hostListesi: String?, sayfaListesi: String?, hashListesi: String?, zaman: Long): TehditVeritabani {
             val urller = HashSet<String>()
             val hostlar = HashSet<String>()
-            satirlar(urlhausUrl).forEach { urller += urlNormal(it) }
-            satirlar(urlhausHost).forEach { s ->
-                val h = s.split(Regex("\\s+")).lastOrNull()?.lowercase(Locale.ROOT)?.trimEnd('.')
-                if (h != null && h.contains('.') && h != "localhost" && !Regex("""^\d+(\.\d+){3}$""").matches(h) && !ortakPlatformMi(h)) hostlar += h
+            fun hostEkle(h: String?): Boolean {
+                if (h == null || !h.contains('.') || h == "localhost" || ipDeseni.matches(h) || ortakPlatformMi(h)) return false
+                hostlar += h
+                return true
             }
-            satirlar(openphish).forEach { s ->
-                urller += urlNormal(s)
+            satirlar(urlListesi).forEach { urller += urlNormal(it) }
+            satirlar(hostListesi).forEach { s ->
+                hostEkle(s.split(bosluk).lastOrNull()?.lowercase(Locale.ROOT)?.trimEnd('.'))
+            }
+            satirlar(sayfaListesi).forEach { s ->
+                val n = urlNormal(s)
+                val h = hostOf(s)
+                val yalinAlanAdi = h != null && n == h
                 // Sahte sayfanın sunucusu da engellenir; ortak platformlar (ör. sites.google.com) hariç.
-                hostOf(s)?.let { h -> if (!ortakPlatformMi(h) && !Regex("""^\d+(\.\d+){3}$""").matches(h)) hostlar += h }
+                val hostEklendi = hostEkle(h)
+                // Yalın alan adı sunucu listesine girdiyse ayrıca tam adres olarak saklanmaz (bellek tasarrufu).
+                if (!(yalinAlanAdi && hostEklendi)) urller += n
             }
-            val hashler = satirlar(bazaar).map { it.lowercase(Locale.ROOT) }.filter { Regex("^[0-9a-f]{64}$").matches(it) }.toHashSet()
+            val hashler = satirlar(hashListesi).map { it.lowercase(Locale.ROOT) }.filter { hashDeseni.matches(it) }.toHashSet()
             return TehditVeritabani(urller, hostlar, hashler, zaman)
         }
 
