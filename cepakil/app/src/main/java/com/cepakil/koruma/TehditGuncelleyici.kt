@@ -80,7 +80,8 @@ object TehditGuncelleyici {
     }
 
     /** Tek adresi indirir; boyut sınırı ve "gerçekten metin liste mi" denetimiyle. */
-    private fun indirDosya(adres: String, hedef: File): Boolean = try {
+    private fun indirDosya(adres: String, hedef: File): Boolean {
+      return try {
         val c = (URL(adres).openConnection() as HttpURLConnection).apply {
             connectTimeout = 20_000; readTimeout = 60_000
             instanceFollowRedirects = true
@@ -109,5 +110,6 @@ object TehditGuncelleyici {
         } finally { c.disconnect() }
     } catch (_: Exception) {
         hedef.delete(); false
+    }
     }
 }
