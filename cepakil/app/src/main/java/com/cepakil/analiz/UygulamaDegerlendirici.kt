@@ -42,6 +42,8 @@ object UygulamaDegerlendirici {
         val dosyadanYuklendi: Boolean = false,
         /** Eski telefondan taşıma aracıyla (Smart Switch, Mi Mover…) aktarılmış; asıl kaynağı bilinmiyor. */
         val tasindi: Boolean = false,
+        /** Uygulama dosyasının (base.apk) SHA-256 parmak izi; hesaplanmadıysa null. */
+        val sha256: String? = null,
     )
 
     /** ApplicationInfo.category karşılığı (Android 8+ uygulamalar kendisi bildirir). */
@@ -81,6 +83,14 @@ object UygulamaDegerlendirici {
 
     fun degerlendir(u: UygulamaBilgisi): Sonuc {
         val b = mutableListOf<Bulgu>()
+        // Kesin eşleşme: uygulamanın parmak izi bildirilmiş zararlı Android uygulamaları listesinde.
+        if (u.sha256 != null && TehditKaynagi.veritabani?.hashler?.contains(u.sha256.lowercase()) == true) {
+            b += Bulgu(
+                Seviye.KIRMIZI, "Bilinen zararlı yazılım",
+                "Bu uygulamanın dosyası, dünyada bildirilmiş zararlı Android uygulamaları listesinde (MalwareBazaar) birebir kayıtlı. " +
+                    "Bu bir tahmin değil, kesin eşleşmedir. Hemen kaldır; bu uygulamaya girdiğin şifreleri (özellikle banka) değiştir.",
+            )
+        }
         val verilenGruplar = u.izinler.filter { it.value }.keys
             .mapNotNull { IzinSozlugu.tanim(it) }
             .filter { it.tur == IzinSozlugu.Tur.CALISMA_ZAMANI }

@@ -99,7 +99,7 @@ fun KorumaBolumu() {
         Anahtar(
             "Çevrimiçi tehdit veritabanı",
             "Herkese açık listeler (Türkiye'nin resmi USOM listesi, OpenPhish, URLhaus) günde bir telefona indirilir; " +
-                "bağlantılar, mesajlar ve açtığın siteler bunlarla karşılaştırılır. Senin hiçbir verin gönderilmez.\n$tehditDurumu",
+                "bağlantılar, mesajlar ve açtığın siteler bunlarla; mağaza dışından yüklenen uygulamalar da bildirilmiş zararlı Android uygulamaları listesiyle karşılaştırılır. Senin hiçbir verin gönderilmez.\n$tehditDurumu",
             a.tehditListeleri, "koruma_tehdit",
         ) { acik ->
             a.tehditListeleri = acik

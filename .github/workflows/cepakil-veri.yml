@@ -1,0 +1,62 @@
+# CepAkıl: bildirilmiş zararlı Android uygulamalarının parmak izi listesi.
+# MalwareBazaar (abuse.ch, CC0 lisanslı veri) üyelik anahtarı istediği için anahtar GitHub'da gizli
+# (ABUSECH_KEY) tutulur; liste her gün indirilip "cepakil-veri" dalında herkese açık yayınlanır.
+# CepAkıl uygulaması yalnız bu düz metin listeyi indirir; anahtar uygulamaya konmaz.
+name: CepAkıl tehdit verisi
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cepakil-veri
+  cancel-in-progress: false
+
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Son zararlı Android uygulamaları (MalwareBazaar)
+        env:
+          ANAHTAR: ${{ secrets.ABUSECH_KEY }}
+        run: |
+          if [ -z "$ANAHTAR" ]; then echo "::warning::ABUSECH_KEY tanımlı değil; liste güncellenmedi."; exit 0; fi
+          : > yeni.txt
+          for TUR in apk; do
+            curl -sS --fail --max-time 120 -H "Auth-Key: $ANAHTAR" \
+              --data "query=get_file_type&file_type=$TUR&limit=1000" \
+              https://mb-api.abuse.ch/api/v1/ -o yanit.json
+            DURUM=$(jq -r '.query_status' yanit.json)
+            echo "$TUR: $DURUM"
+            if [ "$DURUM" != "ok" ]; then echo "::error::MalwareBazaar yanıtı: $DURUM"; exit 1; fi
+            jq -r '.data[].sha256_hash' yanit.json | tr 'A-F' 'a-f' | grep -E '^[0-9a-f]{64}$' >> yeni.txt
+          done
+          echo "Yeni gelen: $(wc -l < yeni.txt)"
+          test -s yeni.txt
+
+      - name: Birikmiş listeyi güncelle
+        run: |
+          git init -q veri && cd veri
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin cepakil-veri 2>/dev/null; then git checkout -q -b cepakil-veri FETCH_HEAD; else git checkout -q --orphan cepakil-veri; fi
+          touch apk_sha256.txt
+          # Yeniler başa; tekrarlar atılır; en fazla 100.000 kayıt (yaklaşık 6,5 MB) tutulur.
+          { grep -v '^#' apk_sha256.txt || true; } > eski.txt
+          { echo "# CepAkıl: bildirilmiş zararlı Android uygulamaları (SHA-256). Kaynak: MalwareBazaar (abuse.ch), CC0."
+            echo "# Güncelleme: $(date -u +%Y-%m-%dT%H:%MZ)"
+            cat ../yeni.txt eski.txt | awk '!g[$0]++' | head -n 100000
+          } > apk_sha256.txt
+          rm eski.txt
+          echo "Toplam: $(grep -vc '^#' apk_sha256.txt)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apk_sha256.txt
+          # Geçmiş birikmesin: veri dalı her seferinde tek commit olarak yazılır.
+          git commit -q -m "CepAkıl tehdit verisi (otomatik)"
+          NEW=$(git commit-tree "HEAD^{tree}" -m "CepAkıl tehdit verisi (otomatik)")
+          git push -q -f origin "$NEW:refs/heads/cepakil-veri"

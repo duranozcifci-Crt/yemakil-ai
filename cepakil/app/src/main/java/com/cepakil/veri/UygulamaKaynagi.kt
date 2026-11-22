@@ -237,8 +237,38 @@ class UygulamaKaynagi(private val context: Context) {
             simgesiz = guvenli(false) { pm.getLaunchIntentForPackage(paket) == null && pm.getLeanbackLaunchIntentForPackage(paket) == null },
             dosyadanYuklendi = dosyadan,
             tasindi = tasindi,
+            sha256 = if (parmakIziGerekli(ai, yukleyen)) parmakIzi(ai, pi.lastUpdateTime) else null,
         )
     }
+
+    /**
+     * Parmak izi yalnız mağaza denetiminden geçmemiş kullanıcı uygulamaları için hesaplanır
+     * (bilinen zararlılar neredeyse hep SMS/WhatsApp bağlantısıyla dosyadan kurulur). Play ve
+     * sistem uygulamalarını okumamak taramayı hızlı tutar.
+     */
+    private fun parmakIziGerekli(ai: ApplicationInfo, yukleyen: String?): Boolean =
+        !sistemMi(ai) && yukleyen !in UygulamaDegerlendirici.denetleyenMagazalar
+
+    /** base.apk'nın SHA-256'sı; uygulama güncellenmedikçe yeniden hesaplanmaz (telefonda saklanır). */
+    private fun parmakIzi(ai: ApplicationInfo, guncelleme: Long): String? = guvenli(null) {
+        val anahtar = "${ai.packageName}@$guncelleme"
+        izOnbellegi.getString(anahtar, null)?.let { return@guvenli it }
+        val dosya = java.io.File(ai.sourceDir ?: return@guvenli null)
+        if (!dosya.canRead() || dosya.length() > 400L * 1024 * 1024) return@guvenli null
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        dosya.inputStream().use { g ->
+            val t = ByteArray(256 * 1024)
+            while (true) { val n = g.read(t); if (n < 0) break; md.update(t, 0, n) }
+        }
+        val iz = md.digest().joinToString("") { "%02x".format(it) }
+        // Aynı paketin eski kayıtları silinir.
+        val e = izOnbellegi.edit()
+        izOnbellegi.all.keys.filter { it.startsWith("${ai.packageName}@") }.forEach { e.remove(it) }
+        e.putString(anahtar, iz).apply()
+        iz
+    }
+
+    private val izOnbellegi by lazy { context.getSharedPreferences("parmak_izi", Context.MODE_PRIVATE) }
 
     /**
      * Başka bir uygulamanın özel izin durumunu okumayı dener. Bazı Android

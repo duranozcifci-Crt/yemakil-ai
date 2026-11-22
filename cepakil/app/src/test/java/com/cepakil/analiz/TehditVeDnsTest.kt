@@ -103,4 +103,20 @@ class TehditVeDnsTest {
         assertEquals(40000, u.kaynakPort); assertEquals(53, u.hedefPort)
         assertArrayEquals(veri, u.veri)
     }
+
+    @Test fun yukluUygulamaParmakIziListede() {
+        val iz = "b".repeat(64)
+        val v = TehditVeritabani.ayristir(null, null, null, "# apk\n$iz\n", 1L)
+        val u = UygulamaDegerlendirici.UygulamaBilgisi(
+            paket = "com.sahte.kargo", ad = "Kargo Takip", sistemUygulamasi = false,
+            yukleyen = "com.android.vending", hedefSdk = 34, izinler = emptyMap(), sha256 = iz.uppercase(),
+        )
+        assertTrue(UygulamaDegerlendirici.degerlendir(u).bulgular.none { it.baslik == "Bilinen zararlı yazılım" })
+        TehditKaynagi.veritabani = v
+        val s = UygulamaDegerlendirici.degerlendir(u)
+        assertEquals(Seviye.KIRMIZI, s.seviye)
+        assertEquals("Bilinen zararlı yazılım", s.bulgular.first().baslik)
+        // Parmak izi farklıysa eşleşme yok.
+        assertTrue(UygulamaDegerlendirici.degerlendir(u.copy(sha256 = "c".repeat(64))).bulgular.none { it.baslik == "Bilinen zararlı yazılım" })
+    }
 }

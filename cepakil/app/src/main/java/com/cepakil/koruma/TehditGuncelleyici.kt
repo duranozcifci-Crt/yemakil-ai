@@ -38,6 +38,12 @@ object TehditGuncelleyici {
             "https://phishing-filter.pages.dev/phishing-filter-hosts.txt",
             "https://curbengh.github.io/phishing-filter/phishing-filter-hosts.txt",
         )),
+        // Bildirilmiş zararlı Android uygulamalarının SHA-256 parmak izleri. MalwareBazaar üyelik anahtarı
+        // istediği için CepAkıl'ın kendi GitHub görevi (cepakil-veri.yml) her gün indirip herkese açık yayınlar;
+        // anahtar uygulamaya konmaz.
+        Kaynak("apk_sha256.txt", listOf(
+            "https://raw.githubusercontent.com/duranozcifci-Crt/yemakil-ai/cepakil-veri/apk_sha256.txt",
+        )),
     )
     private const val AZAMI_BOYUT = 25L * 1024 * 1024
 
@@ -54,7 +60,7 @@ object TehditGuncelleyici {
             null,
             listOfNotNull(oku("urlhaus_host.txt"), oku("phishing_host.txt")).joinToString("\n"),
             listOfNotNull(oku("openphish.txt"), oku("usom.txt")).joinToString("\n"),
-            null,
+            oku("apk_sha256.txt"),
             KorumaAyarlari(context).sonGuncelleme,
         )
     }

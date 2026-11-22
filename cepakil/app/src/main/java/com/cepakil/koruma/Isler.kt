@@ -20,8 +20,25 @@ import java.util.concurrent.TimeUnit
 /** Günde bir tehdit listelerini günceller (yalnız internet varken). */
 class TehditIsi(c: Context, p: WorkerParameters) : CoroutineWorker(c, p) {
     override suspend fun doWork(): Result {
-        if (!KorumaAyarlari(applicationContext).tehditListeleri) return Result.success()
-        return if (TehditGuncelleyici.indir(applicationContext)) Result.success() else Result.retry()
+        val ctx = applicationContext
+        val a = KorumaAyarlari(ctx)
+        if (!a.tehditListeleri) return Result.success()
+        if (!TehditGuncelleyici.indir(ctx)) return Result.retry()
+        // Liste yenilendi: önceden yüklü bir uygulama artık bilinen zararlılar arasında mı?
+        if (a.anlikKoruma) {
+            val hashler = com.cepakil.analiz.TehditKaynagi.veritabani?.hashler.orEmpty()
+            if (hashler.isNotEmpty()) {
+                val p = ctx.getSharedPreferences("koruma", Context.MODE_PRIVATE)
+                val bildirilen = p.getStringSet("zararli_bildirilen", emptySet()).orEmpty()
+                UygulamaKaynagi(ctx).tumUygulamalar(sistemDahil = false)
+                    .filter { it.sha256 != null && it.sha256 in hashler && it.sha256 !in bildirilen }
+                    .forEach { u ->
+                        Bildirimler.uygulamaUyarisi(ctx, u.paket, u.ad, true, "Bilinen zararlı yazılım listesinde. Hemen kaldır.")
+                        p.edit().putStringSet("zararli_bildirilen", p.getStringSet("zararli_bildirilen", emptySet()).orEmpty() + u.sha256!!).apply()
+                    }
+            }
+        }
+        return Result.success()
     }
 }
 
