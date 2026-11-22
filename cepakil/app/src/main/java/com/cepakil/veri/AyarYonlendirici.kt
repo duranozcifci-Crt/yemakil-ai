@@ -109,7 +109,7 @@ object AyarYonlendirici {
 
     /**
      * KVKK 11. madde kapsamında hazır bir veri silme talebi e-postası açar.
-     * Gönderen kullanıcıdır; CepAkıl hiçbir şey göndermez (internet izni yok).
+     * Gönderen kullanıcıdır; CepAkıl e-postayı kendisi göndermez.
      */
     fun silmeTalebiEpostasi(
         context: Context,

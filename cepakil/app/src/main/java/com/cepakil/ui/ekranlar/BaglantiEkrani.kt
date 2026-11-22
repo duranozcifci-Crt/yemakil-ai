@@ -59,7 +59,7 @@ import com.cepakil.veri.QrOkuyucu
 
 /**
  * Mesaj ve bağlantı kontrolü: tamamen cihazda, bağlantı AÇILMADAN yapılır.
- * Uygulamanın internet izni olmadığı için hiçbir metin dışarı gönderilmez.
+ * Mesaj ve bağlantılar hiçbir yere gönderilmez; tehdit listeleriyle karşılaştırma telefonda yapılır.
  */
 @Composable
 fun BaglantiEkrani(paylasilan: String?, paylasilanKullanildi: () -> Unit) {
@@ -200,7 +200,7 @@ fun BaglantiEkrani(paylasilan: String?, paylasilanKullanildi: () -> Unit) {
             item {
                 SinirNotu(
                     "Mesaj, Türkçe dolandırıcılık kalıplarına (aciliyet, kurum adı, ödeme/kod isteği, ödül, yakın taklidi, uygulama yükletme) göre incelenir; " +
-                        "bağlantılar açılmadan yalnız yazılışına bakılır. CepAkıl internete bağlanmadığı için yeni kurulmuş sahte siteleri ve yeni kurguları tanımayabilir; " +
+                        "bağlantılar açılmadan yazılışına ve telefona indirilmiş tehdit listelerine bakılır. Listeler günde bir güncellendiği için çok yeni kurulmuş sahte siteleri ve yeni kurguları tanımayabilir; " +
                         "işaret bulunmaması mesajın güvenli olduğunu göstermez.",
                 )
             }

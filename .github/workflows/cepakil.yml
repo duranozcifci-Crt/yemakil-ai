@@ -32,11 +32,26 @@ jobs:
       - name: Android Lint
         run: ./gradlew --no-daemon lintDebug
       # Söz denetimi: APK'da internet izni olmamalı (kütüphaneler gizlice eklemesin).
-      - name: İnternet izni yok mu?
+      # Söz: kişisel verilere erişen izinler (SMS, kişiler, konum, kamera, mikrofon, depolama...) asla istenmez.
+      - name: Gereksiz izin yok mu?
         run: |
           AAPT2="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt2"
           "$AAPT2" dump permissions app/build/outputs/apk/debug/app-debug.apk | tee izinler.txt
-          if grep -q "android.permission.INTERNET" izinler.txt; then echo "::error::APK internet izni içeriyor!"; exit 1; fi
+          for IZIN in READ_SMS RECEIVE_SMS SEND_SMS READ_CONTACTS WRITE_CONTACTS READ_CALL_LOG READ_PHONE_STATE ACCESS_FINE_LOCATION \
+                      ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION CAMERA RECORD_AUDIO READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
+                      MANAGE_EXTERNAL_STORAGE READ_MEDIA_IMAGES READ_MEDIA_VIDEO BIND_ACCESSIBILITY_SERVICE BIND_DEVICE_ADMIN GET_ACCOUNTS; do
+            if grep -q "android.permission.$IZIN'" izinler.txt; then echo "::error::APK gereksiz izin içeriyor: $IZIN"; exit 1; fi
+          done
+      # Tehdit listeleri hâlâ yayında ve beklenen biçimde mi? (Uyarı verir, derlemeyi durdurmaz.)
+      - name: Tehdit listeleri erişilebilir mi?
+        continue-on-error: true
+        run: |
+          for U in https://urlhaus.abuse.ch/downloads/text_online/ https://urlhaus.abuse.ch/downloads/hostfile/ \
+                   https://openphish.com/feed.txt https://bazaar.abuse.ch/export/txt/sha256/recent/; do
+            N=$(curl -sfL --max-time 60 "$U" | grep -vc '^#' || true)
+            echo "$U -> $N satır"
+            if [ "${N:-0}" -lt 5 ]; then echo "::warning::Tehdit listesi boş ya da erişilemiyor: $U"; fi
+          done
       # Sanal telefonda uçtan uca deneme (kurulum, tarama, kaldırma, mesaj kontrolü).
       - name: Sanal telefon için KVM
         run: |

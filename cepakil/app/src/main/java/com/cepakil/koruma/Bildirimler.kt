@@ -1,0 +1,95 @@
+package com.cepakil.koruma
+
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import com.cepakil.MainActivity
+import com.cepakil.R
+
+/** CepAkıl'ın gönderdiği uyarı bildirimleri. */
+object Bildirimler {
+    const val KANAL_UYGULAMA = "uygulama"
+    const val KANAL_MESAJ = "mesaj"
+    const val KANAL_WEB = "web"
+    const val EK_PAKET = "cepakil.paket"
+    const val EK_MESAJ = "cepakil.mesaj"
+
+    fun kanallariKur(context: Context) {
+        if (Build.VERSION.SDK_INT < 26) return
+        val nm = context.getSystemService(NotificationManager::class.java) ?: return
+        nm.createNotificationChannel(NotificationChannel(KANAL_UYGULAMA, "Riskli uygulama uyarıları", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Yeni yüklenen ya da güncellenen bir uygulama riskli göründüğünde"
+        })
+        nm.createNotificationChannel(NotificationChannel(KANAL_MESAJ, "Dolandırıcılık mesajı uyarıları", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Gelen bir mesaj dolandırıcılık kurgusuna benzediğinde"
+        })
+        nm.createNotificationChannel(NotificationChannel(KANAL_WEB, "Engellenen siteler", NotificationManager.IMPORTANCE_DEFAULT).apply {
+            description = "Web koruması zararlı bir siteyi engellediğinde"
+        })
+    }
+
+    fun izinVarMi(context: Context): Boolean =
+        Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+
+    private fun ac(context: Context, istek: Int, ekle: Intent.() -> Unit): PendingIntent {
+        val i = Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP).apply(ekle)
+        return PendingIntent.getActivity(context, istek, i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    private fun gonder(context: Context, id: Int, b: NotificationCompat.Builder) {
+        if (!izinVarMi(context)) return
+        try { NotificationManagerCompat.from(context).notify(id, b.build()) } catch (_: SecurityException) { }
+    }
+
+    fun uygulamaUyarisi(context: Context, paket: String, ad: String, kirmizi: Boolean, neden: String) {
+        kanallariKur(context)
+        val b = NotificationCompat.Builder(context, KANAL_UYGULAMA)
+            .setSmallIcon(R.drawable.ic_bildirim)
+            .setContentTitle(if (kirmizi) "Riskli uygulama: $ad" else "İncelemen önerilir: $ad")
+            .setContentText(neden)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$neden\nAyrıntılar ve kaldırma için dokun."))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(ac(context, paket.hashCode()) { putExtra(EK_PAKET, paket) })
+        gonder(context, paket.hashCode(), b)
+    }
+
+    fun mesajUyarisi(context: Context, kaynak: String, metin: String, ozet: String) {
+        kanallariKur(context)
+        val kisa = metin.replace('\n', ' ').take(90)
+        val b = NotificationCompat.Builder(context, KANAL_MESAJ)
+            .setSmallIcon(R.drawable.ic_bildirim)
+            .setContentTitle("Şüpheli mesaj ($kaynak)")
+            .setContentText(ozet)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$ozet\n\n\"$kisa…\"\n\nBağlantıya dokunma, kod paylaşma. Ayrıntı için dokun."))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(ac(context, metin.hashCode()) { putExtra(EK_MESAJ, metin.take(4000)) })
+        gonder(context, metin.hashCode(), b)
+    }
+
+    fun siteEngellendi(context: Context, host: String) {
+        kanallariKur(context)
+        val izin = PendingIntent.getBroadcast(
+            context, host.hashCode(),
+            Intent(context, IzinVerAlici::class.java).putExtra(IzinVerAlici.EK_HOST, host),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val b = NotificationCompat.Builder(context, KANAL_WEB)
+            .setSmallIcon(R.drawable.ic_bildirim)
+            .setContentTitle("Zararlı site engellendi")
+            .setContentText(host)
+            .setStyle(NotificationCompat.BigTextStyle().bigText("\"$host\" tehdit listelerinde ya da sahte site kurallarında olduğu için açılması engellendi."))
+            .setAutoCancel(true)
+            .addAction(0, "Bu siteye izin ver", izin)
+        gonder(context, 7000 + (host.hashCode() and 0x3FF), b)
+    }
+}

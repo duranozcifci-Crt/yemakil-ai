@@ -53,7 +53,12 @@ private enum class Sekme(val rota: String, val etiket: String, val ikon: ImageVe
  * [paylasilanMetin] başka bir uygulamadan "Paylaş" ile gelen bağlantıdır.
  */
 @Composable
-fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit) {
+fun CepAkilUygulamasi(
+    paylasilanMetin: String?,
+    paylasilanKullanildi: () -> Unit,
+    acilacakPaket: String? = null,
+    paketAcildi: () -> Unit = {},
+) {
     val nav = rememberNavController()
     val taramaVm: TaramaViewModel = viewModel()
     val uygulamalarVm: UygulamalarViewModel = viewModel()
@@ -63,6 +68,14 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
 
     LaunchedEffect(paylasilanMetin) {
         if (!paylasilanMetin.isNullOrBlank()) sekmeyeGit(nav, Sekme.BAGLANTI.rota)
+    }
+    // Anlık koruma bildirimine dokunulunca: o uygulamanın ayrıntısı.
+    LaunchedEffect(acilacakPaket) {
+        if (!acilacakPaket.isNullOrBlank()) {
+            sekmeyeGit(nav, Sekme.UYGULAMALAR.rota)
+            nav.navigate("uygulama/$acilacakPaket")
+            paketAcildi()
+        }
     }
 
     Scaffold(
@@ -94,6 +107,7 @@ fun CepAkilUygulamasi(paylasilanMetin: String?, paylasilanKullanildi: () -> Unit
                     onerilereGit = { nav.navigate("oneriler") },
                     dosyayaGit = { sekmeyeGit(nav, Sekme.DOSYA.rota) },
                     baglantiyaGit = { sekmeyeGit(nav, Sekme.BAGLANTI.rota) },
+                    korumayaGit = { sekmeyeGit(nav, Sekme.AYARLAR.rota) },
                 )
             }
             composable(Sekme.UYGULAMALAR.rota) {

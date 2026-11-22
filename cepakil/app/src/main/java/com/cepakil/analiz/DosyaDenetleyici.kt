@@ -27,9 +27,9 @@ object DosyaDenetleyici {
     private const val ARSIV_KAYIT_SINIRI = 5000
 
     const val SINIR_NOTU =
-        "CepAkıl dosyanın türüne, adına ve içindeki bazı bilinen risk işaretlerine bakar. " +
-            "Zararlı yazılım imza veritabanı kullanmaz; dosyayı hiçbir sunucuya göndermez. " +
-            "Bu yüzden bir dosyanın temiz olduğunu kesin olarak söyleyemez."
+        "CepAkıl dosyanın türüne, adına, kodundaki yeteneklere ve içindeki bilinen risk işaretlerine bakar; parmak izini telefona " +
+            "indirilmiş MalwareBazaar zararlı dosya listesiyle karşılaştırır. Dosya hiçbir sunucuya gönderilmez. Liste son günlerin " +
+            "kayıtlarını içerdiği için bir dosyanın temiz olduğunu kesin olarak söyleyemez."
 
     enum class Tur(val ad: String, val tehlikeli: Boolean = false) {
         PDF("PDF belgesi"),
@@ -235,6 +235,9 @@ object DosyaDenetleyici {
         val tur = if (boyut == 0L) Tur.BOS else turuBelirle(icerik, zipKayitlari)
         val uzanti = uzantisi(ad)
 
+        // Uluslararası zararlı dosya veritabanı (MalwareBazaar; telefona indirilmiş kopya).
+        TehditKaynagi.veritabani?.dosyaBulgusu(sha256)?.let { b += it }
+
         // 3) Ad hileleri
         if (ad.any { it in yonKarakterleri }) {
             b += Bulgu(
@@ -376,7 +379,7 @@ object DosyaDenetleyici {
         val ozet = when (seviye) {
             Seviye.KIRMIZI -> "Tehlike göstergeleri bulundu. Bu dosyayı açmaman önerilir."
             Seviye.SARI -> "İncelemen gereken işaretler var. Kimden geldiğinden emin değilsen açma."
-            else -> "Bilinen göstergelere göre risk bulunamadı. Bu, dosyanın temiz olduğu anlamına gelmez."
+            else -> "Bilinen göstergelere göre risk bulunamadı. Bu, dosyanın kesinlikle temiz olduğu anlamına gelmez."
         }
         return Sonuc(ad, boyut, tur, seviye, ozet, sirali, sha256, kismi, if (tur == Tur.APK) apk else null)
     }

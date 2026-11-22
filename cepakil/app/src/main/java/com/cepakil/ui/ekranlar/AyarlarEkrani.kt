@@ -52,6 +52,9 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            item { BolumBasligi("Koruma") }
+            item { KorumaBolumu() }
+
             item { BolumBasligi("Tarama") }
             item {
                 Row(
@@ -76,7 +79,8 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             item { BolumBasligi("Gizlilik") }
             item {
                 Madde(
-                    "İnternet izni yok", "CepAkıl'ın internete bağlanma izni yoktur. Dosyaların, bağlantıların, uygulama listen ve tarama sonuçların hiçbir sunucuya gönderilemez. " +
+                    "Hiçbir verin gönderilmez", "CepAkıl internete yalnız herkese açık tehdit listelerini İNDİRMEK için çıkar. Dosyaların, mesajların, bağlantıların, " +
+                        "açtığın siteler, uygulama listen ve tarama sonuçların hiçbir sunucuya gönderilmez; karşılaştırma telefonda yapılır. " +
                         "Reklam, analiz ya da takip aracı içermez.",
                 )
             }
@@ -88,7 +92,13 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
                         "APK dosyaları incelenirken Android'in paket okuyucusu için uygulamanın kendi önbelleğine geçici bir kopya alınır ve inceleme biter bitmez silinir.",
                 )
             }
-            item { Madde("Arka planda çalışmaz", "Gizli izleme, zamanlanmış tarama ya da otomatik silme yoktur. Her kontrol yalnız sen başlattığında yapılır.") }
+            item {
+                Madde(
+                    "Arka planda yalnız senin açtıkların çalışır",
+                    "Liste güncellemesi, anlık uygulama koruması, mesaj taraması ve web koruması yukarıdaki anahtarlarla açılıp kapatılır. " +
+                        "Gizli izleme ya da otomatik silme yoktur; uyarılar bildirim olarak gelir, kararı sen verirsin.",
+                )
+            }
             item { Madde("Pano yalnız sen istediğinde okunur", "Bağlantı kontrolündeki \"Panodan yapıştır\" düğmesine basmadıkça panodaki metin okunmaz.") }
 
             item { BolumBasligi("İzinler ve nedenleri") }
@@ -113,17 +123,41 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             }
             item {
                 Madde(
+                    "İnternet (INTERNET)",
+                    "Yalnız herkese açık tehdit listelerini indirmek ve web korumasında site adı sorgularını telefonun kendi DNS sunucusuna iletmek için. Yükleme sırasında verilir.",
+                )
+            }
+            item {
+                Madde(
+                    "Bildirim gösterme (POST_NOTIFICATIONS)",
+                    "Anlık koruma, mesaj taraması ve web koruması seni uyarabilsin diye. Android 13 ve sonrasında yalnız bu özelliklerden birini açtığında sorulur.",
+                )
+            }
+            item {
+                Madde(
+                    "Bildirim erişimi (isteğe bağlı)",
+                    "Yalnız \"Gelen mesajları otomatik tara\" açıksa ve sen Android ayarlarından verirsen. SMS okuma izni istenmez; yalnız mesajlaşma uygulamalarının bildirim metnine bakılır.",
+                )
+            }
+            item {
+                Madde(
+                    "VPN (isteğe bağlı)",
+                    "Yalnız \"Web koruması\" açıksa. Android onay penceresi gösterir. Yalnız site adı sorguları telefonda denetlenir; trafiğin başka bir sunucuya yönlendirilmez.",
+                )
+            }
+            item {
+                Madde(
                     "İstenmeyen izinler",
-                    "SMS, kişiler, konum, mikrofon, kamera, depolama, bildirim, erişilebilirlik ve cihaz yöneticisi izinleri bilerek istenmez. " +
-                        "Bu yüzden CepAkıl sana hiçbir izin penceresi göstermez.",
+                    "SMS, kişiler, arama kayıtları, konum, mikrofon, kamera, depolama, erişilebilirlik ve cihaz yöneticisi izinleri bilerek istenmez.",
                 )
             }
 
             item { BolumBasligi("CepAkıl neleri yapamaz?") }
             item {
                 Madde(
-                    "Antivirüs değildir",
-                    "Zararlı yazılım imza veritabanı kullanmaz, uygulamaların kodunu incelemez. Bulduğu işaretler \"incele\" önerisidir, kesin hüküm değildir.",
+                    "Kesin hüküm vermez",
+                    "Tehdit listeleri yalnız bilinen ve bildirilmiş zararlıları içerir; yeni çıkmış bir tehdidi tanımayabilir. " +
+                        "Bulunan işaretler \"incele\" önerisidir; bir şey bulunmaması güvenli olduğu anlamına gelmez.",
                 )
             }
             item {
@@ -136,7 +170,7 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             item {
                 Madde(
                     "Bağlantılar açılmaz",
-                    "Bağlantı kontrolü internete bağlanmadan yalnız adresin yazılışına bakar. Yeni açılmış sahte siteleri tanıyamaz; bu yüzden hiçbir bağlantıyı \"güvenli\" ilan etmez.",
+                    "Bağlantı kontrolü adresi açmaz; yazılışına ve telefondaki tehdit listelerine bakar. Çok yeni açılmış sahte siteleri tanımayabilir; bu yüzden hiçbir bağlantıyı \"güvenli\" ilan etmez.",
                 )
             }
 
@@ -153,7 +187,7 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             }
 
             item { BolumBasligi("Hakkında") }
-            item { Text("CepAkıl sürüm $surum · Tüm kontroller telefonun üzerinde çalışır.", style = MaterialTheme.typography.bodyMedium) }
+            item { Text("CepAkıl sürüm $surum · Tüm kontroller telefonun üzerinde yapılır.", style = MaterialTheme.typography.bodyMedium) }
         }
     }
 

@@ -12,7 +12,7 @@ import java.util.Locale
  * taklidi ve harf benzerliğiyle yazılmış (typosquatting) alan adları.
  *
  * Ne yapmaz: bağlantıyı açmaz, sayfayı indirmez, hiçbir sunucuya sormaz
- * (uygulamanın internet izni yoktur). Bu yüzden yeni açılmış bir dolandırıcılık
+ * (adres hiçbir yere gönderilmez; tehdit listeleriyle telefonda karşılaştırılır). Yeni açılmış bir dolandırıcılık
  * sitesini tanıyamaz ve hiçbir bağlantıyı "güvenli" ilan etmez.
  */
 object BaglantiDenetleyici {
@@ -26,9 +26,9 @@ object BaglantiDenetleyici {
     )
 
     const val SINIR_NOTU =
-        "Bu kontrol bağlantıyı açmadan, yalnızca adresin yazılışına bakar. " +
-            "İnternete bağlanmadığı için yeni kurulmuş sahte siteleri tanıyamaz. " +
-            "Adreste bir işaret bulunmaması bağlantının güvenli olduğunu göstermez."
+        "Bu kontrol bağlantıyı açmadan adresin yazılışına bakar ve telefona indirilmiş uluslararası tehdit listeleriyle " +
+            "(URLhaus, OpenPhish) karşılaştırır; adres hiçbir yere gönderilmez. Listeler günde bir güncellenir; birkaç saat önce " +
+            "kurulmuş bir sahte site henüz listede olmayabilir. İşaret bulunmaması bağlantının güvenli olduğunu göstermez."
 
     private val tehlikeliProtokoller = setOf("javascript", "data", "vbscript", "file", "intent", "content")
     private val webDisiProtokoller = setOf("tel", "mailto", "sms", "smsto", "geo", "market")
@@ -225,6 +225,9 @@ object BaglantiDenetleyici {
                 "Sıradan web siteleri adreste ayrıca port numarası kullanmaz. Geçici ya da kişisel bir sunucuya işaret ediyor olabilir.",
             )
         }
+
+        // Uluslararası tehdit listeleri (telefona indirilmiş kopya).
+        TehditKaynagi.veritabani?.baglantiBulgusu(girdi, host)?.let { bulgular += it }
 
         // 3) IP adresi
         if (ipv4.matches(host) || host.startsWith("[") || sayisalHost.matches(host)) {

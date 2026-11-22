@@ -4,15 +4,27 @@ Android telefonlar için Türkçe, sade bir **güvenlik farkındalık** uygulama
 Kullanıcının telefonundaki riskleri anlamasına, zararlı olabilecek uygulama,
 dosya ve bağlantıları fark etmesine yardımcı olur.
 
-> **CepAkıl bir antivirüs değildir.** Zararlı yazılım imza veritabanı
-> kullanmaz, uygulamaların kodunu incelemez ve internete bağlanmaz. Bulduğu
-> işaretler kesin hüküm değil, **"incele"** önerisidir. Hiçbir ekranda
+> CepAkıl, bilinen tehditleri herkese açık uluslararası listelerle (URLhaus,
+> OpenPhish, MalwareBazaar) ve telefonda çalışan kurallarla arar. Listeler
+> yalnız bilinen/bildirilmiş zararlıları içerir; bulduğu işaretler kesin hüküm
+> değil, **"incele"** önerisidir. Hiçbir ekranda
 > "telefonun tamamen korunuyor" gibi doğrulanamayan bir iddia yoktur.
 
 - Dil: Kotlin · Arayüz: Jetpack Compose (Material 3)
 - En düşük Android: **8.0 (API 26)** · Hedef: **Android 15 (API 35)**
-- Uygulamanın istediği izinler: `QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE` — hepsi yükleme sırasında verilir, hiçbiri kullanıcıya sorulmaz; ayrıntı aşağıda
-- İnternet izni: **yok**
+- Uygulamanın istediği izinler: `QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `INTERNET` (yükleme sırasında verilir) ve `POST_NOTIFICATIONS` (Android 13+, yalnız bir koruma özelliği açılınca sorulur)
+- İsteğe bağlı, kullanıcının Android ayarından verdiği: **Bildirim erişimi** (mesaj taraması) ve **VPN** (web koruması)
+- İnternet yalnız herkese açık tehdit listelerini **indirmek** ve web korumasında DNS sorgularını iletmek için kullanılır; kullanıcı verisi gönderilmez
+
+## 0. Koruma özellikleri (Ayarlar > Koruma)
+
+| Özellik | Nasıl çalışır | Varsayılan |
+|---|---|---|
+| **Çevrimiçi tehdit veritabanı** | `koruma/TehditGuncelleyici` günde bir (WorkManager, yalnız internet varken) URLhaus zararlı bağlantı + sunucu listesi, OpenPhish kimlik avı listesi ve MalwareBazaar son SHA-256 listesini `filesDir/tehdit` altına indirir. `analiz/TehditVeritabani` bağlantı, mesaj ve dosya kontrollerinde telefonda karşılaştırır. Ortak barındırma platformları (Google, GitHub, Firebase…) sunucu olarak engellenmez. | Açık |
+| **Anlık uygulama koruması** | `koruma/KorumaIsi` ~15 dakikada bir (Android'in en sık periyodik aralığı) yeni yüklenen/güncellenen uygulamaları değerlendirir; değişiklik yoksa hiçbir şey okumaz. Riskliyse bildirim; dokununca uygulama ayrıntısı açılır. | Kapalı |
+| **Gelen mesajları otomatik tara** | `koruma/BildirimDinleyici` (NotificationListenerService) yalnız SMS/WhatsApp/Telegram vb. mesajlaşma uygulamalarının bildirim metnini `MesajDenetleyici` ile inceler; şüpheliyse uyarı bildirimi. Mesajlar saklanmaz. `READ_SMS` istenmez. | Kapalı |
+| **Web koruması** | `koruma/CepAkilVpn` yalnız DNS sorgularını yakalayan yerel VPN'dir (sanal DNS 10.111.222.2'ye giden UDP/53). Tehdit listesindeki ya da banka/e-Devlet taklidi alan adlarına NXDOMAIN döner, bildirim gösterir ("Bu siteye izin ver" eylemiyle). Diğer sorgular telefonun gerçek DNS sunucusuna `protect()` edilmiş soketle iletilir; trafik başka sunucuya yönlendirilmez. Özel DNS (DoH/DoT) kullanan tarayıcılarda devre dışı kalabilir; başka VPN açıkken çalışmaz. | Kapalı |
+
 
 ---
 
@@ -66,10 +78,10 @@ Kullanıcı düğmeye basar
 
 - `analiz/` paketi **Android'e bağımlı değildir**; tüm kurallar bilgisayarda
   birim testleriyle denetlenir (`app/src/test`).
-- Hiçbir katman ağ kullanmaz; manifestte `INTERNET` izni yoktur, bu yüzden
-  veri dışarı gönderilemez.
-- Tarama yalnız kullanıcı düğmeye bastığında çalışır. Arka plan hizmeti,
-  zamanlanmış iş, bildirim ya da otomatik silme yoktur.
+- Ağ yalnız `koruma/TehditGuncelleyici` (liste indirme, GET) ve `koruma/CepAkilVpn`
+  (DNS iletimi) tarafından kullanılır; hiçbir istekte kullanıcı verisi yoktur.
+- Tam tarama kullanıcı düğmeye bastığında çalışır. Arka plan işleri yalnız
+  Ayarlar > Koruma'da açılan özellikler içindir; otomatik silme yoktur.
 
 ## 3. Her kontrol neyi ölçer, neyi ölçmez?
 
@@ -225,10 +237,11 @@ o da yoksa genel Ayarlar açılır.
 
 ## 5. Gizlilik
 
-- `INTERNET` izni yok: dosya, kişi, mesaj, fotoğraf, uygulama listesi ya da tarama sonucu hiçbir sunucuya **gönderilemez**.
+- Dosya, kişi, mesaj, fotoğraf, uygulama listesi, açılan siteler ya da tarama sonucu hiçbir sunucuya **gönderilmez**; internet yalnız herkese açık listeleri indirmek içindir.
 - Reklam, analiz, çökme raporlama kütüphanesi yok.
 - Yalnız son tarama özeti uygulamanın özel klasöründe (SharedPreferences) saklanır; `allowBackup=false` ve `dataExtractionRules` ile buluta/başka cihaza aktarılmaz. Ayarlar'dan silinebilir.
-- Uygulama hiçbir izin penceresi göstermez; tek izni ve nedeni Ayarlar ekranında açıklanır.
+- İzin pencereleri yalnız kullanıcı bir koruma özelliğini açtığında gösterilir; her iznin nedeni Ayarlar ekranında açıklanır.
+- CI, APK'da kişisel veriye erişen izinler (SMS, kişiler, konum, kamera, mikrofon, depolama, erişilebilirlik…) bulunursa derlemeyi durdurur.
 
 ## 6. Derleme
 
@@ -245,7 +258,7 @@ Android Studio'da **File > Open** ile `cepakil/` klasörünü açmak yeterlidir.
 
 Depodaki `.github/workflows/cepakil.yml`, `cepakil/` altında her
 değişiklikte şunları çalıştırır: kural testleri, APK derlemesi, Lint,
-**APK'da internet izni olmadığının denetimi** ve **sanal Android telefonda
+**APK'da gereksiz izin olmadığının denetimi**, tehdit listelerinin erişilebilirliği ve **sanal Android telefonda
 uçtan uca testler** (`app/src/androidTest/UcUcaTest.kt`: tarama, mağaza dışı
 deneme uygulamasının — `ornek/` modülü — yakalanması, kaldırılınca listeden
 düşmesi, dolandırıcılık mesajı, sekmeler). Biri başarısız olursa APK yayımlanmaz;
@@ -278,9 +291,10 @@ cepakil/
 
 ## 8. Bilinen sınırlar ve sonraki adımlar
 
-- Bağlantılar için isteğe bağlı, **açık kullanıcı onaylı** çevrimiçi kontrol
-  (ör. Google Safe Browsing) eklenebilir; bu, `INTERNET` izni gerektireceği
-  için ayrı bir karar olmalı ve her sorgudan önce onay alınmalıdır.
+- Tehdit listeleri yalnız bilinen zararlıları içerir; çok yeni sahte siteler
+  listeye girene kadar yalnız yazılış kurallarıyla yakalanabilir.
+- Web koruması telefon yeniden başlayınca CepAkıl açılana kadar kapalı kalır
+  (Android ayarlarındaki "Her zaman açık VPN" seçilirse otomatik başlar).
 - Kurum ve resmi alan adı listesi elle tutulur; güncel tutulması gerekir.
 - RAR/7z arşivlerinin içi denetlenmez.
 - Arayüz metinleri Kotlin kodunda Türkçe yazılmıştır; başka dil eklenecekse

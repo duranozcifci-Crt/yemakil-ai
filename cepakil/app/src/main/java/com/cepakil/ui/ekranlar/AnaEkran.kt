@@ -20,12 +20,18 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Shield
+import com.cepakil.koruma.CepAkilVpn
+import com.cepakil.koruma.KorumaAyarlari
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -72,9 +78,20 @@ fun AnaEkran(
     onerilereGit: () -> Unit,
     dosyayaGit: () -> Unit,
     baglantiyaGit: () -> Unit,
+    korumayaGit: () -> Unit = {},
 ) {
     val d by vm.durum.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var korumaSayisi by remember { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        val a = KorumaAyarlari(context)
+        korumaSayisi = listOf(
+            a.tehditListeleri,
+            a.anlikKoruma,
+            a.mesajTarama && bildirimErisimiVar(context),
+            a.webKoruma && CepAkilVpn.aktifMi(context),
+        ).count { it }
+    }
     // CepAkıl her ön plana geldiğinde: son açılıştan beri yeni yüklenen uygulamalar.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.degisiklikleriDenetle() }
     AnaEkranIcerik(
@@ -86,6 +103,7 @@ fun AnaEkran(
         dosyayaGit = dosyayaGit,
         baglantiyaGit = baglantiyaGit,
         cihazEylemi = { cihazEylemi(context, it) },
+        koruma = korumaSayisi to korumayaGit,
     )
 }
 
@@ -100,6 +118,8 @@ fun AnaEkranIcerik(
     dosyayaGit: () -> Unit,
     baglantiyaGit: () -> Unit,
     cihazEylemi: (Bulgu) -> (() -> Unit)? = { null },
+    /** Açık koruma sayısı (4 üzerinden) ve Ayarlar'a gitme eylemi. */
+    koruma: Pair<Int, () -> Unit>? = null,
 ) {
     val kayit = d.kayit
     LazyColumn(
@@ -191,6 +211,27 @@ fun AnaEkranIcerik(
             }
         }
 
+        koruma?.let { (sayi, git) ->
+            item {
+                Grup {
+                    val tam = sayi == 4
+                    Satir(
+                        "Koruma: $sayi / 4 açık",
+                        if (tam) "Tehdit listeleri, anlık koruma, mesaj taraması ve web koruması çalışıyor."
+                        else "Anlık koruma, mesaj taraması ve web korumasını Ayarlar'dan açabilirsin.",
+                        bas = {
+                            TonluSimge(
+                                Icons.Filled.Shield,
+                                if (tam) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                                if (tam) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                            )
+                        },
+                        onClick = git,
+                    )
+                }
+            }
+        }
+
         item { BolumBasligi("Araçlar") }
         item {
             Grup {
@@ -209,7 +250,7 @@ fun AnaEkranIcerik(
                 baslik = "Bu tarama neleri kontrol eder?",
                 metin = "Ekran kilidi, güvenlik güncellemesi tarihi, Wi-Fi şifrelemesi, USB hata ayıklama ve yüklü uygulamaların izinleri, kodları, " +
                     "nereden yüklendikleri ile açık erişilebilirlik / cihaz yöneticisi / bildirim erişimi hizmetleri. " +
-                    "CepAkıl bir antivirüs değildir: zararlı yazılım imza veritabanı kullanmaz ve internete bağlanmaz. " +
+                    "Tehdit listeleri telefona indirildiyse bağlantılar ve dosyalar bilinen zararlılarla da karşılaştırılır; hiçbir verin gönderilmez. " +
                     "Tarama yalnız sen düğmeye bastığında çalışır. Koruma puanı bu kontrollerin özetidir; bir güvenlik garantisi değildir.",
             )
         }

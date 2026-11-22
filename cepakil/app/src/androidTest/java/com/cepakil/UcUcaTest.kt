@@ -128,7 +128,8 @@ class UcUcaTest {
         bekle("Dosya seç")
         foto("7_dosya")
         sekme("ayarlar")
-        bekle("Gizlilik")
+        bekle("Çevrimiçi tehdit veritabanı")
+        bekle("Web koruması")
         foto("8_ayarlar")
     }
 }
