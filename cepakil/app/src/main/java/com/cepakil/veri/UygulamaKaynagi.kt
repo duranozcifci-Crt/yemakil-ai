@@ -96,10 +96,17 @@ class UygulamaKaynagi(private val context: Context) {
      * kaldırıldı mı? (Android'in hazır sayacı; ucuz.) İlk çağrıda her zaman true.
      */
     fun degisiklikVarMi(anahtar: String): Boolean {
+        // 1) Yüklü paket adları: yükleme ve KALDIRMA her zaman burada görünür (hızlı; izin okumaz).
+        val adlar = guvenli(emptySet<String>()) {
+            (if (Build.VERSION.SDK_INT >= 33) pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0))
+            else @Suppress("DEPRECATION") pm.getInstalledApplications(0)).map { it.packageName }.toSet()
+        }
+        val oncekiAdlar = paketAdlari.put(anahtar, adlar)
+        // 2) Android'in değişiklik sayacı: güncellemeleri (yeni izin vb.) yakalar.
         val onceki = siraNumaralari[anahtar]
         val degisen = guvenli(null) { pm.getChangedPackages(onceki ?: 0) }
         if (degisen != null) siraNumaralari[anahtar] = degisen.sequenceNumber
-        return onceki == null || degisen != null
+        return oncekiAdlar == null || onceki == null || oncekiAdlar != adlar || degisen != null
     }
 
     /** Manifestte gerçekten bir erişilebilirlik hizmeti tanımlı mı? Okunamazsa null. */
@@ -270,6 +277,7 @@ class UygulamaKaynagi(private val context: Context) {
 
         /** Son görülen paket değişiklik sıra numaraları (anahtar başına). */
         private val siraNumaralari = java.util.concurrent.ConcurrentHashMap<String, Int>()
+        private val paketAdlari = java.util.concurrent.ConcurrentHashMap<String, Set<String>>()
 
         /** Kullanıcının dosyadan/bilgisayardan kurduğu uygulamaları yükleyen genel bileşenler. */
         private val genelYukleyiciler = setOf(
