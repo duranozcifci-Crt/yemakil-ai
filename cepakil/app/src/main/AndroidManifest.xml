@@ -29,7 +29,7 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!--
-        İnternet: YALNIZ herkese açık tehdit listelerini (URLhaus, OpenPhish, MalwareBazaar)
+        İnternet: YALNIZ herkese açık tehdit listelerini (USOM, OpenPhish, URLhaus)
         indirmek ve web korumasında DNS sorularını telefonun kendi DNS sunucusuna iletmek için.
         Kullanıcının hiçbir verisi (dosya, mesaj, uygulama listesi, açtığı siteler) gönderilmez.
     -->
