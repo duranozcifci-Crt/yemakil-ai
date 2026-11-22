@@ -78,6 +78,8 @@ object UygulamaDegerlendirici {
         val ozel = u.sistemUygulamasi || u.ureticiUygulamasi
         val webUygulamasi = u.paket.startsWith("org.chromium.webapk.") || u.yukleyen in tarayicilar
         val magazaDisi = !ozel && !webUygulamasi && !magazadanMi(u.yukleyen)
+        // Google Play hassas izinleri (SMS, arama kaydı, arka plan konum…) yayından önce kendisi denetler.
+        val playden = u.yukleyen == "com.android.vending"
 
         if (webUygulamasi && !ozel) {
             b += Bulgu(
@@ -118,8 +120,9 @@ object UygulamaDegerlendirici {
         val smsOkuma = listOf("READ_SMS", "RECEIVE_SMS").any { u.izinler["android.permission.$it"] == true }
         if (smsOkuma && !u.varsayilanSmsUygulamasi && !ozel) {
             b += Bulgu(
-                if (magazaDisi) Seviye.KIRMIZI else Seviye.SARI, "SMS okuma izni var",
-                "Bu uygulama mesaj uygulaman değil ama SMS'lerini okuyabiliyor; bankaların gönderdiği tek kullanımlık şifreler dahil. Gerçekten gerekli mi?",
+                when { magazaDisi -> Seviye.KIRMIZI; playden -> Seviye.BILGI; else -> Seviye.SARI }, "SMS okuma izni var",
+                "Bu uygulama mesaj uygulaman değil ama SMS'lerini okuyabiliyor; bankaların gönderdiği tek kullanımlık şifreler dahil." +
+                    if (playden) " Google Play bu izni yalnız denetleyip onayladığı uygulamalara verir (ör. doğrulama kodunu otomatik okuma)." else " Gerçekten gerekli mi?",
             )
         }
 
@@ -146,13 +149,13 @@ object UygulamaDegerlendirici {
         }
 
         if (!ozel && IzinSozlugu.Grup.ARKA_PLAN_KONUM in verilenGruplar) {
-            b += Bulgu(Seviye.SARI, "Arka planda konum izni verilmiş", "Uygulama kapalıyken de konumunu alabilir. Navigasyon ya da aile takip uygulamaları dışında nadiren gerekir.")
+            b += Bulgu(if (playden) Seviye.BILGI else Seviye.SARI, "Arka planda konum izni verilmiş", "Uygulama kapalıyken de konumunu alabilir. Navigasyon, aile takip ya da konum paylaşımı dışında nadiren gerekir.")
         }
 
         val kisiselVerilen = verilenGruplar.intersect(IzinSozlugu.kisiselVeriGruplari)
         if (!ozel && kisiselVerilen.size >= 4) {
             b += Bulgu(
-                Seviye.SARI, "Çok sayıda hassas izin verilmiş",
+                if (magazaDisi) Seviye.SARI else Seviye.BILGI, "Çok sayıda hassas izin verilmiş",
                 "${kisiselVerilen.joinToString { it.ad.lowercase(Locale("tr")) }} izinleri verilmiş. Her birinin bu uygulama için gerçekten gerekli olup olmadığını düşün.",
             )
         }

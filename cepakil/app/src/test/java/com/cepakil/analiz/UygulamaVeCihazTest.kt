@@ -104,3 +104,28 @@ class UreticiVeWebTest {
         org.junit.Assert.assertEquals(Seviye.BILGI, UygulamaDegerlendirici.degerlendir(w).seviye)
     }
 }
+
+class PlayKurallariTest {
+    private val p = "android.permission."
+    private fun u(yukleyen: String?, izinler: Map<String, Boolean>) = UygulamaDegerlendirici.UygulamaBilgisi(
+        paket = "com.ornek", ad = "Örnek", sistemUygulamasi = false, yukleyen = yukleyen, hedefSdk = 34, izinler = izinler,
+    )
+    private val banka = mapOf(
+        "${p}CAMERA" to true, "${p}ACCESS_FINE_LOCATION" to true, "${p}READ_CONTACTS" to true,
+        "${p}RECORD_AUDIO" to true, "${p}ACCESS_BACKGROUND_LOCATION" to true,
+    )
+    private val whatsapp = mapOf("${p}READ_SMS" to true, "${p}RECEIVE_SMS" to true, "${p}READ_CONTACTS" to true)
+
+    @org.junit.Test fun playdenBankaUygulamasiIsaretlenmez() {
+        org.junit.Assert.assertTrue(UygulamaDegerlendirici.degerlendir(u("com.android.vending", banka)).seviye.agirlik < Seviye.SARI.agirlik)
+    }
+
+    @org.junit.Test fun playdenSmsOkuyanUygulamaIsaretlenmez() {
+        org.junit.Assert.assertTrue(UygulamaDegerlendirici.degerlendir(u("com.android.vending", whatsapp)).seviye.agirlik < Seviye.SARI.agirlik)
+    }
+
+    @org.junit.Test fun ayniIzinlerMagazaDisiysaYineYakalanir() {
+        org.junit.Assert.assertEquals(Seviye.KIRMIZI, UygulamaDegerlendirici.degerlendir(u(null, whatsapp)).seviye)
+        org.junit.Assert.assertEquals(Seviye.SARI, UygulamaDegerlendirici.degerlendir(u(null, banka)).seviye)
+    }
+}

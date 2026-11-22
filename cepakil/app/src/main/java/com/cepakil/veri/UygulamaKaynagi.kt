@@ -128,6 +128,22 @@ class UygulamaKaynagi(private val context: Context) {
         return sonuc
     }
 
+    /**
+     * Uygulamayı telefonun kendi sistem bileşenlerinden biri mi kurdu? (ör. Samsung'un
+     * bölgesel uygulama yükleyicisi ya da güncelleme merkezi). Dosyadan kurulan APK'lar
+     * Android'in genel paket yükleyicisinden geçtiği için bu sayılmaz; tarayıcılar,
+     * dosya yöneticileri ve bilgisayar (adb) da sayılmaz.
+     */
+    private fun sistemYukleyicisiMi(yukleyen: String?): Boolean {
+        if (yukleyen == null || yukleyen in genelYukleyiciler) return false
+        if (yukleyen in com.cepakil.analiz.UygulamaDegerlendirici.tarayicilar) return false
+        return guvenli(false) {
+            val ai = if (Build.VERSION.SDK_INT >= 33) pm.getApplicationInfo(yukleyen, PackageManager.ApplicationInfoFlags.of(0))
+            else @Suppress("DEPRECATION") pm.getApplicationInfo(yukleyen, 0)
+            (ai.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+        }
+    }
+
     /** Bir uygulamanın imza sertifikalarının SHA-256 özetleri. */
     private fun imzalar(paket: String): Set<String> = guvenli(emptySet()) {
         val sertifikalar = if (Build.VERSION.SDK_INT >= 28) {
@@ -183,7 +199,10 @@ class UygulamaKaynagi(private val context: Context) {
             bilinmeyenKaynakIzni = bilinmeyenKaynak,
             surum = pi.versionName,
             sonGuncelleme = pi.lastUpdateTime,
-            ureticiUygulamasi = !sistemMi(ai) && o.sistemImzalari.isNotEmpty() && imzalar(paket).any { it in o.sistemImzalari },
+            ureticiUygulamasi = !sistemMi(ai) && (
+                (o.sistemImzalari.isNotEmpty() && imzalar(paket).any { it in o.sistemImzalari }) ||
+                    sistemYukleyicisiMi(yukleyen)
+                ),
         )
     }
 
@@ -214,6 +233,14 @@ class UygulamaKaynagi(private val context: Context) {
     companion object {
         /** Sistem imzaları uygulama açık kaldığı sürece bir kez hesaplanır. */
         @Volatile private var onbellek: Set<String>? = null
+
+        /** Kullanıcının dosyadan/bilgisayardan kurduğu uygulamaları yükleyen genel bileşenler. */
+        private val genelYukleyiciler = setOf(
+            "com.google.android.packageinstaller", "com.android.packageinstaller", "com.samsung.android.packageinstaller",
+            "com.miui.packageinstaller", "com.android.shell", "com.sec.android.app.myfiles",
+            "com.google.android.apps.nbu.files", "com.google.android.documentsui", "com.android.documentsui",
+            "com.mi.android.globalFileexplorer", "com.coloros.filemanager", "com.huawei.filemanager",
+        )
 
         fun degerlendir(liste: List<UygulamaBilgisi>) = liste.map { UygulamaDegerlendirici.degerlendir(it) }
     }
