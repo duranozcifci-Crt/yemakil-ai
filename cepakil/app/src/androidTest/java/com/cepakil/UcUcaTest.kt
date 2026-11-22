@@ -21,6 +21,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.FixMethodOrder
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
 import java.io.File
@@ -38,8 +40,16 @@ import java.io.FileInputStream
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class UcUcaTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
     val k = createAndroidComposeRule<MainActivity>()
+
+    /** Test başarısız olursa o anki ekranın görüntüsünü alır (hatayı görerek düzeltmek için). */
+    @get:Rule(order = 1)
+    val izleyici = object : TestWatcher() {
+        override fun failed(e: Throwable?, d: Description) {
+            try { foto("HATA_${d.methodName}") } catch (_: Throwable) { }
+        }
+    }
 
     private val deneme = "CepAkıl Deneme Uygulaması"
 

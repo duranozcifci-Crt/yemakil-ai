@@ -54,7 +54,7 @@ jobs:
           working-directory: cepakil
           script: |
             adb install -r ornek/build/outputs/apk/debug/ornek-debug.apk
-            ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true; S=$?; mkdir -p cihaz-ekran; (adb exec-out run-as com.cepakil tar -c -C files ekran > cihaz-ekran.tar && tar -xf cihaz-ekran.tar -C cihaz-ekran) || true; exit $S
+            ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true; S=$?; mkdir -p cihaz-ekran; (adb exec-out run-as com.cepakil tar -c -C files ekran > cihaz-ekran.tar && tar -xf cihaz-ekran.tar -C cihaz-ekran) || true; adb logcat -d -v time > cihaz-ekran/logcat.txt || true; adb shell pm list packages -3 > cihaz-ekran/paketler.txt || true; exit $S
       # Yalnız elle başlatılınca: APK'yı aynı dala ekler (sohbetten doğrudan göndermek için).
       - name: APK'yı dala ekle
         if: github.event_name == 'workflow_dispatch'
@@ -75,6 +75,19 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add indir/CepAkil.apk
           git commit -m "CepAkıl APK (otomatik)"
+          git push origin HEAD:${{ github.ref_name }}
+      # Elle başlatılmış derlemede testler başarısız olursa: kanıtları (ekran görüntüsü, rapor, logcat) dala ekle.
+      - name: Hata kanıtlarını dala ekle
+        if: failure() && github.event_name == 'workflow_dispatch'
+        run: |
+          rm -rf hata && mkdir -p hata
+          cp -r cihaz-ekran/* hata/ 2>/dev/null || true
+          find app/build/outputs/androidTest-results -name "*.xml" -exec cp {} hata/ \; 2>/dev/null || true
+          if [ -f hata/logcat.txt ]; then grep -E "cepakil|AndroidRuntime|FATAL|TestRunner" hata/logcat.txt | tail -n 400 > hata/logcat-ozet.txt; rm hata/logcat.txt; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f hata
+          git commit -m "CepAkıl test hatası kanıtları (otomatik)" || exit 0
           git push origin HEAD:${{ github.ref_name }}
       - uses: actions/upload-artifact@v4
         if: always()
