@@ -5,7 +5,7 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json"><title>YemAkıl Rasyon</title>
-<script src="yedek.js?v=225"></script>
+<script src="yedek.js?v=226"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f3efeb;--card:#fdfcfb;--tx:#1f1a17;--mu:#6b625b;--ac:#d9580a;--on:#fff;--bd:#dcd3cb;--bad:#a8281f;--ok:#1d6b3a;--wa:#a86a00;box-sizing:border-box;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
@@ -107,7 +107,7 @@ details.ogrB{border-left:3px solid var(--ac);padding:0 0 2px 10px;margin:8px 0}d
 body:not(.ogr-on) .ogrB,body:not(.ogr-on) .ogrL{display:none!important}
 table.ogrT{width:100%;table-layout:fixed;font-size:12px;margin:4px 0 6px;border-collapse:collapse}table.ogrT th,table.ogrT td{text-align:left;white-space:normal;overflow-wrap:anywhere;padding:4px 3px;vertical-align:top}table.ogrT th:nth-child(1),table.ogrT td:nth-child(1){width:34%}table.ogrT th:nth-child(3),table.ogrT td:nth-child(3){width:25%}table.ogrT tr.ogrG td{font-weight:600;color:var(--ac);padding-top:8px}details.ogrP{border-bottom:1px dashed var(--bd);padding:1px 0}details.ogrP summary{font-size:13px;padding:6px 0;cursor:pointer}details.ogrP p.s{margin:3px 0 3px 8px}.ogrB p.ogrKy{font-size:12px;color:var(--mu)}
 </style></head><body><main>
-<h1 aria-label="YemAkıl Rasyon" style="display:flex;align-items:center;gap:10px;background:#fff;color:#111;border-bottom:1px solid #e3e3e3;padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px"><img src="logo-rasyon-yuvarlak.png" width="64" height="64" alt="yemakıl Rasyon" style="border-radius:14px"><button type="button" id="ogrTgl" aria-pressed="false" title="Öğretici mod: her bölümde ne işe yaradığını ve sonuçların nasıl okunduğunu anlatır">🎓 Öğretici</button><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="color:#555;font-size:11px;font-weight:400;opacity:.75">v225</span></h1>
+<h1 aria-label="YemAkıl Rasyon" style="display:flex;align-items:center;gap:10px;background:#fff;color:#111;border-bottom:1px solid #e3e3e3;padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:6px"><img src="logo-rasyon-yuvarlak.png" width="64" height="64" alt="yemakıl Rasyon" style="border-radius:14px"><button type="button" id="ogrTgl" aria-pressed="false" title="Öğretici mod: her bölümde ne işe yaradığını ve sonuçların nasıl okunduğunu anlatır">🎓 Öğretici</button><a href="yemakil.html" aria-label="YemAkıl: tüm programlar" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:500;text-decoration:none;color:inherit;opacity:.85"><img src="icon-yemakil-192.png" width="20" height="20" alt="" style="border-radius:5px;margin:0;background:#000">YemAkıl</a><span style="color:#555;font-size:11px;font-weight:400;opacity:.75">v226</span></h1>
 
 <div class="seg" id="seg"></div>
 <div id="sutPanel" style="scroll-margin-top:8px"><h2>Irk ve verim</h2>
@@ -171,12 +171,13 @@ var REF={
  dcadLak:{isi:[350,450],src:"Iwaniuk ve Erdman 2015; NASEM 2021; West 2003"}, /* sağmal DCAD, mEq/kg KM — lo/hi REF4.sagmal.dcad; isi: sıcak stresinde hedef (West 2003; tabloda yok, yerel) */
  seLak:{src:"NASEM 2021; AB 2019/804"}, /* sağmal Se, mg/kg KM — lo/hi REF4.sagmal.se */
  lys:{hedef:"7,0–7,2"},met:{hedef:"2,3–2,4"}, /* sağmal, % MP — min REF4.sagmal.lys/met alt sınırı (çözücü alt sınırı = uyarı eşiği) */
- beefP:{dikkat:0.35,ust:0.5,src:"OSU Beef 2017; NASEM 2016"}, /* besi fosforu, % KM */
- sheepCu:{pratik:10,ust:12,yasal:15,src:"NRC 2007; AB 2018/1039"} /* koyun bakırı risk kartı basamakları, mg/kg KM (değerlendirme satırı sınırı REF4.kuzu.cu) */
+ beefP:{src:"OSU Beef 2017; NASEM 2016"}, /* besi fosforu, % KM — dikkat/ust REF4.besi.ph (us/uk) */
+ sheepCu:{src:"NRC 2007; AB 2018/1039"} /* koyun bakırı, mg/kg KM — pratik/yasal = REF4.kuzu.cu üst sınır / üst kritik (tek kaynak) */
 };
 /* ===== DÖRT KADEMELİ REFERANS TABLOSU (REF4): alt kritik (ak) | alt sınır (as) | üst sınır (us) | üst kritik (uk); null = o yönde sınır yok.
    TEK KAYNAK: değerlendirme tabloları, risk kartları, çözücüler, "Hedefleri düzenle", öğretici ve rapor sayıları buradan okur (ref4, durum4).
-   Sınıflar: sagmal (laktasyondaki sağmal inek), kuruYakin, kuruUzak, duve, besi, kuzu (kuzu/toklu besisi), koyun (ergin), buzagi.
+   Sınıflar: sagmal (laktasyondaki sağmal inek), kuruYakin, kuruUzak, duve, besi, kuzu (kuzu/toklu besisi), koyun (ergin), buzagi; yem = çiftlik yemi (karma yemin kendisi, hayvan rasyonundan ayrı).
+   kart:1 = yalnız risk kartında kullanılan ölçü (V226): değerlendirme tablosunda satırı yok; kart, öğretici ve "Hedefleri düzenle → İleri" buradan okur. acil / acilAlt = kartın üçüncü (en ağır) kademesi.
    kaynak KT = kullanıcının gönderdiği tablo ("Refah riskleri genel kabuller", NDS; 2026-11-18): sağmalda tablo değeri uygulamanın eski değerinin yerine geçer.
    tur:1 = türetilmiş hücre (tabloda/kaynakta doğrudan yok); olc:1 = program hesaplamaz, ölçümle izlenir (yalnız bilgi); eq:1 = eşik değerinin kendisi de sayılır (≥ / ≤).
    Eşitlik kuralı (durum4): sınırın kendisi içeridedir → v < ak "kritik düşük"; ak ≤ v < as "düşük"; as ≤ v ≤ us "normal"; us < v ≤ uk "yüksek"; v > uk "kritik yüksek". Değer, satırın ondalığına (d) yuvarlanıp karşılaştırılır.
@@ -277,13 +278,18 @@ var REF4={
   dmp:{n:"Rasyon KM",birim:"% KM",d:1,ak:null,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   cp:{n:"Ham protein",birim:"% KM",d:1,ak:12,uk:17,kaynak:"Uygulamadaki mevcut eşik (hedef 14; −1/+1,5); Martins 2022 (ilk doğum yapacaklarda %14–15); kritikler türetilmiş",tur:1},
   mp:{n:"Metabolik protein",birim:"g/gün",d:0,ak:90,as:100,us:130,uk:150,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"V224: hedef hesaplanan ihtiyaca göre (ihtiyaç × 1,0–1,3; kritik < × 0,9, > × 1,5), ırk ve ağırlıkla ölçeklenir; eski sabit taban (1000–1350 g) kaldırıldı; Husnain ve Santos 2019 (çok doğum yapmışta 800 g üstü yarar yok; ilk …; kritikler türetilmiş",tur:1},
-  sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:22,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,as:12,us:18,uk:22,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (12–18; risk kartı ve çözücü); üst kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:27,uk:50,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   kaba:{n:"Kaba yem payı",birim:"% KM",d:0,ak:50,uk:null,kaynak:"Uygulamadaki mevcut eşik (kesif > %50 asidoz riski); kritikler türetilmiş",tur:1},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:null,uk:0.8,kaynak:"Uygulamadaki mevcut eşik (NRC 2001; GfE: günde 60 g üstü önerilmez; %0,8 üstü süt humması riski); NASEM 202…",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.2,uk:0.4,kaynak:"alt kritik: NASEM 2021 ihtiyacı 0,20 (Anas ve ark. 2023, Tablo 1 (PMC10223334; NASEM 2021/2016 ve NRC 2005 …",tur:1},
-  fn:{n:"Kaba yem NDF",birim:"% KM",d:1,ak:22,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  adf:{n:"ADF",birim:"% KM",d:1,ak:18,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
+  fn:{n:"Kaba yem NDF",birim:"% KM",d:1,ak:22,as:25,us:60,uk:null,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (25–60; risk kartı: 25 altı); alt kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
+  adf:{n:"ADF",birim:"% KM",d:1,ak:18,as:20,us:40,uk:null,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (20–40; risk kartı: 20 altı); alt kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
+  /* risk kartı satırları (kart:1; değerlendirme tablosunda satırı yok, kart ve öğretici buradan okur; "Hedefleri düzenle → İleri"de düzenlenir) */
+  bcs:{n:"Kondisyon puanı",birim:"puan",d:2,ak:2.75,as:3.0,us:3.5,uk:3.75,eq:1,kart:1,kaynak:"Roche 2009; Serrenho 2021 (3,75 ve üstü yağlı inek: süt humması, ketozis, yağlı karaciğer); hedef 3,0–3,5; alt kritik türetilmiş",tur:1},
+  enRatio:{n:"Enerji karşılama (ihtiyaca göre)",birim:"%",d:0,ak:85,as:95,us:115,uk:125,kart:1,kaynak:"Uygulamadaki mevcut eşik (%95–115); Martins ve ark. 2022 (Anim. Front. 12:29); kritikler türetilmiş",tur:1},
+  yonca:{n:"Yonca payı",birim:"% KM",d:0,ak:null,as:null,us:25,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (süt humması kartı: yüksek Ca ve K) (düşük güven)",tur:1,guven:"d"},
+  caAn:{n:"Kalsiyum (anyonik tuzlu programda)",birim:"% KM",d:2,ak:0.8,as:1.0,us:1.5,uk:2.0,kart:1,kaynak:"Uygulamadaki mevcut eşik (%1,0–1,5); Ontario OMAFRA; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
  "kuruUzak":{k:{n:"Potasyum",birim:"% KM",d:2,ak:0.55,as:0.65,us:1.5,uk:2,kaynak:"alt sınır: NASEM 2021 0,66, Ontario OMAFRA 0,65; üst sınır: Uygulamadaki mevcut eşik; üst kritik: NRC 2005 …",tur:1},
   mg:{n:"Magnezyum",birim:"% KM",d:2,ak:0.14,as:0.25,us:0.45,uk:0.6,kaynak:"NASEM 2021; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   s:{n:"Kükürt",birim:"% KM",d:2,ak:0.17,as:0.2,us:0.35,uk:0.4,kaynak:"alt sınır: NASEM 2021 0,20; üst kritik: NRC tolerans 0,40 (Anas ve ark. 2023, Tablo 1 (PMC10223334; NASEM 2…",tur:1},
@@ -298,13 +304,18 @@ var REF4={
   dmp:{n:"Rasyon KM",birim:"% KM",d:1,ak:null,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   cp:{n:"Ham protein",birim:"% KM",d:1,ak:10,uk:16,kaynak:"Uygulamadaki mevcut eşik (hedef 12; −1/+1,5); NRC 2001; kritikler türetilmiş",tur:1},
   mp:{n:"Metabolik protein",birim:"g/gün",d:0,ak:90,as:100,us:130,uk:150,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"V224: hedef hesaplanan ihtiyaca göre (ihtiyaç × 1,0–1,3; kritik < × 0,9, > × 1,5); eski sabit taban (800–1050 g) kaldırıldı; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:20,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,as:10,us:16,uk:20,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (10–16; risk kartı ve çözücü); üst kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:30,uk:65,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   kaba:{n:"Kaba yem payı",birim:"% KM",d:0,ak:60,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:null,uk:0.8,kaynak:"alt sınır: NASEM 2021 0,35 (Anas ve ark. 2023, Tablo 1 (PMC10223334; NASEM 2021/2016 ve NRC 2005 değerlerin…",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.2,uk:0.4,kaynak:"alt kritik: NASEM 2021 0,20; alt/üst sınır: Uygulamadaki mevcut eşik; üst kritik: Ontario OMAFRA / Phibro",tur:1},
-  fn:{n:"Kaba yem NDF",birim:"% KM",d:1,ak:22,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  adf:{n:"ADF",birim:"% KM",d:1,ak:18,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
+  fn:{n:"Kaba yem NDF",birim:"% KM",d:1,ak:22,as:25,us:60,uk:null,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (25–60; risk kartı: 25 altı); alt kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
+  adf:{n:"ADF",birim:"% KM",d:1,ak:18,as:20,us:40,uk:null,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (20–40; risk kartı: 20 altı); alt kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
+  /* risk kartı satırları (kart:1; değerlendirme tablosunda satırı yok, kart ve öğretici buradan okur; "Hedefleri düzenle → İleri"de düzenlenir) */
+  bcs:{n:"Kondisyon puanı",birim:"puan",d:2,ak:2.75,as:3.0,us:3.5,uk:3.75,eq:1,kart:1,kaynak:"Roche 2009; Serrenho 2021 (3,75 ve üstü yağlı inek: süt humması, ketozis, yağlı karaciğer); hedef 3,0–3,5; alt kritik türetilmiş",tur:1},
+  enRatio:{n:"Enerji karşılama (ihtiyaca göre)",birim:"%",d:0,ak:85,as:95,us:115,uk:125,kart:1,kaynak:"Uygulamadaki mevcut eşik (%95–115); Martins ve ark. 2022 (Anim. Front. 12:29); kritikler türetilmiş",tur:1},
+  yonca:{n:"Yonca payı",birim:"% KM",d:0,ak:null,as:null,us:25,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (süt humması kartı: yüksek Ca ve K) (düşük güven)",tur:1,guven:"d"},
+  caAn:{n:"Kalsiyum (anyonik tuzlu programda)",birim:"% KM",d:2,ak:0.8,as:1.0,us:1.5,uk:2.0,kart:1,kaynak:"Uygulamadaki mevcut eşik (%1,0–1,5); Ontario OMAFRA; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
  "duve":{k:{n:"Potasyum",birim:"% KM",d:2,ak:0.5,as:0.6,us:1.6,uk:2,kaynak:"alt sınır: NASEM 2021 düve 0,56 (Anas ve ark. 2023, Tablo 1 (PMC10223334; NASEM 2021/2016 ve NRC 2005 değer…",tur:1},
   mg:{n:"Magnezyum",birim:"% KM",d:2,ak:0.1,as:0.12,us:0.3,uk:0.4,kaynak:"alt sınır: NASEM 2021 düve 0,12 (Anas ve ark. 2023, Tablo 1 (PMC10223334; NASEM 2021/2016 ve NRC 2005 değer…",tur:1},
   s:{n:"Kükürt",birim:"% KM",d:2,ak:0.15,as:0.2,us:0.3,uk:0.4,kaynak:"alt sınır: NASEM 2021 0,20; alt kritik: NASEM 2016 0,15; üst kritik: 0,40 (Anas ve ark. 2023, Tablo 1 (PMC1…",tur:1},
@@ -318,8 +329,13 @@ var REF4={
   cp:{n:"Ham protein",birim:"% KM",d:1,ak:-2,as:-1,us:2.5,uk:4.5,altBaz:"fark",ustBaz:"fark",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:0.85,as:1,us:1,uk:1.5,altBaz:"oran",goreli:1,kaynak:"NASEM 2016 (Nutrient Requirements of Beef Cattle, 8. baskı) denklemi (Uygulamadaki mevcut eşik); NASEM 2021…; kritikler türetilmiş",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.85,as:1,us:0.5,uk:0.7,altBaz:"oran",goreli:1,kaynak:"NASEM 2016 (Nutrient Requirements of Beef Cattle, 8. baskı) denklemi (Uygulamadaki mevcut eşik); NASEM 2021…; kritikler türetilmiş",tur:1},
-  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1,uk:7,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
- "duve:0":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.1,uk:2.75,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1,uk:7,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  /* risk kartı satırları (kart:1) */
+  adg:{n:"Günlük artış (tohumlama öncesi)",birim:"g/gün",d:0,ak:600,as:700,us:900,uk:1000,kart:1,kaynak:"Uygulamadaki mevcut eşik (600 altı ilk doğum gecikir; 900–1.000 üstü meme dokusu yağlanır; NRC 2001); Zanton ve Heinrichs 2005; alt sınır 700 türetilmiş",tur:1},
+  adgOran:{n:"Artış / hedef artış",birim:"%",d:0,ak:null,as:80,us:130,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (hedefin %80 altı yetersiz büyüme; gebe düvede %130 üstü yağlanma)",tur:1},
+  bcs:{n:"Kondisyon puanı",birim:"puan",d:2,ak:null,as:null,us:null,uk:3.75,eq:1,kart:1,kaynak:"Uygulamadaki mevcut eşik (3,75 ve üstü yağlı düve) (düşük güven; araştırmadaki 2,75–3,5 sınır çifti türetilmiş, uygulanmadı)",tur:1,guven:"d"}},
+ "duve:0":{kesif:{n:"Kesif yem payı (dönem başı)",birim:"% KM",d:0,ak:null,as:null,us:60,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (asidoz kartı: dönem başında kesif %60 üstü kademeli geçiş ister)",tur:1},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.1,uk:2.75,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:26,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:29,uk:55,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:16,uk:37,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
@@ -353,22 +369,38 @@ var REF4={
   cp:{n:"Ham protein",birim:"% KM",d:1,ak:-2,as:-1,us:2.5,uk:4.5,altBaz:"fark",ustBaz:"fark",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:0.85,as:1,us:1,uk:1.5,altBaz:"oran",goreli:1,kaynak:"NASEM 2016 (Nutrient Requirements of Beef Cattle, 8. baskı) denklemi (Uygulamadaki mevcut eşik); üst kritik…; kritikler türetilmiş",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.85,as:1,us:0.35,uk:0.5,altBaz:"oran",goreli:1,kaynak:"NASEM 2016 (Nutrient Requirements of Beef Cattle, 8. baskı); OSU Beef 2017 (Uygulamadaki mevcut eşik: REF.b…; kritikler türetilmiş",tur:1},
-  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1.5,as:2,us:4,uk:7,kaynak:"Uygulamadaki mevcut eşik: OSU Beef 2017; NASEM 2016 (idrar taşı: <1,5 yüksek risk, en az 2:1); kritikler türetilmiş",tur:1}},
- "besi:0":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.4,uk:2.95,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1.5,as:2,us:4,uk:7,kaynak:"Uygulamadaki mevcut eşik: OSU Beef 2017; NASEM 2016 (idrar taşı: <1,5 yüksek risk, en az 2:1); kritikler türetilmiş",tur:1},
+  /* risk kartı satırları (kart:1): besi risk kartları ve öğretici buradan okur; "Hedefleri düzenle → İleri"de düzenlenir */
+  rfs:{n:"Rumende yıkılan nişasta",birim:"% KM",d:0,ak:null,as:null,us:25,uk:30,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998; Firkins 2001"},
+  wb:{n:"Buğday/arpa/tritikale payı",birim:"% KM",d:0,ak:null,as:null,us:40,uk:45,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998 (asidoz: üst sınır); Cheng 1998 (ince öğütülmüşse şişme: üst kritik)"},
+  leg:{n:"Baklagil (yonca/fiğ) payı",birim:"% KM",d:0,ak:null,as:null,us:50,uk:70,kart:1,kaynak:"Uygulamadaki mevcut eşik: Nebraska Extension G2018; Cheng 1998 (pratik kural)"},
+  kabaBL:{n:"Kaba yem payı (besi şişmesi; nişastayla birlikte)",birim:"% KM",d:0,ak:10,as:15,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: Nebraska G2018; Cheng 1998 (kaba %10 altı + nişasta %40 üstü yüksek; %15 altı + %35 üstü dikkat)"},
+  staBL:{n:"Nişasta (besi şişmesi; az kaba yemle birlikte)",birim:"% KM",d:0,ak:null,as:null,us:35,uk:40,kart:1,kaynak:"Uygulamadaki mevcut eşik: Nebraska G2018; Cheng 1998"},
+  kesifG:{n:"Kesif payı (besiye girişin ilk 24 günü)",birim:"% KM",d:0,ak:null,as:null,us:null,uk:75,kart:1,kaynak:"Uygulamadaki mevcut eşik: Samuelson 2016; Brown 2006 (doğrudan bitiş yemine geçiş)"},
+  dof:{n:"Besideki gün",birim:"gün",d:0,ak:null,as:null,us:150,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: Nagaraja ve Lechtenberg 2007 (150 gün üstü karaciğer apsesi artar)"},
+  tuz:{n:"Tuz eşdeğeri",birim:"% KM",d:2,ak:0.25,as:0.5,us:1.0,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: OSU Beef 2017; Univ. Minnesota (idrar taşı önlemi)"},
+  so4:{n:"İçme suyunda sülfat",birim:"mg/L",d:0,ak:null,as:null,us:500,uk:1000,kart:1,kaynak:"Uygulamadaki mevcut eşik: NASEM 2016; Colorado State ILM"},
+  ddS:{n:"Kükürtlü yan ürün payı (DDGS, gluten, melas…)",birim:"% KM",d:0,ak:null,as:null,us:25,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: CSU ILM; Drewnoski 2014"},
+  thi:{n:"THI (sıcaklık-nem indeksi)",birim:"",d:0,ak:null,as:null,us:75,uk:79,acil:84,eq:1,kart:1,kaynak:"Uygulamadaki mevcut eşik: Mader 2006 (75 dikkat, 79 tehlike, 84 acil)"}},
+ "besi:0":{pendf:{n:"peNDF",birim:"% KM",d:1,ak:15,as:17,us:30,uk:null,kaynak:"Uygulamadaki mevcut eşik: Fox ve Tedeschi 2002; NASEM 2016 (risk kartı: dönem kaba NDF sınırı 15 altı yüksek, +2 dikkat); Mertens 1997 (araştırma, orta güven)",tur:1},
+  kesif:{n:"Kesif yem payı (başlangıç/adaptasyon)",birim:"% KM",d:0,ak:null,as:null,us:60,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: Brown 2006 (başlangıçta kesif %60 üstü: geçiş kademeli olmalı)",tur:1},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.4,uk:2.95,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:40,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:25,uk:50,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:13,uk:33,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   kaba:{n:"Kaba yem payı",birim:"% KM",d:0,ak:20,uk:null,kaynak:"Uygulamadaki mevcut eşik (BPH; Samuelson 2016; NASEM 2016); kritikler türetilmiş",tur:1},
   fn:{n:"Kaba yem NDF",birim:"% KM",d:1,ak:12,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   dmp:{n:"Rasyon KM",birim:"% KM",d:1,ak:null,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
- "besi:1":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.5,uk:3,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+ "besi:1":{pendf:{n:"peNDF",birim:"% KM",d:1,ak:10,as:12,us:30,uk:null,kaynak:"Uygulamadaki mevcut eşik: Fox ve Tedeschi 2002; NASEM 2016 (risk kartı: dönem kaba NDF sınırı 10 altı yüksek, +2 dikkat); Mertens 1997 (araştırma, orta güven)",tur:1},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.5,uk:3,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:45,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:20,uk:43,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:10,uk:29,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   kaba:{n:"Kaba yem payı",birim:"% KM",d:0,ak:10,uk:null,kaynak:"Uygulamadaki mevcut eşik (BPH; Samuelson 2016; NASEM 2016); kritikler türetilmiş",tur:1},
   fn:{n:"Kaba yem NDF",birim:"% KM",d:1,ak:8,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   dmp:{n:"Rasyon KM",birim:"% KM",d:1,ak:null,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
- "besi:2":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.55,uk:3.05,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+ "besi:2":{pendf:{n:"peNDF",birim:"% KM",d:1,ak:8,as:10,us:30,uk:null,kaynak:"Uygulamadaki mevcut eşik: Fox ve Tedeschi 2002; NASEM 2016 (risk kartı: dönem kaba NDF sınırı 8 altı yüksek, +2 dikkat); Mertens 1997 (araştırma, orta güven)",tur:1},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.55,uk:3.05,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:45,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:16,uk:37,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:8,uk:25,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
@@ -386,10 +418,16 @@ var REF4={
   ee:{n:"Ham yağ",birim:"% KM",d:1,ak:null,as:2,us:5,uk:7,kaynak:"NRC 2007; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   dmi:{n:"KM alımı",birim:"kg/gün",d:1,ak:85,as:90,us:110,uk:120,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"Uygulamadaki mevcut eşik (%90–110; DMICAP 1,10); kritikler türetilmiş",tur:1},
   cp:{n:"Ham protein",birim:"% KM",d:1,ak:-2,as:-1,us:2.5,uk:4.5,altBaz:"fark",ustBaz:"fark",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1.2,uk:7,kaynak:"Uygulamadaki mevcut eşik: NRC 2007 / OSU (erkek kuzuda en az 2:1; 1,2 altı yüksek risk); kritikler türetilmiş",tur:1},
+  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1.2,as:2,us:4,uk:7,kaynak:"alt/üst sınır: değerlendirme tablosu ve risk kartı (erkek kuzuda en az 2:1); Uygulamadaki mevcut eşik: NRC 2007 / OSU (erkek kuzuda en az 2:1; 1,2 altı yüksek risk); kritikler türetilmiş",tur:1},
+  /* risk kartı satırları (kart:1) */
+  kesif:{n:"Kesif yem payı (enterotoksemi)",birim:"% KM",d:0,ak:null,as:null,us:70,uk:85,kart:1,kaynak:"Uygulamadaki mevcut eşik (enterotoksemi kartı: Teagasc, UC Davis, NRC 2007)"},
+  staEn:{n:"Nişasta (enterotoksemi; nişasta + şeker sınırı)",birim:"% KM",d:0,ak:null,as:null,us:35,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (Teagasc; UC Davis: nişasta + şeker %35’i aşmasın)"},
+  bkep:{n:"Buğday / kepek payı (tek yem)",birim:"% KM",d:0,ak:null,as:null,us:15,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (NRC 2007; OSU: fosfor ve silika taşı)"},
+  sicaklik:{n:"Ahır sıcaklığı",birim:"°C",d:0,ak:null,as:null,us:30,uk:35,eq:1,kart:1,kaynak:"Uygulamadaki mevcut eşik (30 °C ve üstü ısı stresi); üst kritik türetilmiş (düşük güven)",tur:1,guven:"d"},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:0.38,uk:1.5,kaynak:"Uygulamadaki mevcut eşik (KPH); NRC 1985 aralığı 0,20–0,82; kritikler türetilmiş",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.19,uk:0.6,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
- "kuzu:0":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.4,uk:3.2,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+ "kuzu:0":{kesifGenc:{n:"Kesif yem payı (genç kuzu)",birim:"% KM",d:0,ak:null,as:null,us:60,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (genç kuzuda kesif %60 üstü kademeli alıştırma ister; NRC 2007)"},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.4,uk:3.2,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:36,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:20,uk:50,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:11,uk:33,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
@@ -421,8 +459,12 @@ var REF4={
   ee:{n:"Ham yağ",birim:"% KM",d:1,ak:null,as:2,us:5,uk:7,kaynak:"NRC 2007; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   dmi:{n:"KM alımı",birim:"kg/gün",d:1,ak:85,as:90,us:110,uk:120,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"Uygulamadaki mevcut eşik (%90–110; DMICAP 1,10); kritikler türetilmiş",tur:1},
   cp:{n:"Ham protein",birim:"% KM",d:1,ak:-2,as:-1,us:2.5,uk:4.5,altBaz:"fark",ustBaz:"fark",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1.2,uk:7,kaynak:"Uygulamadaki mevcut eşik: NRC 2007 / OSU (erkek kuzuda en az 2:1; 1,2 altı yüksek risk); kritikler türetilmiş",tur:1}},
- "koyun:idame":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:1.8,uk:2.5,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1.2,as:1.5,us:4,uk:7,kaynak:"alt/üst sınır: değerlendirme tablosu (ergin koyun 1,5); Uygulamadaki mevcut eşik: NRC 2007 / OSU (erkek kuzuda en az 2:1; 1,2 altı yüksek risk); kritikler türetilmiş",tur:1},
+  /* risk kartı satırları (kart:1) */
+  bcs:{n:"Kondisyon puanı",birim:"puan",d:1,ak:2.0,as:2.5,us:3.5,uk:4.0,eq:1,kart:1,kaynak:"Uygulamadaki mevcut eşik (koç katımı öncesi 2,5–3,5; 4 ve üstü gebelik toksemisi riski); NRC 2007"},
+  sicaklik:{n:"Ahır sıcaklığı",birim:"°C",d:0,ak:null,as:null,us:30,uk:35,eq:1,kart:1,kaynak:"Uygulamadaki mevcut eşik (30 °C ve üstü ısı stresi); üst kritik türetilmiş (düşük güven)",tur:1,guven:"d"}},
+ "koyun:idame":{enDenge:{n:"Enerji dengesi",birim:"Mcal/gün",d:2,ak:-0.4,as:-0.2,us:0.4,uk:0.8,kart:1,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (NRC 2007, Cannas 2004); kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:1.8,uk:2.5,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:24,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:36,uk:73,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:22,uk:50,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
@@ -431,7 +473,8 @@ var REF4={
   dmp:{n:"Rasyon KM",birim:"% KM",d:1,ak:null,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:0.2,uk:1.5,kaynak:"Uygulamadaki mevcut eşik (KPH); NRC 1985 aralığı 0,20–0,82 (Oregon State Univ. Extension 'Mineral Requireme…; kritikler türetilmiş",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.16,uk:0.6,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
- "koyun:gebe":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.1,uk:2.8,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+ "koyun:gebe":{enDenge:{n:"Enerji dengesi",birim:"Mcal/gün",d:2,ak:-0.25,as:null,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (−0,25 Mcal/gün altı yüksek toksemi riski: alt kritik); araştırmanın −0,10 alt sınırı türetilmiş, uygulanmadı (düşük güven)",tur:1,guven:"d"},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.1,uk:2.8,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:29,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:32,uk:60,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:18,uk:43,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
@@ -440,7 +483,8 @@ var REF4={
   dmp:{n:"Rasyon KM",birim:"% KM",d:1,ak:null,uk:null,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ca:{n:"Kalsiyum",birim:"% KM",d:2,ak:0.32,uk:1,kaynak:"Uygulamadaki mevcut eşik (KPH); NRC 1985 aralığı 0,20–0,82 (Oregon State Univ. Extension 'Mineral Requireme…; kritikler türetilmiş",tur:1},
   ph:{n:"Fosfor",birim:"% KM",d:2,ak:0.2,uk:0.6,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"}},
- "koyun:lak":{me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.2,uk:2.9,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+ "koyun:lak":{enDenge:{n:"Enerji dengesi",birim:"Mcal/gün",d:2,ak:-0.6,as:null,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (−0,6 Mcal/gün altı yüksek risk: alt kritik); araştırmanın −0,3 alt sınırı türetilmiş, uygulanmadı (düşük güven)",tur:1,guven:"d"},
+  me:{n:"ME yoğunluğu",birim:"Mcal/kg KM",d:2,ak:2.2,uk:2.9,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sta:{n:"Nişasta",birim:"% KM",d:1,ak:null,uk:32,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   ndf:{n:"NDF",birim:"% KM",d:1,ak:29,uk:55,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   adf:{n:"ADF",birim:"% KM",d:1,ak:16,uk:39,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
@@ -457,27 +501,65 @@ var REF4={
   zn:{n:"Çinko",birim:"mg/kg KM",d:0,ak:34,as:40,us:100,uk:136,kaynak:"alt sınır: NRC 2001 Tablo 10-6 40 (Uygulamadaki mevcut eşik); üst kritik: AB 2016/1095 (çinko: 120 mg/kg ta…",tur:1},
   se:{n:"Selenyum",birim:"mg/kg KM",d:2,ak:0.2,as:0.3,us:0.5,uk:0.57,kaynak:"alt sınır: NRC 2001 / NASEM 2021 0,3; üst kritik: AB 1831/2003 selenyum izinleri (toplam 0,5 mg/kg tam yem,…",tur:1},
   ee:{n:"Ham yağ",birim:"% KM",d:1,ak:null,as:2.5,us:6,uk:7,kaynak:"NASEM 2021; kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  meOran:{n:"Toplam ME",birim:"Mcal/gün",d:2,ak:85,as:95,us:115,uk:125,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"NASEM 2021 (Nutrient Requirements of Dairy Cattle, 8. baskı) buzağı modeli; Uygulamadaki mevcut eşik (%95–115); kritikler türetilmiş",tur:1}},
- "buzagi:sut":{sutBW:{n:"Süt / sulu ikame",birim:"L/gün",d:1,ak:8,as:10,us:20,uk:25,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"Uygulamadaki mevcut eşik (6 haftadan küçükte en az %10; üst %20); NASEM 2021 (düşük düzey 400–600, yüksek >…; kritikler türetilmiş",tur:1},
+  meOran:{n:"Toplam ME",birim:"Mcal/gün",d:2,ak:85,as:95,us:115,uk:125,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"NASEM 2021 (Nutrient Requirements of Dairy Cattle, 8. baskı) buzağı modeli; Uygulamadaki mevcut eşik (%95–115); kritikler türetilmiş",tur:1},
+  adgOran:{n:"Artış / hedef artış",birim:"%",d:0,ak:70,as:90,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (hedefin %70 altı yetersiz büyüme: risk kartı); alt sınır %90 (araştırma, orta güven; kart puanı alt kritikte)"}},
+ "buzagi:sut":{/* risk kartı satırları (kart:1) */
+  sicaklikGenc:{n:"Ahır sıcaklığı (3 haftadan küçük)",birim:"°C",d:0,acilAlt:0,ak:10,as:15,us:25,uk:30,eq:1,kart:1,kaynak:"NASEM 2021 (alt kritik sıcaklık 15 °C, üst 25 °C); Uygulamadaki mevcut eşik (alt kritik = 15 − 5 °C; 0 °C altı yüksek)"},
+  sicaklik:{n:"Ahır sıcaklığı",birim:"°C",d:0,acilAlt:0,ak:0,as:5,us:25,uk:30,eq:1,kart:1,kaynak:"NASEM 2021 (alt kritik sıcaklık 5 °C, üst 25 °C); Uygulamadaki mevcut eşik (0 °C altı yüksek, 30 °C ve üstü ısı stresi)"},
+  ogunL:{n:"Öğün başına süt",birim:"L",d:1,ak:null,as:null,us:3.5,uk:4.0,kart:1,kaynak:"Uygulamadaki mevcut eşik (4 L üstü abomazum kapasitesini aşar; 14 günden küçükte 3,5)"},
+  ogun:{n:"Günlük öğün sayısı",birim:"",d:0,ak:null,as:2,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik (günde tek öğün: ozmotik yük; NASEM 2021)"},
+  sutBW:{n:"Süt / sulu ikame",birim:"L/gün",d:1,ak:8,as:10,us:20,uk:25,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"Uygulamadaki mevcut eşik (6 haftadan küçükte en az %10; üst %20); NASEM 2021 (düşük düzey 400–600, yüksek >…; kritikler türetilmiş",tur:1},
   lqd:{n:"Sıvı KM",birim:"kg/gün",d:2,ak:1.2,as:1.5,us:1.3,uk:1.5,altBaz:"oran",goreli:1,kaynak:"Uygulamadaki mevcut eşik (NASEM 2021 pratik alt sınır: doğum ağırlığının %1,5'i; üst 1,3 kg); kritikler türetilmiş",tur:1},
   lcp:{n:"İkame yemi HP",birim:"% KM",d:1,ak:18,uk:30,kaynak:"Uygulamadaki mevcut eşik (20–28); sahada 20–24 (PMC11758631); NASEM 2021 yalnız sütle beslenen buzağıda %21…; kritikler türetilmiş",tur:1},
   starterOran:{n:"Başlangıç yemi KM",birim:"kg/gün",d:2,ak:40,as:60,us:140,uk:null,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   scp:{n:"HP (katı yem)",birim:"% KM",d:1,ak:16,uk:24,kaynak:"Uygulamadaki mevcut eşik (NASEM 2021 %18–22); NRC 2001 %18; kritikler türetilmiş",tur:1},
-  ssta:{n:"Nişasta (katı yem)",birim:"% KM",d:1,ak:15,uk:40,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  sndf:{n:"NDF (katı yem)",birim:"% KM",d:1,ak:10,uk:35,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  skb:{n:"Kaba yem (katı içinde)",birim:"%",d:0,ak:null,uk:15,kaynak:"Uygulamadaki mevcut eşik (%5–10); kaba yem toplam KM'nin en çok %15'i (PMC11758631)",tur:1},
+  ssta:{n:"Nişasta (katı yem)",birim:"% KM",d:1,ak:15,as:20,us:35,uk:40,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (20–35; değerlendirme tablosu ve risk kartı); kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  sndf:{n:"NDF (katı yem)",birim:"% KM",d:1,ak:10,as:12,us:30,uk:35,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (12–30; değerlendirme tablosu ve risk kartı); kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  skb:{n:"Kaba yem (katı içinde)",birim:"%",d:0,ak:null,as:0,us:10,uk:15,kaynak:"Uygulamadaki mevcut eşik (%5–10); kaba yem toplam KM'nin en çok %15'i (PMC11758631)",tur:1},
   sca:{n:"Kalsiyum (katı yem)",birim:"% KM",d:2,ak:0.5,uk:1.5,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sph:{n:"Fosfor (katı yem)",birim:"% KM",d:2,ak:0.4,uk:0.7,kaynak:"alt sınır: NASEM 2021 başlangıç yemi 0,45 (PMC12365123); alt kritik: Uygulamadaki mevcut eşik (0,40); üst k…; kritikler türetilmiş",tur:1},
   cu:{n:"Bakır",birim:"mg/kg KM",d:1,ak:8,as:10,us:15,uk:17,kaynak:"NRC 2001 (alt sınır 10); AB 2018/1039 yasal üst sınır (geviş öncesi sığır 15, diğer sığır 30 mg/kg tam yem; KM karşılığı ÷ 0,88)"}},
- "buzagi:kesim":{katiOran:{n:"Katı yem KM",birim:"kg/gün",d:2,ak:60,as:75,us:130,uk:null,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+ "buzagi:kesim":{sicaklik:{n:"Ahır sıcaklığı",birim:"°C",d:0,acilAlt:0,ak:0,as:5,us:25,uk:30,eq:1,kart:1,kaynak:"NASEM 2021 (alt kritik sıcaklık 5 °C, üst 25 °C); Uygulamadaki mevcut eşik (0 °C altı yüksek, 30 °C ve üstü ısı stresi)"},
+  katiOran:{n:"Katı yem KM",birim:"kg/gün",d:2,ak:60,as:75,us:130,uk:null,altBaz:"oran",ustBaz:"oran",goreli:1,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   scp:{n:"HP (katı yem)",birim:"% KM",d:1,ak:14,uk:22,kaynak:"Uygulamadaki mevcut eşik (%16–20); kritikler türetilmiş",tur:1},
-  ssta:{n:"Nişasta (katı yem)",birim:"% KM",d:1,ak:15,uk:40,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  sndf:{n:"NDF (katı yem)",birim:"% KM",d:1,ak:12,uk:40,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  skb:{n:"Kaba yem (katı içinde)",birim:"%",d:0,ak:null,uk:35,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  ssta:{n:"Nişasta (katı yem)",birim:"% KM",d:1,ak:15,as:18,us:35,uk:40,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (18–35; değerlendirme tablosu ve risk kartı); kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  sndf:{n:"NDF (katı yem)",birim:"% KM",d:1,ak:12,as:15,us:35,uk:40,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (15–35; değerlendirme tablosu ve risk kartı); kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
+  skb:{n:"Kaba yem (katı içinde)",birim:"%",d:0,ak:null,as:5,us:25,uk:35,kaynak:"alt/üst sınır: Uygulamadaki mevcut eşik (5–25; değerlendirme tablosu ve risk kartı); kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
   sca:{n:"Kalsiyum (katı yem)",birim:"% KM",d:2,ak:0.5,uk:1.5,kaynak:"Uygulamadaki mevcut eşik; NRC 2001 büyütme yemi 0,60; üst kritik NRC 2005; kritikler türetilmiş",tur:1},
   sph:{n:"Fosfor (katı yem)",birim:"% KM",d:2,ak:0.34,uk:0.7,kaynak:"Uygulamadaki mevcut eşik; NRC 2001 büyütme yemi 0,40; üst kritik NRC 2005; kritikler türetilmiş",tur:1},
   cpr:{n:"Ca:P oranı",birim:"oran",d:1,ak:1,uk:4,kaynak:"kritikler türetilmiş (düşük güven)",tur:1,guven:"d"},
-  cu:{n:"Bakır",birim:"mg/kg KM",d:1,ak:8,as:10,us:20,uk:34,kaynak:"NRC 2001 (alt sınır 10); AB 2018/1039 yasal üst sınır (geviş öncesi sığır 15, diğer sığır 30 mg/kg tam yem; KM karşılığı ÷ 0,88)"}}
+  cu:{n:"Bakır",birim:"mg/kg KM",d:1,ak:8,as:10,us:20,uk:34,kaynak:"NRC 2001 (alt sınır 10); AB 2018/1039 yasal üst sınır (geviş öncesi sığır 15, diğer sığır 30 mg/kg tam yem; KM karşılığı ÷ 0,88)"}},
+ /* çiftlik yemi (karma yemin kendisi; hayvan rasyonu sınıflarından ayrı): yRiskEval risk kartları ve öğretici buradan okur. Hedefleri düzenle bu bölümde yok; S.r4.yem değişiklikleri yine uygulanır */
+ "yem":{
+  rfsSut:{n:"Rumende yıkılan nişasta (sağmal/düve/kuru dönem yemi)",birim:"% KM",d:0,ak:null,as:null,us:28,uk:33,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998; Ferraretto 2013"},
+  rfsBesi:{n:"Rumende yıkılan nişasta (besi yemi)",birim:"% KM",d:0,ak:null,as:null,us:35,uk:42,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998"},
+  rfsGenc:{n:"Rumende yıkılan nişasta (buzağı/kuzu yemi)",birim:"% KM",d:0,ak:null,as:null,us:30,uk:38,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998"},
+  rfsDiger:{n:"Rumende yıkılan nişasta (diğer yem)",birim:"% KM",d:0,ak:null,as:null,us:32,uk:40,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998"},
+  wbSut:{n:"Buğday/arpa payı (sağmal yemi)",birim:"%",d:0,ak:null,as:null,us:35,uk:50,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998; NASEM 2021"},
+  wbDiger:{n:"Buğday/arpa payı (diğer yem)",birim:"%",d:0,ak:null,as:null,us:45,uk:60,kart:1,kaynak:"Uygulamadaki mevcut eşik: Owens 1998"},
+  staTampon:{n:"Nişasta (sağmal yeminde tampon gerekir)",birim:"% KM",d:0,ak:null,as:null,us:25,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: Hutjens; Erdman 1988"},
+  bik:{n:"Sodyum bikarbonat (sağmal yemi)",birim:"%",d:2,ak:null,as:0.5,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: Hutjens; Erdman 1988 (%0,75–1,5 önerilir)"},
+  ure:{n:"Üre (kesif yemde)",birim:"%",d:1,ak:null,as:null,us:1,uk:2,kart:1,kaynak:"Uygulamadaki mevcut eşik: AB 2023/1708 (tam yemde yasal üst sınır %0,88); FAO"},
+  ureSta:{n:"Nişasta (üre varsa)",birim:"% KM",d:0,ak:null,as:20,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: NASEM 2021"},
+  gosSigir:{n:"Serbest gossipol (yetişkin sığır)",birim:"mg/kg",d:0,ak:null,as:null,us:350,uk:500,kart:1,kaynak:"Uygulamadaki mevcut eşik: Tebliğ 2014/11; AB 2002/32 (üst kritik = yasal sınır, üst sınır = yasal sınırın %70’i)"},
+  gosKoyun:{n:"Serbest gossipol (koyun)",birim:"mg/kg",d:0,ak:null,as:null,us:210,uk:300,kart:1,kaynak:"Uygulamadaki mevcut eşik: Tebliğ 2014/11; AB 2002/32"},
+  gosBuzagi:{n:"Serbest gossipol (buzağı)",birim:"mg/kg",d:0,ak:null,as:null,us:70,uk:100,kart:1,kaynak:"Uygulamadaki mevcut eşik: Tebliğ 2014/11; AB 2002/32"},
+  gosKuzu:{n:"Serbest gossipol (kuzu)",birim:"mg/kg",d:0,ak:null,as:null,us:42,uk:60,kart:1,kaynak:"Uygulamadaki mevcut eşik: Tebliğ 2014/11; AB 2002/32"},
+  cotSut:{n:"Pamuk küspesi (sağmal kesif yemi)",birim:"%",d:0,ak:null,as:null,us:20,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: Mena 2001; UGA SB 59 (pratik üst sınır %15–20)"},
+  cpr:{n:"Ca:P oranı (erkek hayvan yemi)",birim:"oran",d:1,ak:1.5,as:2,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: OSU Beef 2017; NASEM 2016"},
+  ph:{n:"Fosfor (erkek hayvan yemi)",birim:"% KM",d:2,ak:null,as:null,us:0.6,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: NASEM 2016"},
+  tuz:{n:"Tuz eşdeğeri (erkek hayvan yemi)",birim:"%",d:2,ak:null,as:0.5,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: OSU Beef 2017"},
+  nh4:{n:"Amonyum klorür (erkek kuzu/toklu yemi)",birim:"%",d:1,ak:null,as:0.3,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: NMSU; OSU 2017 (%0,5 önerilir)"},
+  mySut:{n:"Aflatoksin riskli hammadde payı (sağmal yemi)",birim:"%",d:0,ak:null,as:null,us:30,uk:50,kart:1,kaynak:"Uygulamadaki mevcut eşik: Tebliğ 2014/11; TGK Bulaşanlar"},
+  myDiger:{n:"Aflatoksin riskli hammadde payı (diğer yem)",birim:"%",d:0,ak:null,as:null,us:45,uk:65,kart:1,kaynak:"Uygulamadaki mevcut eşik: Tebliğ 2014/11"},
+  nem:{n:"Nem",birim:"%",d:1,ak:null,as:null,us:13,uk:14,kart:1,kaynak:"Uygulamadaki mevcut eşik: yem hijyeni (depolama için en çok %13; %14 üstü küflenme)"},
+  tox:{n:"Toksin bağlayıcı (riskli yemde)",birim:"%",d:1,ak:null,as:0.1,us:null,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: EFSA"},
+  cuKoyun:{n:"Bakır (koyun yemi)",birim:"mg/kg",d:0,ak:null,as:null,us:12,uk:15,kart:1,kaynak:"Uygulamadaki mevcut eşik: NRC 2007 (pratik ≤ 10–12); AB 1831/2003, 2018/1039 (yasal 15)"},
+  cuSigir:{n:"Bakır (sığır yemi)",birim:"mg/kg",d:0,ak:null,as:null,us:null,uk:30,kart:1,kaynak:"Uygulamadaki mevcut eşik: AB 2018/1039 (yasal üst sınır 30)"},
+  cuBuzagi:{n:"Bakır (buzağı yemi)",birim:"mg/kg",d:0,ak:null,as:null,us:null,uk:15,kart:1,kaynak:"Uygulamadaki mevcut eşik: AB 2018/1039 (geviş getirmeye başlamamış buzağı 15)"},
+  se:{n:"Selenyum",birim:"mg/kg",d:2,ak:null,as:null,us:null,uk:0.5,kart:1,kaynak:"Uygulamadaki mevcut eşik: AB 1831/2003 (tam yem eşdeğeri 0,5)"},
+  zn:{n:"Çinko",birim:"mg/kg",d:0,ak:null,as:null,us:null,uk:120,kart:1,kaynak:"Uygulamadaki mevcut eşik: AB 2016/1095 (yasal üst sınır 120)"},
+  s:{n:"Kükürt",birim:"% KM",d:2,ak:null,as:null,us:0.45,uk:null,kart:1,kaynak:"Uygulamadaki mevcut eşik: NASEM 2016 (toplam rasyonda %0,3–0,4)"}}
 };
 var R4SINIF={sagmal:"Laktasyondaki sağmal inek",kuruYakin:"Kuru dönem (yakın)",kuruUzak:"Kuru dönem (uzak)",duve:"Düve",besi:"Besi sığırı",kuzu:"Kuzu / toklu besisi",koyun:"Koyun (ergin)",buzagi:"Buzağı"};
 /* değerlendirme tablosu satır adı → REF4 anahtarı (sınıfta o anahtar varsa satır dört kademeli okunur) */
@@ -487,7 +569,7 @@ function r4Cls(){try{var t=S.type;if(t==="sut")return isHf()?"duve":isDry()?(wkT
 /* dönem anahtarı: sağmal taze/erken/orta/gec (STG), düve ve besi 0–2 (bPhase), kuzu 0–2 / koyun idame-gebe-lak (kPhase), buzağı sut/kesim */
 function r4Faz(cls){try{if(cls==="sagmal"){var w=S.b.wk;return w<=3?"taze":w<=14?"erken":w<=28?"orta":"gec"}if(cls==="duve"||cls==="besi")return String(bPhase());if(cls==="kuzu"||cls==="koyun")return String(kPhase());if(cls==="buzagi")return cWeaned()?"kesim":"sut"}catch(e){}return null}
 function r4Ent(cls,key){var C=REF4[cls],e=null;if(cls===r4Cls()){var F=r4Faz(cls),P=F!==null&&REF4[cls+":"+F];if(P&&P[key])e=P[key]}return e||(C&&C[key])||null}
-function ref4(cls,key){var e=r4Ent(cls,key);if(!e)return null;var t={ak:e.ak,as:e.as,us:e.us,uk:e.uk,n:e.n,birim:e.birim,d:e.d,kaynak:e.kaynak,tur:e.tur,olc:e.olc,eq:e.eq,not:e.not,yak:e.yak,altBaz:e.altBaz,ustBaz:e.ustBaz,goreli:e.goreli,guven:e.guven,ozel:false};
+function ref4(cls,key){var e=r4Ent(cls,key);if(!e)return null;var t={ak:e.ak,as:e.as,us:e.us,uk:e.uk,n:e.n,birim:e.birim,d:e.d,kaynak:e.kaynak,tur:e.tur,olc:e.olc,eq:e.eq,not:e.not,yak:e.yak,altBaz:e.altBaz,ustBaz:e.ustBaz,goreli:e.goreli,guven:e.guven,acil:e.acil,acilAlt:e.acilAlt,kart:e.kart,ozel:false};
  try{if(typeof S!=="undefined"&&S){if(cls==="sagmal"&&key==="kaba"&&S.man&&S.t&&S.t.sut){if(S.man.kMin&&S.t.sut.kMin>=0){t.as=S.t.sut.kMin;t.ozel=true}if(S.man.kMax&&S.t.sut.kMax>0){t.us=S.t.sut.kMax;t.ozel=true}}
   var u=S.r4&&S.r4[cls]&&S.r4[cls][key];if(u)["ak","as","us","uk"].forEach(function(q){if(Object.prototype.hasOwnProperty.call(u,q)&&(u[q]===null||(typeof u[q]==="number"&&isFinite(u[q])))){t[q]=u[q];t.ozel=true}})}}catch(er){}
  var N=function(x){return x!==null&&x!==undefined};if(N(t.ak)&&N(t.as)&&t.ak>t.as)t.ak=t.as;if(N(t.uk)&&N(t.us)&&t.uk<t.us)t.uk=t.us;return t}
@@ -541,7 +623,7 @@ function r4Tr(p,cls,o){o=o||{};var d=p[4],pw=Math.pow(10,d),R=function(x){return
  G(REF.rfs,"hedef","sagmal","rfs","us");G(REF.rfs,"ust","sagmal","rfs","uk");G(REF.staLak,"lo","sagmal","sta","as");G(REF.staLak,"dikkat","sagmal","sta","us");G(REF.staLak,"ust","sagmal","sta","uk");
  Object.defineProperty(REF.staLak,"hedef",{enumerable:true,configurable:true,get:function(){var t=ref4("sagmal","sta");return [t.as,t.us]}});
  G(REF.pendf,"min","sagmal","pendf","as");G(REF.pendf,"kritik","sagmal","pendf","ak");G(REF.dcadLak,"lo","sagmal","dcad","as");G(REF.dcadLak,"hi","sagmal","dcad","us");G(REF.seLak,"lo","sagmal","se","as");G(REF.seLak,"hi","sagmal","se","us");
- G(REF.lys,"min","sagmal","lys","as");G(REF.met,"min","sagmal","met","as")})();
+ G(REF.lys,"min","sagmal","lys","as");G(REF.met,"min","sagmal","met","as");G(REF.beefP,"dikkat","besi","ph","us");G(REF.beefP,"ust","besi","ph","uk");G(REF.sheepCu,"pratik","kuzu","cu","us");G(REF.sheepCu,"yasal","kuzu","cu","uk")})();
 /* REF4 parametrelerinin rasyondaki şimdiki değerleri (m = metrics(...)). Sağmalda: kaba NDF ve uNDF canlı ağırlığın %'si (kg/gün ÷ CA), DCAD kükürt katsayısı 0,6 ile,
    K:Mg ağırlık oranı, tetani oranı mEq (K × 256) / (Ca × 499 + Mg × 823), RUFAL g/gün = % KM × KM × 10. */
 function r4Vals(m,cls){cls=cls||r4Cls();if(cls!=="sagmal")return {pendf:m.pendf,k:m.k,mg:m.mg,s:m.s,na:m.na,cu:m.cu,zn:m.zn,se:m.se,ee:(cls==="buzagi"&&(m.lqd||0)>0)?null:m.ee,dcad:m.dcad}; /* V224 (O15): süt içen buzağıda toplam yağ (süt yağı) geviş getiren sınırıyla değerlendirilmez */
@@ -867,7 +949,7 @@ function r4Box(){var el=$("r4Box");if(!el)return;var cls=r4Cls(),C=cls&&REF4[cls
  var QN={ak:"alt kritik",as:"alt sınır",us:"üst sınır",uk:"üst kritik"},CT=r4Tum(cls),ks=Object.keys(CT).filter(function(k){return !CT[k].olc&&!CT[k].goreli&&CT[k].as!==undefined&&CT[k].us!==undefined}),
  inp=function(k,q,t){var v=t[q];return '<td><input type="number" inputmode="decimal" step="any" data-r4k="'+k+'" data-r4q="'+q+'" value="'+((v===null||v===undefined)?'':v)+'" placeholder="–" aria-label="'+esc(t.n+' '+QN[q])+'"></td>'};
  el.innerHTML='<details class="dt" id="r4Det"'+(S.ui&&S.ui.r4open?' open':'')+'><summary>İleri: dört kademeli sınırlar</summary><p class="s"><b>'+R4SINIF[cls]+'.</b> Her ölçü için alt kritik / alt sınır / üst sınır / üst kritik. Çözüm asistanı alt sınır–üst sınır aralığını hedefler; kritik sınırların dışı kırmızı uyarı verir. Boş kutu = o yönde sınır yok.</p><table class="r4T"><tr><th>Ölçü</th><th>Alt kritik</th><th>Alt sınır</th><th>Üst sınır</th><th>Üst kritik</th></tr>'
-  +ks.map(function(k){var t=ref4(cls,k);return '<tr><td>'+t.n+'<small>'+(t.birim||'')+(t.ozel?' · <span class="wa">düzenlendi</span>':'')+'</small></td>'+inp(k,"ak",t)+inp(k,"as",t)+inp(k,"us",t)+inp(k,"uk",t)+'</tr>'}).join("")+'</table><p class="s" id="r4Msg"></p></details><button class="btn l" id="r4Reset" style="margin:8px 0 0">Varsayılana dön</button>'}
+  +ks.map(function(k){var t=ref4(cls,k);return '<tr><td>'+t.n+'<small>'+(t.birim||'')+(t.kart?' · risk kartı':'')+(t.ozel?' · <span class="wa">düzenlendi</span>':'')+'</small></td>'+inp(k,"ak",t)+inp(k,"as",t)+inp(k,"us",t)+inp(k,"uk",t)+'</tr>'}).join("")+'</table><p class="s" id="r4Msg"></p></details><button class="btn l" id="r4Reset" style="margin:8px 0 0">Varsayılana dön</button>'}
 document.addEventListener("change",function(e){var el=e.target;if(!el||!el.dataset||!el.dataset.r4q||!el.closest||!el.closest("#r4Box"))return;var cls=r4Cls(),k=el.dataset.r4k,q=el.dataset.r4q,raw=String(el.value).trim(),v=raw===""?null:num(raw),t=ref4(cls,k);if(!t)return;var n={ak:t.ak,as:t.as,us:t.us,uk:t.uk};n[q]=v;
  var L=["ak","as","us","uk"].map(function(x){return n[x]}).filter(function(x){return x!==null&&x!==undefined}),bad=L.some(function(x,i){return i>0&&x<L[i-1]}),msg=$("r4Msg");
  if(bad){el.value=(t[q]===null||t[q]===undefined)?"":t[q];if(msg){msg.className="s no";msg.textContent=t.n+": sıra bozuluyor (alt kritik ≤ alt sınır ≤ üst sınır ≤ üst kritik olmalı); değişiklik alınmadı."}return}
@@ -1034,14 +1116,14 @@ function pregNEL(dp){if(!(dp>=190))return 0;var v=(0.00318*Math.min(dp,282)-0.03
 function pregMP(dp){return dp>=190?Math.max(0,(0.69*dp-69.2)/0.33)*cbwF():0}
 function DRYT(){var c=wkToCalv()<=3;return c?{n:"Kuru dönem, yakın (doğuma 3 hafta ve az)",cp:14,ca:0.40,p:0.25,nm:30,nx:45,km:55,kx:85,cax:0.6,px:0.35}:{n:"Kuru dönem, uzak (doğuma 3 haftadan fazla)",cp:12,ca:0.35,p:0.22,nm:33,nx:60,km:70,kx:100,cax:0.6,px:0.35}}
 function SG(){return isDry()?DRYT():stg(S.b.wk)}
-function STR(){if(isDry())return wkToCalv()<=3?[12,18]:[10,16];var t=ref4("sagmal","sta");return [t.as,t.us]} /* sağmal: alt sınır–üst sınır (REF4) */
+function STR(){var t=ref4(isDry()?r4Cls():"sagmal","sta");return [t.as,t.us]} /* alt sınır–üst sınır (REF4: sağmal, kuruYakin, kuruUzak) */
 function REQ(){bDef();var b=S.b,w=Math.pow(b.bw,0.75),mt=0.10*w,dp=dpK(),pg=pregNEL(dp),mk=milkE(b),par=b.par>=2?1:0,bcs=b.bcs,dmi,cp,req;
  if(isDry()){var wk=-Math.min(3,wkToCalv()),nd=S.lastNdf||45;dmi=(1.47-(0.365-0.0028*nd)*wk-0.035*wk*wk)/100*b.bw;req=mt+pg;cp=DRYT().cp}
  else{var dim=Math.max(1,b.wk*7),ME=mk*b.milk;dmi=(3.7+par*5.7+0.305*ME+0.022*b.bw+(-0.689-1.87*par)*bcs)*(1-(0.212+par*0.136)*Math.exp(-0.053*dim));req=mt+ME+pg;cp=Math.min(18,Math.max(12.5,stg(b.wk).cp+0.07*(b.milk-32)));var meD=(mt+ME+pg)/dmi/KL,tdn=dmi*(meD+0.45)/1.01/4.409*0.95,mcp=130*tdn,mpq=4.1*Math.sqrt(b.bw)+0.3*Math.pow(b.bw,0.6)+Math.max(0,30*dmi-0.08*mcp)+b.milk*b.pr*0.93*10/0.67+pregMP(dp),cpMP=(1.18*mcp+Math.max(0,(mpq-0.64*mcp)/0.8))/(dmi*10)+1.2;cp=Math.min(18,Math.max(12.5,Math.min(cp,cpMP)));if(dp>200){var wg=dp/7;dmi*=0.8+0.2*(1-Math.exp(-0.25*Math.max(0,40-wg)))}}
  return{dmi:dmi,mt:mt,pg:pg,mk:mk,req:req,me:req/dmi/KL,cp:cp}}
 function refSut(){return REQ()}
 function fLv(meT){var L=KL*meT/(0.10*Math.pow(S.b.bw,0.75));return 1-Math.min(0.06,0.018*Math.max(0,L-1))}
-function enBal(){var R=REQ(),b=S.b,lim;if(isDry())lim=[0.95,1.15];else{var st=b.wk<=14?0:b.wk<=28?1:2;lim=[[0.85,1.05],[0.95,1.05],[1.0,1.10]][st]}return{req:R.req,lim:lim}}
+function enBal(){var R=REQ(),b=S.b,lim;if(isDry()){var tE=ref4(r4Cls(),"enRatio")||{};lim=[tE.as/100,tE.us/100]}else{var st=b.wk<=14?0:b.wk<=28?1:2;lim=[[0.85,1.05],[0.95,1.05],[1.0,1.10]][st]}return{req:R.req,lim:lim}}
 /* 30 günde canlı ağırlık tahmini — gerçekçi paylaşım (kullanıcı isteği, 2026-11-19). Eski hesap enerji dengesinin TAMAMINI vücuda yazıyordu (+4 Mcal → +23 kg); artık:
    1) 1 kg canlı ağırlığın enerjisi kondisyona bağlı: NRC 2001 rezerv denklemleri (yağ = 0,037683×BCS9, protein = 0,200886 − 0,0066762×BCS9; 9,4 ve 5,55 Mcal/kg; boş vücut = 0,855 × CA) → rezerv enerjisi ≈ 2,7426 + 1,0846 × BCS Mcal/kg CA;
       kayıpta ×0,82, artışta ×0,64/0,75. BCS 3'te tablo değerleriyle (4,92 / 5,12; Tablo 2-5) birebir. Diğer puanlar denklemden türetildi (tablonun öbür satırları çevrimiçi doğrulanamadı).
@@ -1108,11 +1190,11 @@ function renderCmp(){try{renderSnap()}catch(e){}setTimeout(function(){try{lblBan
  ["ME, Mcal/kg",me/dm,meRange(dm)[0],meRange(dm)[1],2,"Enerji düşük: tahıl veya kesif yem payı artırılabilir","Enerji fazla: asidoz ve aşırı yağlanma riski, kaba yemi artırın"],
  ["Nişasta, %",sta/dm,STR()[0],STR()[1],1,"Nişasta düşük: enerji ve mikrobiyal protein için tahıl payı artırılabilir","Nişasta yüksek: asidoz ve süt yağı düşüklüğü riski"],
  ["NDF, %",ndf/dm,t.NDFmin,t.NDFmax,1,"NDF düşük: asidoz ve süt yağı düşüklüğü riski","NDF yüksek: tüketim ve enerji alımı düşer"],
- ["ADF, %",adf/dm,D?20:null,D?40:null,1,"ADF düşük: sindirim sağlığı için lifli kaba yem artırılabilir","ADF yüksek: sindirilebilirlik düşük, kaliteli kaba yem kullanın"],
+ ["ADF, %",adf/dm,null,null,1, /* kuru dönemde sınırlar REF4.kuruYakin/kuruUzak.adf; sağmalda REF4.sagmal.adf */"ADF düşük: sindirim sağlığı için lifli kaba yem artırılabilir","ADF yüksek: sindirilebilirlik düşük, kaliteli kaba yem kullanın"],
  ["Kaba, %",kp,t.kMin,t.kMax,0,"Kaba yem az: asidoz riski","Kaba yem çok: enerji yetersiz kalabilir"],
  ["Kesif, %",100-kp,100-t.kMax,100-t.kMin,0,"Kesif yem az: enerji yetersiz kalabilir","Kesif yem çok: asidoz riski"],
- ["Kaba yem NDF, %",fn/dm,D?25:null,D?60:null,1,"Kaba yem lifi az: geviş ve rumen sağlığı için kaba yem veya lifli yem artırılabilir","Kaba yem lifi çok yüksek: tüketim düşebilir"],
- ["Kalsiyum, %",ca/dm,AN?1.0:G.ca,AN?1.5:(G.cax||1.2),2,"Kalsiyum düşük: kireç taşı gibi kalsiyum kaynağı eklenebilir","Kalsiyum fazla: mineral payını azaltın"],
+ ["Kaba yem NDF, %",fn/dm,null,null,1, /* sınırlar REF4 (fn) */"Kaba yem lifi az: geviş ve rumen sağlığı için kaba yem veya lifli yem artırılabilir","Kaba yem lifi çok yüksek: tüketim düşebilir"],
+ ["Kalsiyum, %",ca/dm,AN?ref4(r4Cls(),"caAn").as:G.ca,AN?ref4(r4Cls(),"caAn").us:(G.cax||1.2),2, /* anyonik programda REF4 caAn */"Kalsiyum düşük: kireç taşı gibi kalsiyum kaynağı eklenebilir","Kalsiyum fazla: mineral payını azaltın"],
  ["Fosfor, %",ph/dm,G.p,G.px||0.7,2,"Fosfor düşük: dikalsiyum fosfat gibi fosfor kaynağı eklenebilir","Fosfor fazla: mineral payını azaltın"]];
  var okc=0,notes=[],C4=r4Cls(),L4=C4==="sagmal",rows=P.map(function(p){var ks=p[0]==="Kesif, %";if(ks&&L4){var kt=ref4("sagmal","kaba"),mi=function(x){return (x===null||x===undefined)?null:100-x};p=p.concat([{ak:mi(kt.uk),as:mi(kt.us),us:mi(kt.as),uk:mi(kt.ak),kaynak:kt.kaynak,tur:1,ozel:kt.ozel}])} /* kesif = 100 − kaba: sınırlar kaba yem payından türetilir */
   var r=r4Tr(p,C4,{hi0:1});if(r.ok){if(!ks)okc++}else if(r.note&&!ks)notes.push(r.note);return r.h}).join("");
@@ -1223,51 +1305,53 @@ function rkFocus(T,fk){if(!fk||!T||!T.par)return;var P=function(k){return T.par.
    Duffield ve ark. 2012 (iyonofor meta-analizi); Cheng ve ark. 1998 (şişme); Stewart 1991 ve Merck (idrar taşı); Drewnoski ve ark. 2014 (kükürt). */
 /* V224 (D7): silajsız/sulu yemsiz (saman + kesif yem) kuru yemlemede "Rasyon KM yüksek — TMR'ye su katın" uyarısı verilmez: KM üst sınırı yalnız rasyonda sulu kaba yem (silaj, posa) varken, yani TMR mantığında anlamlıdır */
 function dmpSatir(p,m){if(!((m.fwet||0)>0)&&!curItems().some(function(o){return o.x.dm<60&&!isLiq(o.x)})){p[3]=null;p[7]=Object.assign({},ref4(r4Cls(),"dmp")||{},{us:null,uk:null})}return p}
+var TUZNA=0.393; /* tuzda (NaCl) sodyum payı: tuz eşdeğeri = Na ÷ 0,393 */
 function besiSMax(kp){return kp>=40?0.5:kp>15?0.4:0.3}
 function besiRisk(){if(S.type!=="besi"||isHf())return null;var it=[];S.feeds.forEach(function(x){if(x.on&&x.kg>0&&x.dm>0)it.push({x:x,d:x.kg*x.dm/100,p:x.p||0})});if(!it.length)return null;
  var m=metrics(it),D=m.dm_;if(!(D>0))return null;var b=BA(),P=PHT(),R=BREQ(),ph=R.phase,kp=m.kaba,sta=m.sta,cpr=m.ph>0?m.ca/m.ph:0,dof=b.dof>0?+b.dof:null;
  var rfs=0,ruf=0,leg=0,fine=0,wb=0,dd=0;it.forEach(function(o){var n=o.x.fam||o.x.n;rfs+=o.d*staOf(o.x)*rkDeg(o.x);ruf+=o.d*(mx(o.x).ee||0)*rkUf(o.x);if(/yonca|üçgül|fiğ/i.test(n))leg+=o.d;if(/^(Buğday|Arpa|Tritikale)(?! samanı| kepeği)/.test(n))wb+=o.d;if(/DDGS|gluten|Melas|Vinas|Bira/i.test(n))dd+=o.d});
  rfs/=D;ruf/=D;leg=leg/D*100;wb=wb/D*100;dd=dd/D*100;var sMax=besiSMax(kp),thi=b.temp!==undefined&&b.temp!==""?rkTHI(+b.temp,b.rh):0,male=b.sex!=="d",ion=!!b.ion;
- var r={m:m,rfs:rfs,ruf:ruf,leg:leg,wb:wb,cpr:cpr,sMax:sMax,thi:thi,dof:dof},A=[],BL=[],U=[],PE=[];
+ var r={m:m,rfs:rfs,ruf:ruf,leg:leg,wb:wb,cpr:cpr,sMax:sMax,thi:thi,dof:dof},A=[],BL=[],U=[],PE=[],T=function(k){return ref4("besi",k)||{}}; /* V226: besi risk kartı eşikleri REF4.besi / besi:dönem (tablo, kart, öğretici ve "Hedefleri düzenle" aynı sayı) */
  function add(L,p,txt,src,kd){L.push({p:p,t:txt,s:src||'',kd:kd||'r'})}
  /* ASİDOZ – KARACİĞER APSESİ – TOPALLIK */
- var hol=/^hol/.test(b.breed),kMin=PHT().kb[0], /* kaba alt sınırı analiz tablosu ve çözücüyle aynı kaynaktan (BPH/PHT) */kHi=ph===2?6:kMin-5;
- if(kp<kHi)add(A,3,'Kaba yem %'+f(kp,0)+' — '+P.n+' için çok düşük (bitişte %6 altı yüksek risk; en az %'+kMin+')','Samuelson 2016 (JAS 94:2648)');else if(kp<kMin)add(A,2,'Kaba yem %'+f(kp,0)+' — en az %'+kMin+(ph===2?' (bitiş: %8–12; Holstein ve sıcakta üst uç)':''),'Samuelson 2016');
+ var hol=/^hol/.test(b.breed),kMin=PHT().kb[0], /* kaba alt sınırı analiz tablosu ve çözücüyle aynı kaynaktan (BPH/PHT) */kHi=T("kaba").ak,tPe=T("pendf"),tSt=T("sta"),tRf=T("rfs"),tWb=T("wb"),tTh=T("thi"); /* kaba alt kritiği: REF4 besi:dönem (başlangıç 20, geliştirme 10, bitiş 6) */
+ if(kp<kHi)add(A,3,'Kaba yem %'+f(kp,0)+' — '+P.n+' için çok düşük (bitişte %'+f(ref4("besi:2","kaba").ak,0)+' altı yüksek risk; en az %'+kMin+')','Samuelson 2016 (JAS 94:2648)');else if(kp<kMin)add(A,2,'Kaba yem %'+f(kp,0)+' — en az %'+kMin+(ph===2?' (bitiş: %8–12; Holstein ve sıcakta üst uç)':''),'Samuelson 2016');
  if(hol)add(A,1,'Holstein: karaciğer apsesi oranı etçi ırklardan belirgin yüksek (apseli karaciğerlerin %50–60’ı)','Nagaraja ve Lechtenberg 2007','o');
- if(m.pendf<P.fn+2)add(A,m.pendf<P.fn?2:1,'Fiziksel etkin lif (peNDF) %'+f(m.pendf,1)+' — rumen pH’ını 5,6–5,8 üstünde tutmak için yetersiz','Fox ve Tedeschi 2002; NASEM 2016');
- if(sta>45)add(A,2,'Nişasta %'+f(sta,0)+' — %45 üstü yüksek risk','Owens 1998; Nagaraja 2007');else if(sta>P.sta[1])add(A,1,'Nişasta %'+f(sta,0)+' dönem üst sınırının (%'+P.sta[1]+') üstünde','NASEM 2016');
- if(rfs>30)add(A,2,'Rumende yıkılan nişasta ≈ %'+f(rfs,0)+' — %30 üstü yüksek (buğday ve arpa hızlı yıkılır)','Owens 1998; Firkins 2001');else if(rfs>25)add(A,1,'Rumende yıkılan nişasta ≈ %'+f(rfs,0)+' — hedef %25 altı','Owens 1998');
- if(wb>40)add(A,1,'Buğday/arpa tahılın KM’de %'+numEk(wb,0,"p")+' — hızlı yıkılır; mısırla karıştırın (en çok %40)','Owens 1998; NASEM 2016');
- if(dof!==null&&dof<=24){var ks=100-kp;if(ks>75)add(A,3,'Besiye girişin '+f(dof,0)+'. günü ve kesif %'+f(ks,0)+' — doğrudan bitiş yemine geçiş; en az 4 adım, 21–28 gün (başlangıç ≈ %40 kaba)','Samuelson 2016; Brown 2006');else if(ks>60+dof)add(A,2,'Besinin '+f(dof,0)+'. günü kesif %'+f(ks,0)+' — geçiş hızlı (adım başına ≈ 6 gün, kaba yemi her adımda ≈ 8–10 puan azaltın)','Samuelson 2016')}
- else if(ph===0&&100-kp>60)add(A,1,'Başlangıç döneminde kesif %'+f(100-kp,0)+'; geçiş kademeli olmalı','Brown 2006');
+ if(m.pendf<tPe.as)add(A,m.pendf<tPe.ak?2:1,'Fiziksel etkin lif (peNDF) %'+f(m.pendf,1)+' — rumen pH’ını 5,6–5,8 üstünde tutmak için yetersiz','Fox ve Tedeschi 2002; NASEM 2016');
+ if(sta>tSt.uk)add(A,2,'Nişasta %'+f(sta,0)+' — %'+f(tSt.uk,0)+' üstü yüksek risk','Owens 1998; Nagaraja 2007');else if(sta>P.sta[1])add(A,1,'Nişasta %'+f(sta,0)+' dönem üst sınırının (%'+P.sta[1]+') üstünde','NASEM 2016');
+ if(rfs>tRf.uk)add(A,2,'Rumende yıkılan nişasta ≈ %'+f(rfs,0)+' — %'+f(tRf.uk,0)+' üstü yüksek (buğday ve arpa hızlı yıkılır)','Owens 1998; Firkins 2001');else if(rfs>tRf.us)add(A,1,'Rumende yıkılan nişasta ≈ %'+f(rfs,0)+' — hedef %'+f(tRf.us,0)+' altı','Owens 1998');
+ if(wb>tWb.us)add(A,1,'Buğday/arpa tahılın KM’de %'+numEk(wb,0,"p")+' — hızlı yıkılır; mısırla karıştırın (en çok %'+f(tWb.us,0)+')','Owens 1998; NASEM 2016');
+ if(dof!==null&&dof<=24){var ks=100-kp;if(ks>T("kesifG").uk)add(A,3,'Besiye girişin '+f(dof,0)+'. günü ve kesif %'+f(ks,0)+' — doğrudan bitiş yemine geçiş; en az 4 adım, 21–28 gün (başlangıç ≈ %40 kaba)','Samuelson 2016; Brown 2006');else if(ks>60+dof)add(A,2,'Besinin '+f(dof,0)+'. günü kesif %'+f(ks,0)+' — geçiş hızlı (adım başına ≈ 6 gün, kaba yemi her adımda ≈ 8–10 puan azaltın)','Samuelson 2016')}
+ else if(ph===0&&100-kp>T("kesif").us)add(A,1,'Başlangıç döneminde kesif %'+f(100-kp,0)+'; geçiş kademeli olmalı','Brown 2006');
  if(!ion&&kp<35)add(A,1,'Yüksek kesifli rasyonda iyonofor (monensin) yok — asidoz ve KM dalgalanması artar (ABD’de besi işletmelerinin ≈ %97’si kullanır)','Samuelson 2016; Duffield 2012','m');
- if(m.ee>7)add(A,1,'Ham yağ %'+f(m.ee,1)+' — %6–7 üstü lif sindirimini ve KM alımını düşürür','NASEM 2016');
- if(thi>=75)add(A,1,'Sıcak stresi (THI ≈ '+f(thi,0)+'): öğün düzeni bozulur, serinde tek seferde fazla yeme → asidoz','Mader 2006','o');
- if(dof!==null&&dof>150)add(A,1,'Besideki gün '+f(dof,0)+' (150 üstü): rumen duvarı hasarı birikir, karaciğer apsesi oranı artar','Nagaraja ve Lechtenberg 2007','o');
+ if(m.ee>T("ee").uk)add(A,1,'Ham yağ %'+f(m.ee,1)+' — %'+f(T("ee").us,0)+'–'+f(T("ee").uk,0)+' üstü lif sindirimini ve KM alımını düşürür','NASEM 2016');
+ if(thi>=tTh.us)add(A,1,'Sıcak stresi (THI ≈ '+f(thi,0)+'): öğün düzeni bozulur, serinde tek seferde fazla yeme → asidoz','Mader 2006','o');
+ if(dof!==null&&dof>T("dof").us)add(A,1,'Besideki gün '+f(dof,0)+' ('+f(T("dof").us,0)+' üstü): rumen duvarı hasarı birikir, karaciğer apsesi oranı artar','Nagaraja ve Lechtenberg 2007','o');
  /* ŞİŞME */
- if(leg>70)add(BL,3,'Baklagil (yonca/fiğ) payı KM’nin %'+numEk(leg,0,"p")+' — %70 üstü yüksek köpüklü şişme riski (pratik kural)','Nebraska G2018; Cheng 1998');else if(leg>50)add(BL,2,'Baklagil payı %'+f(leg,0)+' — %50 üstünde risk artar (pratik kural)','Nebraska G2018');
- if(kp<10&&sta>40)add(BL,2,'Kaba yem %'+f(kp,0)+' (10 altı) + nişasta %'+f(sta,0)+': besi (feedlot) köpüklü şişmesi; %10–15 kaba kıyılmış kaba yem önerilir','Nebraska G2018; Cheng 1998');else if(kp<15&&sta>35)add(BL,1,'Düşük kaba / yüksek nişasta','Nebraska G2018');
- if(wb>45)add(BL,1,'İnce öğütülmüş buğday/arpa (%'+f(wb,0)+') köpük oluşumunu artırır','Cheng 1998');
- if(!ion&&(leg>30||kp<15))add(BL,1,'İyonofor yok: monensin şişmeyi belirgin azaltır','Bartley 1983; NASEM 2016','m');
+ var tLg=T("leg"),tKb=T("kabaBL"),tSb=T("staBL");
+ if(leg>tLg.uk)add(BL,3,'Baklagil (yonca/fiğ) payı KM’nin %'+numEk(leg,0,"p")+' — %'+f(tLg.uk,0)+' üstü yüksek köpüklü şişme riski (pratik kural)','Nebraska G2018; Cheng 1998');else if(leg>tLg.us)add(BL,2,'Baklagil payı %'+f(leg,0)+' — %'+f(tLg.us,0)+' üstünde risk artar (pratik kural)','Nebraska G2018');
+ if(kp<tKb.ak&&sta>tSb.uk)add(BL,2,'Kaba yem %'+f(kp,0)+' ('+f(tKb.ak,0)+' altı) + nişasta %'+f(sta,0)+': besi (feedlot) köpüklü şişmesi; %'+f(tKb.ak,0)+'–'+f(tKb.as,0)+' kaba kıyılmış kaba yem önerilir','Nebraska G2018; Cheng 1998');else if(kp<tKb.as&&sta>tSb.us)add(BL,1,'Düşük kaba / yüksek nişasta','Nebraska G2018');
+ if(wb>tWb.uk)add(BL,1,'İnce öğütülmüş buğday/arpa (%'+f(wb,0)+') köpük oluşumunu artırır','Cheng 1998');
+ if(!ion&&(leg>30||kp<tKb.as))add(BL,1,'İyonofor yok: monensin şişmeyi belirgin azaltır','Bartley 1983; NASEM 2016','m');
  /* İDRAR TAŞI */
  /* V224 (O13): idrar taşı kartı tabloyla aynı sınırları okur (REF4.besi.cpr ve REF4.besi.ph) ve aynı yuvarlamayla karşılaştırır (Ca:P 1 ondalık, fosfor 2 ondalık) */
- var tCp=ref4("besi","cpr")||{ak:1.5,as:2},tPh=ref4("besi","ph")||{us:0.35,uk:0.5},cprR=Math.round(cpr*10)/10,phR=Math.round(m.ph*100)/100,EST=typeof caTah==="function"?caTah(it):null,estN=EST&&EST.pay>=0.5?' (kalsiyum–fosfor değerlerinin çoğu külden tahmin: etikete/analize bakın)':'';
- var eU=EST&&EST.pay>=0.5;cpr=cprR; /* tabloyla aynı yuvarlama; sayılar REF4.besi.cpr ile aynı (alt kritik 1,5, alt sınır 2 — öz-denetim eşitliği denetler; öğretici bu kalıbı okur) */
- if(cpr<1.5)add(U,eU?1:3,'Ca:P '+f(cpr,1)+' — 1,5 altı fosfat (struvit) taşı için yüksek risk; en az 2:1 (yerleşik uygulama)'+estN,'OSU Beef 2017; NASEM 2016');else if(cpr<2)add(U,eU?1:2,'Ca:P '+f(cpr,1)+' — 2:1 altında'+estN,'OSU Beef 2017');
+ var tCp=T("cpr"),tPh=T("ph"),cprR=Math.round(cpr*10)/10,phR=Math.round(m.ph*100)/100,EST=typeof caTah==="function"?caTah(it):null,estN=EST&&EST.pay>=0.5?' (kalsiyum–fosfor değerlerinin çoğu külden tahmin: etikete/analize bakın)':'';
+ var eU=EST&&EST.pay>=0.5;cpr=cprR; /* tabloyla aynı yuvarlama; sınırlar REF4.besi.cpr (alt kritik, alt sınır) */
+ if(cpr<tCp.ak)add(U,eU?1:3,'Ca:P '+f(cpr,1)+' — '+f(tCp.ak,1)+' altı fosfat (struvit) taşı için yüksek risk; en az '+f(tCp.as,0)+':1 (yerleşik uygulama)'+estN,'OSU Beef 2017; NASEM 2016');else if(cpr<tCp.as)add(U,eU?1:2,'Ca:P '+f(cpr,1)+' — '+f(tCp.as,0)+':1 altında'+estN,'OSU Beef 2017');
  if(phR>tPh.uk)add(U,EST&&EST.pay>=0.5?1:2,'Fosfor %'+f(m.ph,2)+' — %'+f(tPh.uk,2)+' üstü (kepek, DDGS, mısır gluteni) taş riskini artırır; ihtiyaç ≈ %0,25–0,35'+estN,'OSU Beef 2017; NASEM 2016');else if(phR>tPh.us)add(U,1,'Fosfor %'+f(m.ph,2)+' — %'+f(tPh.us,2)+' üstü ihtiyacın üstünde'+estN,'NASEM 2016');
- if(m.mg>0.35)add(U,1,'Magnezyum %'+f(m.mg,2)+' — fazlası struvit (Mg-amonyum fosfat) taşına katılır','Merck');
- var salt=m.na/0.393;if(salt<0.25)add(U,2,'Tuz eşdeğeri %'+f(salt,2)+' — %0,25 altı; tuz su tüketimini ve idrar hacmini artırır (rasyonun %0,5–1’i)','OSU Beef 2017; UMN','m');else if(salt<0.5)add(U,1,'Tuz eşdeğeri %'+f(salt,2)+' — hedef %0,5–1','OSU Beef 2017','m');
+ if(m.mg>T("mg").us)add(U,1,'Magnezyum %'+f(m.mg,2)+' — %'+f(T("mg").us,2)+' üstü; fazlası struvit (Mg-amonyum fosfat) taşına katılır','Merck');
+ var tTz=T("tuz"),salt=m.na/TUZNA;if(salt<tTz.ak)add(U,2,'Tuz eşdeğeri %'+f(salt,2)+' — %'+f(tTz.ak,2)+' altı; tuz su tüketimini ve idrar hacmini artırır (rasyonun %'+f(tTz.as,1)+'–'+f(tTz.us,0)+'’i)','OSU Beef 2017; UMN','m');else if(salt<tTz.as)add(U,1,'Tuz eşdeğeri %'+f(salt,2)+' — hedef %'+f(tTz.as,1)+'–'+f(tTz.us,0),'OSU Beef 2017','m');
  if(male)add(U,1,'Erkek hayvan: üretra dar ve kıvrımlı, taş tıkanması riski','Merck','o');
- if(thi>=75)add(U,1,'Sıcakta su kaybı idrarı koyulaştırır','UMN','o');
+ if(thi>=tTh.us)add(U,1,'Sıcakta su kaybı idrarı koyulaştırır','UMN','o');
  /* PEM – KÜKÜRT */
- var sw=b.so4>0?+b.so4:0,wL=(thi>=75?6:4.5),sTot=m.s+sw*0.334*wL/10000; /* su: ≈ 4,5 L/kg KM (sıcakta ≈ 6); SO4 mg/L × 0,334 = S mg/L */
+ var sw=b.so4>0?+b.so4:0,wL=(thi>=tTh.us?6:4.5),sTot=m.s+sw*0.334*wL/10000; /* su: ≈ 4,5 L/kg KM (sıcakta ≈ 6); SO4 mg/L × 0,334 = S mg/L */
  r.sTot=sTot;
  if(sTot>sMax+0.1)add(PE,3,'Toplam kükürt (yem + su) ≈ %'+f(sTot,2)+' — üst sınır %'+f(sMax,1)+' (kesifli %0,3, kaba ağırlıklı %0,5); beyin yumuşaması (PEM) riski yüksek','NASEM 2016; Drewnoski 2014');else if(sTot>sMax)add(PE,2,'Toplam kükürt ≈ %'+f(sTot,2)+' — üst sınır %'+f(sMax,1),'NASEM 2016');else if(sTot>sMax-0.05)add(PE,1,'Kükürt %'+f(sTot,2)+' üst sınıra yakın','NASEM 2016');
- if(dd>25)add(PE,1,'Kükürtlü yan ürün KM’nin %'+numEk(dd,0,"p")+' (DDGS %0,66, mısır gluteni ≈ %0,86 S)','CSU ILM; Drewnoski 2014');
- if(sw>500)add(PE,sw>1000?2:1,'İçme suyunda sülfat '+f(sw,0)+' mg/L — buzağıda 500, erginde 1.000 üstü sakıncalı','NASEM 2016; CSU ILM','o');
- if(m.cu<10&&sTot>0.3)add(PE,1,'Yüksek kükürt bakırı bağlar; rasyon bakırı '+f(m.cu,0)+' mg/kg KM','NASEM 2016','m');
- var H=[];if(thi>=84)add(H,6,'THI ≈ '+f(thi,0)+' — ACİL (84 ve üstü): ölüm riski','Mader 2006; Iowa Beef Center','o');else if(thi>=79)add(H,4,'THI ≈ '+f(thi,0)+' — TEHLİKE (79–83)','Mader 2006','o');else if(thi>=75)add(H,2,'THI ≈ '+f(thi,0)+' — DİKKAT (75–78): KM alımı düşer (25–35 °C ≈ %10)','Mader 2006; NASEM 2016','o');
- if(H.length&&hol)add(H,1,'Holstein ve siyah renkli hayvanlar ısıya daha duyarlı','Mader 2006','o');if(H.length&&m.ee>6)add(H,0,'Yağ yüksek; sıcakta yağ ısı yükünü artırmaz ama KM alımı düşerken toplam yağ %7’yi geçmesin','NASEM 2016');r.H=H;
+ if(dd>T("ddS").us)add(PE,1,'Kükürtlü yan ürün KM’nin %'+numEk(dd,0,"p")+' (DDGS %0,66, mısır gluteni ≈ %0,86 S)','CSU ILM; Drewnoski 2014');
+ var tSo=T("so4");if(sw>tSo.us)add(PE,sw>tSo.uk?2:1,'İçme suyunda sülfat '+f(sw,0)+' mg/L — buzağıda '+f(tSo.us,0)+', erginde '+f(tSo.uk,0)+' üstü sakıncalı','NASEM 2016; CSU ILM','o');
+ if(m.cu<T("cu").as&&sTot>T("s").us)add(PE,1,'Yüksek kükürt bakırı bağlar; rasyon bakırı '+f(m.cu,0)+' mg/kg KM','NASEM 2016','m');
+ var H=[];if(thi>=tTh.acil)add(H,6,'THI ≈ '+f(thi,0)+' — ACİL ('+f(tTh.acil,0)+' ve üstü): ölüm riski','Mader 2006; Iowa Beef Center','o');else if(thi>=tTh.uk)add(H,4,'THI ≈ '+f(thi,0)+' — TEHLİKE ('+f(tTh.uk,0)+'–'+f(tTh.acil-1,0)+')','Mader 2006','o');else if(thi>=tTh.us)add(H,2,'THI ≈ '+f(thi,0)+' — DİKKAT ('+f(tTh.us,0)+'–'+f(tTh.uk-1,0)+'): KM alımı düşer (25–35 °C ≈ %10)','Mader 2006; NASEM 2016','o');
+ if(H.length&&hol)add(H,1,'Holstein ve siyah renkli hayvanlar ısıya daha duyarlı','Mader 2006','o');if(H.length&&m.ee>T("ee").us)add(H,0,'Yağ yüksek; sıcakta yağ ısı yükünü artırmaz ama KM alımı düşerken toplam yağ %'+f(T("ee").uk,0)+'’yi geçmesin','NASEM 2016');r.H=H;
  var sum=function(L,o){return L.reduce(function(s,x){return s+((!o||o.indexOf(x.kd)>=0)?x.p:0)},0)};
  r.A=A;r.BL=BL;r.U=U;r.PE=PE;r.h=sum(H);r.a=sum(A);r.bl=sum(BL);r.u=sum(U);r.pe=sum(PE);r.raN=sum(A,'r');r.blN=sum(BL,'r');r.uN=sum(U,'r');r.peN=sum(PE,'r');r.ra=sum(A,'rm');r.bla=sum(BL,'rm');r.ua=sum(U,'rm');r.pea=sum(PE,'rm');r.male=male;
  if(!male){r.uF=r.u;r.u=0;r.uN=0;r.ua=0;r.U=[{p:0,t:'Dişi hayvan: idrar yolu kısa ve geniştir, taş tıkanması beklenmez; bu kart dişide puanlanmaz.'+(cprR<tCp.as?' Kalsiyum–fosfor dengesi (Ca:P '+f(cpr,1)+') kemik gelişimi için yine de düzeltilmelidir (tablo ve katkı planı).':''),s:'Merck',kd:'o'}]} /* V224 (O11): dişide idrar taşı alarmı yok */
@@ -1278,9 +1362,15 @@ var RKACTB={
  bloat:['Baklagil (yonca) payını KM’nin %50’sinin altında tutun; ıslak/taze yoncayı samanla seyreltin.','Tahılı ince öğütmeyin; kaba yem en az %10–15.','İyonofor (monensin) şişmeyi azaltır; baklagil merasında poloksalen ≈ 2,2 g/100 kg CA/gün (ağır koşulda 2 katı), meraya çıkmadan 2–3 gün önce başlayın — besi (tahıl) şişmesinde etkisizdir.','Ani şişmede: hayvanı yürütün, ağızdan yağ veya poloksalen; ağır vakada veteriner (trokar).'],
  uro:['Ca:P oranını en az 2:1’e getirin (kireç taşı); fosforu ihtiyaca indirin (%0,25–0,35; kepek ve DDGS’yi sınırlayın).','Tuz: rasyonun %0,5–1’i (su tüketimini ve idrar hacmini artırır); temiz, ılık su her zaman.','Amonyum klorür: KM’nin %0,5–1’i (≈ 30–60 g/baş/gün) idrar pH’ını 6,5 altına çeker; sürekli verilince etkisi azalabilir, aralıklı verin (danışmanla).','Magnezyumu %0,3’ün altında tutun; idrarda kan, damlatma, kuyruk sallama görülürse veteriner.'],
  pem:['Toplam kükürdü (yem + su) yüksek kesifli rasyonda %0,3, kaba ağırlıklıda %0,5 altında tutun.','DDGS, mısır gluteni, melas/vinas ve bira posası payını azaltın; içme suyunun sülfatını ölçtürün (500 mg/L üstü riskli).','Belirti (körlük, baş bastırma, titreme) görülürse hemen veteriner: tiamin (B1) tedavisi veteriner işidir.','Yüksek kükürtte bakırı 15–20 mg/kg KM’ye çıkarın (kükürt bakırı bağlar).']};
+/* V226: "Ne yapılmalı" maddelerindeki sınırlar REF4.besi'den (kartla aynı sayı); diğer maddeler sabit metin */
+(function(){var T=function(k){return ref4("besi",k)||{}},B0=RKACTB.bloat.slice(),U0=RKACTB.uro.slice(),H0=RKACTB.heat.slice(),P0=RKACTB.pem.slice(),G=function(k,fn){Object.defineProperty(RKACTB,k,{enumerable:true,configurable:true,get:fn})};
+ G("bloat",function(){return ['Baklagil (yonca) payını KM’nin '+pctEk(T("leg").us,0)+' altında tutun; ıslak/taze yoncayı samanla seyreltin.','Tahılı ince öğütmeyin; kaba yem en az %'+f(T("kabaBL").ak,0)+'–'+f(T("kabaBL").as,0)+'.'].concat(B0.slice(2))});
+ G("uro",function(){return ['Ca:P oranını en az '+f(T("cpr").as,0)+':1’e getirin (kireç taşı); fosforu ihtiyaca indirin (%0,25–'+f(T("ph").us,2)+'; kepek ve DDGS’yi sınırlayın).','Tuz: rasyonun %'+f(T("tuz").as,1)+'–'+f(T("tuz").us,0)+'’i (su tüketimini ve idrar hacmini artırır); temiz, ılık su her zaman.',U0[2],'Magnezyumu %'+f(T("mg").us,1)+'’ün altında tutun; idrarda kan, damlatma, kuyruk sallama görülürse veteriner.']});
+ G("heat",function(){return [H0[0],H0[1],'THI '+f(T("thi").uk,0)+' üstünde hayvanı taşımayın, işlem yapmayın; gerekirse ince su sisi + rüzgâr.',H0[3]]});
+ G("pem",function(){return [P0[0],'DDGS, mısır gluteni, melas/vinas ve bira posası payını azaltın; içme suyunun sülfatını ölçtürün ('+f(T("so4").us,0)+' mg/L üstü riskli).',P0[2],P0[3]]})})();
 var RKSRCB={bacid:'NASEM 2016; Samuelson 2016 (JAS 94:2648, besi uzmanı anketi); Brown 2006 (JAS 84:E25); Owens 1998 (JAS 76:275); Nagaraja ve Lechtenberg 2007 (Vet Clin Food Anim 23:351); Duffield 2012 (JAS 90:4583); FDA 21 CFR 558.355.',heat:'Mader 2006 (JAS 84:712, THI eşikleri); Iowa Beef Center 2026; NASEM 2016.',bloat:'Nebraska Extension G2018; Cheng 1998 (Can J Anim Sci 78:167); Nagaraja, Galyean ve Cole 1998; 21 CFR 558.464 (poloksalen).',uro:'Ohio State Beef 2017; Univ. Minnesota (urolithiasis); NASEM 2016. Ca:P 2:1 ve fosfor üst sınırı yerleşik uygulamadır.',pem:'NASEM 2016 (S en çok %0,3 kesifli / %0,5 kaba ağırlıklı); Drewnoski 2014 (JAS 92:3539); Colorado State ILM.'};
 function rkRenderB(r){var b=BA(),m=r.m,sMx=r.sMax;
- var ex='<div class="sum"><div><b>%'+f(m.kaba,0)+'</b><span>Kaba yem payı</span></div><div><b>%'+f(r.rfs,0)+'</b><span>Rumende yıkılan nişasta (≤ 25)</span></div><div><b>'+f(r.cpr,1)+'</b><span>Ca:P (≥ 2)</span></div><div><b>%'+f(r.sTot,2)+'</b><span>Kükürt, yem+su (≤ '+f(sMx,1)+')</span></div>'+(r.thi?'<div><b>'+f(r.thi,0)+'</b><span>THI (75 üstü stres)</span></div>':'')+'</div>';
+ var ex='<div class="sum"><div><b>%'+f(m.kaba,0)+'</b><span>Kaba yem payı</span></div><div><b>%'+f(r.rfs,0)+'</b><span>Rumende yıkılan nişasta (≤ '+f(ref4("besi","rfs").us,0)+')</span></div><div><b>'+f(r.cpr,1)+'</b><span>Ca:P (≥ '+f(ref4("besi","cpr").as,0)+')</span></div><div><b>%'+f(r.sTot,2)+'</b><span>Kükürt, yem+su (≤ '+f(sMx,1)+')</span></div>'+(r.thi?'<div><b>'+f(r.thi,0)+'</b><span>THI ('+f(ref4("besi","thi").us,0)+' ve üstü stres)</span></div>':'')+'</div>';
  var miss=[];if(!(b.dof>0))miss.push('besideki gün');if(!(b.so4>0))miss.push('su sülfatı (biliniyorsa)');
  return '<h2>Sağlık riskleri (besi)</h2>'+ex+(miss.length?'<p class="s">Daha isabetli risk için Hayvan sekmesine girin: '+miss.join(', ')+'.</p>':'')
  +rkCardB('bacid','Asidoz, karaciğer apsesi ve topallık',r.a,r.A,'Asidoz çoğu zaman sessizdir: yem tüketiminde dalgalanma, gevşek köpüklü dışkı, topallık ve kesimde karaciğer apsesi ile kendini gösterir.')
@@ -1289,12 +1379,12 @@ function rkRenderB(r){var b=BA(),m=r.m,sMx=r.sMax;
  +rkCardB('pem','Beyin yumuşaması (PEM) – kükürt',r.pe,r.PE,'Su sülfatı girilmezse yalnız yemdeki kükürt hesaplanır.')
  +(r.H.length?rkCardB('heat','Sıcak stresi',r.h,r.H,'THI, girilen sıcaklık ve '+(BA().rh>0?'%'+f(+BA().rh,0)+' bağıl nemle':'%60 nemle (nem girilmedi; Hayvan sekmesinden girebilirsiniz)')+' hesaplanır.').replace(/<button[^>]*data-rf="heat"[^>]*>[^<]*<\/button>/,''):'')}
 function rkCardB(key,name,sc,L,extra){var l=rkLv(sc),btn=sc>=2?'<button class="btn l" data-rf="'+key+'" style="margin:6px 0 0">Bu riske göre çözüm öner</button>':'';
- return '<div class="rk"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'+(L.length?'<ul class="nt">'+L.slice().sort(function(a,b){return b.p-a.p}).map(function(x){return '<li>'+x.t+(x.s?' <small style="color:var(--mu)">['+x.s+']</small>':'')+'</li>'}).join('')+'</ul>':'<p class="nt" style="padding:0;margin:2px 0;color:var(--mu)">Belirgin risk işareti yok.</p>')
+ return '<div class="rk" data-sc="'+sc+'"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'+(L.length?'<ul class="nt">'+L.slice().sort(function(a,b){return b.p-a.p}).map(function(x){return '<li>'+x.t+(x.s?' <small style="color:var(--mu)">['+x.s+']</small>':'')+'</li>'}).join('')+'</ul>':'<p class="nt" style="padding:0;margin:2px 0;color:var(--mu)">Belirgin risk işareti yok.</p>')
  +(sc>=2&&RKACTB[key]?'<details class="dt" style="margin-top:4px"'+(sc>=4?' open':'')+'><summary>Ne yapılmalı (kaynaklı, dozlu)</summary><ol class="nt" style="margin:4px 0">'+RKACTB[key].map(function(t){return '<li>'+t+'</li>'}).join('')+'</ol><small>Kaynak: '+RKSRCB[key]+'</small></details>':'')+(extra?'<p class="s" style="margin:4px 0 0;font-size:12px">'+extra+'</p>':'')+btn+'</div>'} /* açıklama (puan düşürme nedeni, "teşhis değildir") her zaman görünür; yalnız kaynak adları gizlenebilir */
 function rkFocusB(T,fk){if(!fk||!T||!T.par)return;var P=function(k){return T.par.filter(function(p){return p[0]===k})[0]},ph=BREQ().phase,kMin=ph===0?28:ph===1?18:12;T.extra=T.extra||[];
- if(fk==="bacid"){var kb=P("kb");if(kb)kb[1]=Math.max(kb[1],kMin);var s=P("sta");if(s)s[2]=Math.min(s[2],38);T.fnMin=Math.max(T.fnMin||8,(PHT().fn||8)+3);T.extra.push({fn:function(x){return 25-staOf(x)*rkDeg(x)},op:">=",b:0},{fn:function(x){return (x.ndf||0)*(mx(x).pef||0)-(PHT().fn+4)},op:">=",b:0})}
+ if(fk==="bacid"){var kb=P("kb");if(kb)kb[1]=Math.max(kb[1],kMin);var s=P("sta");if(s)s[2]=Math.min(s[2],38);T.fnMin=Math.max(T.fnMin||8,(PHT().fn||8)+3);var rfU=ref4("besi","rfs").us;T.extra.push({fn:function(x){return rfU-staOf(x)*rkDeg(x)},op:">=",b:0},{fn:function(x){return (x.ndf||0)*(mx(x).pef||0)-(PHT().fn+4)},op:">=",b:0})}
  if(fk==="bloat"){var kb2=P("kb");if(kb2)kb2[1]=Math.max(kb2[1],15);T.extra.push({fn:function(x){return 25-(/yonca|üçgül|fiğ/i.test(x.fam||x.n)?100:0)},op:">=",b:0});var s2=P("sta");if(s2)s2[2]=Math.min(s2[2],38)}
- if(fk==="uro"){T.extra.push({fn:function(x){return (x.ca||0)-2.1*(x.ph||0)},op:">=",b:0},{fn:function(x){return 0.35-(x.ph||0)},op:">=",b:0},{fn:function(x){return (mx(x).na||0)-0.2},op:">=",b:0});var c=P("ph");if(c)c[2]=Math.min(c[2],0.35);var ca=P("ca");if(ca)ca[2]=Math.max(ca[2],1.0)}
+ if(fk==="uro"){T.extra.push({fn:function(x){return (x.ca||0)-2.1*(x.ph||0)},op:">=",b:0},{fn:function(x){return ref4("besi","ph").us-(x.ph||0)},op:">=",b:0},{fn:function(x){return (mx(x).na||0)-0.2},op:">=",b:0});var c=P("ph");if(c)c[2]=Math.min(c[2],0.35);var ca=P("ca");if(ca)ca[2]=Math.max(ca[2],1.0)}
  if(fk==="pem"){var kb3=P("kb");var sM=(kb3&&kb3[1]>=40)?0.45:0.28;T.extra.push({fn:function(x){return sM-(mx(x).s||0)},op:">=",b:0})}}
 
 function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
@@ -1303,18 +1393,17 @@ function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
  kp=Math.round(kb/dm*100),fnp=Math.round(fn/dm*10)/10,cpP=cp/dm,ne=b.milk>0?b.milk*b.pr/cp*100:0,
  fpr=(b.fat>0&&b.pr>0)?b.fat/b.pr:0,early=b.wk<=8,lim0=e.lim[0],defi=1-ratio;
  function lv(sc){return sc>=4?["Yüksek risk","no"]:sc>=2?["Orta risk","wa"]:["Düşük risk","ok"]}
- function card(name,sc,why,act,note){var l=lv(sc);return '<div class="rk"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'
+ function card(name,sc,why,act,note){var l=lv(sc);return '<div class="rk" data-sc="'+sc+'"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'
   +(why.length?'<ul class="nt">'+why.map(function(x){return '<li>'+x+'</li>'}).join("")+'</ul>':'<p class="nt" style="padding:0;margin:2px 0;color:var(--mu)">Belirgin risk işareti yok.</p>')
   +(sc>=2&&act?'<p style="margin:4px 0;font-size:13px"><b>Ne yapılmalı:</b> '+act+'</p>':'')+(note?'<small>'+note+'</small>':'')+'</div>'}
  /* 1) asidoz */
  var a=0,aw=[];
- var c4=r4Cls(),T4k=function(q){return (D&&c4&&ref4(c4,q))||{}},kbA=T4k("kaba").ak,ksX=(kbA!==null&&kbA!==undefined)?100-kbA:50; /* V224 (2. kısım): kuru dönem risk kartları eşikleri REF4.kuruYakin / REF4.kuruUzak'tan okur (tabloyla aynı sayı) */
- /* Not: veri.js öğretici tabloları bu karttaki eşikleri kaynak koddaki kalıplardan okur (OGRN: "D&&ks>50", "if(caP>0.8&&", "if(MXm.k>1.5)" …). Yakın dönem sayıları bu yüzden kodda yazılı kalır ve REF4.kuruYakin ile aynıdır (öz-denetim eşitliği denetler); uzak dönem REF4.kuruUzak'tan okunur. */
- var ks=100-kp,clA=D&&wkToCalv()<=3;if(D&&!clA&&ks>ksX){a+=2;aw.push('Uzak kuru dönemde kesif payı %'+f(ks,0)+' (%'+f(ksX,0)+' üstü)')}else if(D&&ks>50){a+=2;aw.push('Kuru dönemde kesif payı %'+f(ks,0)+' (%50 üstü)')}else if(!D&&ks>60){a+=2;aw.push('Kesif yem payı %'+f(ks,0)+' (%60 üstü)')}else if(ks>55){a+=1;aw.push('Kesif yem payı %'+f(ks,0)+' yüksek sınırda')}
+ var c4=r4Cls(),T4k=function(q){return (D&&c4&&ref4(c4,q))||{}},ksX=100-T4k("kaba").ak; /* V226: kuru dönem risk kartlarının bütün eşikleri REF4.kuruYakin / REF4.kuruUzak'tan (tablo, kart, öğretici ve "Hedefleri düzenle" aynı sayı); kesif üst sınırı = 100 − kaba alt kritiği */
+ var ks=100-kp,clA=D&&wkToCalv()<=3;if(D&&!clA&&ks>ksX){a+=2;aw.push('Uzak kuru dönemde kesif payı %'+f(ks,0)+' (%'+f(ksX,0)+' üstü)')}else if(D&&ks>ksX){a+=2;aw.push('Kuru dönemde kesif payı %'+f(ks,0)+' (%'+f(ksX,0)+' üstü)')}else if(!D&&ks>60){a+=2;aw.push('Kesif yem payı %'+f(ks,0)+' (%60 üstü)')}else if(ks>55){a+=1;aw.push('Kesif yem payı %'+f(ks,0)+' yüksek sınırda')}
  if(kp<t.kMin){a+=1;aw.push('Kaba yem payı %'+f(kp,0)+' (en az %'+f(t.kMin,0)+' olmalı)')}
- var stP=Math.round((S.lastSta||0)*10)/10,stL=STR()[1];if(stP>stL+3){a+=2;aw.push('Nişasta %'+f(stP,0)+' (en çok %'+stL+')')}else if(stP>stL){a+=1;aw.push('Nişasta %'+f(stP,0)+' üst sınırda')}
+ var stP=Math.round((S.lastSta||0)*10)/10,stL=STR()[1],stK=D?T4k("sta").uk:stL+3;if(stP>stK){a+=2;aw.push('Nişasta %'+f(stP,0)+' (en çok %'+stL+')')}else if(stP>stL){a+=1;aw.push('Nişasta %'+f(stP,0)+' üst sınırda')}
  if(Math.round(ndf/dm*10)/10<t.NDFmin){a+=2;aw.push('Rasyon NDF %'+f(ndf/dm,1)+' (en az %'+f(t.NDFmin,0)+')')}
- var fnM=D?25:(ref4("sagmal","fn").ak||19),adM=D?20:(ref4("sagmal","adf").ak||17);if(fnp<fnM){a+=2;aw.push('Kaba yemden gelen NDF %'+f(fnp,1)+' (en az %'+fnM+')')}
+ var fnM=D?T4k("fn").as:(ref4("sagmal","fn").ak||19),adM=D?T4k("adf").as:(ref4("sagmal","adf").ak||17);if(fnp<fnM){a+=2;aw.push('Kaba yemden gelen NDF %'+f(fnp,1)+' (en az %'+fnM+')')}
  if(Math.round(adf/dm*10)/10<adM){a+=1;aw.push('ADF %'+f(adf/dm,1)+' (en az %'+adM+')')}
  var MXa=window.metrics?metrics(curItems()):{pendf:99};if(!D&&MXa.pendf<REF.pendf.kritik){a+=2;aw.push('peNDF %'+f(MXa.pendf,1)+' (en az %'+REF.pendf.kritik+': fiziksel etkin lif yetersiz)')}else if(!D&&MXa.pendf<REF.pendf.min){a+=1;aw.push('peNDF %'+f(MXa.pendf,1)+' alt sınırda')}
  if(!D&&b.fat>0&&b.fat<3.0){a+=1;aw.push('Süt yağı %'+f(b.fat,1)+' (%3,0 altı asidoz işareti olabilir)')}
@@ -1322,30 +1411,31 @@ function risks(dm,me,cp,kb,fn,ndf,adf,ca,ph){
  if(D){var dk=0,dkw=[],h=0,hw=[],cl=wkToCalv()<=3,caP=ca/dm,pP=ph/dm,alf=0;
   S.feeds.forEach(function(x){if(x.on&&x.kg>0&&/yonca/i.test(x.fam||x.n))alf+=x.kg*x.dm/100});alf=alf/dm*100;
   if(ratio<lim0){dk+=2;dkw.push('Enerji açığı: '+f(bal,1)+' Mcal/gün; doğum öncesi kondisyon kaybı')}
-  if(b.bcs>=3.75){dk+=2;dkw.push('Kondisyon puanı '+f(b.bcs,2)+' (3,75 ve üstü: yağlı inek, doğum sonrası ketozis ve yağlı karaciğer riski)')}
+  var tBc=T4k("bcs"),bcU=tBc.uk,bcT=f(tBc.as,1)+'–'+f(tBc.us,1)+' arasında tutun ('+f(bcU,2)+' ve üstü yağlı inek sayılır)';
+  if(b.bcs>=bcU){dk+=2;dkw.push('Kondisyon puanı '+f(b.bcs,2)+' ('+f(bcU,2)+' ve üstü: yağlı inek, doğum sonrası ketozis ve yağlı karaciğer riski)')}
   if(ratio>e.lim[1]){dk+=1;dkw.push('Enerji fazlası: yağlanma gidişi')}
-  if(dm<R.dmi*0.85){dk+=1;dkw.push('Kuru madde alımı beklenenin altında ('+f(dm,1)+' / '+f(R.dmi,1)+' kg)')}
-  var MX0=metrics(curItems()),caUk=T4k("ca").uk||0.8,caUs=sg.cax||0.6,pUs=sg.px||0.35,r2c=function(v){return Math.round(v*100)/100};
+  if(dm<R.dmi*T4k("dmi").ak/100){dk+=1;dkw.push('Kuru madde alımı beklenenin altında ('+f(dm,1)+' / '+f(R.dmi,1)+' kg)')}
+  var MX0=metrics(curItems()),caUk=T4k("ca").uk,caUs=sg.cax,pUs=sg.px,tCA=T4k("caAn"),r2c=function(v){return Math.round(v*100)/100};
   caP=r2c(caP);pP=r2c(pP); /* tabloyla aynı yuvarlama */
-  if(caP>0.8&&!(MX0.dcad<0)){h+=cl?3:2;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%0,8 üstü: doğum öncesi yüksek Ca süt humması riskini artırır)')}else if(caP>0.6){if(!(MX0.dcad<0)){h+=1;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%0,6 üstü sınırda; GfE kuru dönemde günde 60 g Ca üstünü önermez)')}}
-  if(pP>0.35){h+=1;hw.push('Fosfor %'+f(pP,2)+' (%0,35 üstü: fazla fosfor Ca dengesini bozar)')}
-  if(alf>25){h+=1;hw.push('Yonca payı %'+f(alf,0)+' KM (yüksek Ca ve K: süt humması riski)')}
+  if(caP>caUk&&!(MX0.dcad<0)){h+=cl?3:2;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%'+f(caUk,1)+' üstü: doğum öncesi yüksek Ca süt humması riskini artırır)')}else if(caP>caUs){if(!(MX0.dcad<0)){h+=1;hw.push('Rasyon kalsiyumu %'+f(caP,2)+' (%'+f(caUs,1)+' üstü sınırda; GfE kuru dönemde günde 60 g Ca üstünü önermez)')}}
+  if(pP>pUs){h+=1;hw.push('Fosfor %'+f(pP,2)+' (%'+f(pUs,2)+' üstü: fazla fosfor Ca dengesini bozar)')}
+  if(alf>T4k("yonca").us){h+=1;hw.push('Yonca payı %'+f(alf,0)+' KM (yüksek Ca ve K: süt humması riski)')}
   var MXm=metrics(curItems()),anyon=MXm.dcad<0;
-  var tKk=T4k("k"),kUs=tKk.us||1.3,kUk=tKk.uk||1.5,tDc=T4k("dcad"),dcU=(tDc.uk!==null&&tDc.uk!==undefined)?tDc.uk:100,tMgk=T4k("mg"),mgA=tMgk.as||0.35,dn=cl?'yakın dönemde':'uzak kuru dönemde';
-  if(!cl){if(r2c(MXm.k)>kUk){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' (uzak kuru dönemde kritik %'+f(kUk,1)+' üstü)')}else if(r2c(MXm.k)>kUs){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' (uzak kuru dönemde üst sınır %'+f(kUs,1)+'; yakın dönemde en çok %1,3)')}}
-  else if(MXm.k>1.5){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' (yakın dönemde en çok %1,3–1,5: süt hummasının ana nedeni)')}else if(MXm.k>1.3&&cl){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' üst sınırda')}
-  if(cl&&!anyon&&MXm.dcad>100){h+=2;hw.push('DCAD +'+f(MXm.dcad,0)+' mEq/kg (yakın dönemde +100 altı, anyonik programda −100 hedeflenir)')}
-  if(anyon){h=Math.max(0,h-2);hw.push('DCAD '+f(MXm.dcad,0)+' mEq/kg: anyonik program; idrar pH 6,0–6,8 olmalı, rasyon Ca %1,0–1,5\'e çıkarılmalı'+(caP<1.0?' (şu an %'+f(caP,2)+', düşük)':''))}
-  if(!cl){if(r2c(MXm.mg)<mgA){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' (uzak kuru dönemde en az %'+f(mgA,2)+' önerilir; yakın dönemde %0,35–0,40)')}}
-  else if(MXm.mg<0.35){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' (yakın dönemde %0,35–0,40 önerilir)')}
-  if(b.bcs>=3.75){h+=1;hw.push('Yağlı inek: doğumda yem tüketimi düşer, Ca dengesi zorlanır')}
+  var tKk=T4k("k"),kUs=tKk.us,kUk=tKk.uk,dcU=T4k("dcad").uk,tMgk=T4k("mg"),mgA=tMgk.as,yK=ref4("kuruYakin","k"),yMg=ref4("kuruYakin","mg").as,dn=cl?'yakın dönemde':'uzak kuru dönemde';
+  if(!cl){if(r2c(MXm.k)>kUk){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' (uzak kuru dönemde kritik %'+f(kUk,1)+' üstü)')}else if(r2c(MXm.k)>kUs){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' (uzak kuru dönemde üst sınır %'+f(kUs,1)+'; yakın dönemde en çok %'+f(yK.us,1)+')')}}
+  else if(MXm.k>kUk){h+=2;hw.push('Potasyum %'+f(MXm.k,2)+' (yakın dönemde en çok %'+f(kUs,1)+'–'+f(kUk,1)+': süt hummasının ana nedeni)')}else if(MXm.k>kUs&&cl){h+=1;hw.push('Potasyum %'+f(MXm.k,2)+' üst sınırda')}
+  if(cl&&!anyon&&MXm.dcad>dcU){h+=2;hw.push('DCAD +'+f(MXm.dcad,0)+' mEq/kg (yakın dönemde +'+f(dcU,0)+' altı, anyonik programda −100 hedeflenir)')}
+  if(anyon){h=Math.max(0,h-2);hw.push('DCAD '+f(MXm.dcad,0)+' mEq/kg: anyonik program; idrar pH 6,0–6,8 olmalı, rasyon Ca %'+f(tCA.as,1)+'–'+f(tCA.us,1)+'\'e çıkarılmalı'+(caP<tCA.as?' (şu an %'+f(caP,2)+', düşük)':''))}
+  if(!cl){if(r2c(MXm.mg)<mgA){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' (uzak kuru dönemde en az %'+f(mgA,2)+' önerilir; yakın dönemde %'+f(yMg,2)+'–0,40)')}}
+  else if(MXm.mg<mgA){h+=1;hw.push('Magnezyum %'+f(MXm.mg,2)+' (yakın dönemde %'+f(mgA,2)+'–0,40 önerilir)')}
+  if(b.bcs>=bcU){h+=1;hw.push('Yağlı inek: doğumda yem tüketimi düşer, Ca dengesi zorlanır')}
   if(b.par<=1){h=Math.max(0,h-2);hw.push('İlk doğum: süt humması riski doğal olarak düşük')}
   if(!cl){h=Math.max(0,h-1)}
   var ex2='<div class="sum"><div><b>%'+f(caP,2)+' / %'+f(pP,2)+'</b><span>Rasyon Ca / P ('+(cl?'yakın':'uzak')+' kuru dönem hedefi Ca %'+f(sg.ca,2)+'–'+f(caUs,2)+', P %'+f(sg.p,2)+'–'+f(pUs,2)+')</span></div></div>';
   return '<h2>Sağlık riskleri (kuru dönem)</h2>'+ex2
-  +card('Süt humması (hipokalsemi)',h,hw,(cl?'':'Uzak kuru dönemde amaç kondisyonu korumak ve potasyumu yüksek yemleri (yonca, melas) sınırlamaktır; asıl önlemler doğuma son 3 haftada alınır. ')+'Doğuma son 3 haftada iki yoldan biri uygulanır: (A) anyonik tuz kullanılmıyorsa rasyon kalsiyumunu %0,40–0,60, fosforu %0,35 altında tutun, yoncayı sınırlayın, kireç taşı eklemeyin; (B) anyonik tuz (negatif DCAD) kullanıyorsanız Ca\'yı kireç taşıyla %1,0–1,5\'e çıkarın ve idrar pH\'sını izleyin (6,0–6,8). Doğumda oral kalsiyum için veterinere danışın.','Potasyum ve DCAD kütüphane mineral değerleriyle hesaplanır (ayrıntı tablosu); kaba yemlerin K analizini yaptırmanız önerilir. NDSU, Merck ve NASEM 2021 önerilerine göre puanlandı.')
-  +card('Doğum sonrası ketozis / yağlı karaciğer',dk,dkw,'Kuru dönemde kondisyonu 3,0–3,5 arasında tutun (3,75 ve üstü yağlı inek sayılır); yakın dönemde enerji yoğunluğunu kademeli artırın, yem masasını boş bırakmayın; doğum sonrası ilk 2 haftada BHB testi yaptırın.','Kuru dönem beslemesinin etkisi doğumdan sonra görülür; bu kart doğum sonrası riski öngörür.')
-  +card('Asidoz ('+(wkToCalv()<=3?'yakın':'uzak')+' dönem rasyonu)',a,aw,'Kesif payını %50 altında tutun, kademeli artırın; kaba yemi uzun kıyımlı verin.','Yakın dönemde kesif yem kademeli artırılır; birden artırmak doğum sonrası asidoz ve abomazum kaymasına zemin hazırlar.')}
+  +card('Süt humması (hipokalsemi)',h,hw,(cl?'':'Uzak kuru dönemde amaç kondisyonu korumak ve potasyumu yüksek yemleri (yonca, melas) sınırlamaktır; asıl önlemler doğuma son 3 haftada alınır. ')+'Doğuma son 3 haftada iki yoldan biri uygulanır: (A) anyonik tuz kullanılmıyorsa rasyon kalsiyumunu %0,40–'+f(caUs,2)+', fosforu %'+f(pUs,2)+' altında tutun, yoncayı sınırlayın, kireç taşı eklemeyin; (B) anyonik tuz (negatif DCAD) kullanıyorsanız Ca\'yı kireç taşıyla %'+f(tCA.as,1)+'–'+f(tCA.us,1)+'\'e çıkarın ve idrar pH\'sını izleyin (6,0–6,8). Doğumda oral kalsiyum için veterinere danışın.','Potasyum ve DCAD kütüphane mineral değerleriyle hesaplanır (ayrıntı tablosu); kaba yemlerin K analizini yaptırmanız önerilir. NDSU, Merck ve NASEM 2021 önerilerine göre puanlandı.')
+  +card('Doğum sonrası ketozis / yağlı karaciğer',dk,dkw,'Kuru dönemde kondisyonu '+bcT+'; yakın dönemde enerji yoğunluğunu kademeli artırın, yem masasını boş bırakmayın; doğum sonrası ilk 2 haftada BHB testi yaptırın.','Kuru dönem beslemesinin etkisi doğumdan sonra görülür; bu kart doğum sonrası riski öngörür.')
+  +card('Asidoz ('+(wkToCalv()<=3?'yakın':'uzak')+' dönem rasyonu)',a,aw,'Kesif payını %'+f(ksX,0)+' altında tutun, kademeli artırın; kaba yemi uzun kıyımlı verin.','Yakın dönemde kesif yem kademeli artırılır; birden artırmak doğum sonrası asidoz ve abomazum kaymasına zemin hazırlar.')}
  if(!D&&!isHf()){var RR=sutRisk();if(RR)return rkRender(RR)}
  /* 2) ketozis */
  var k=0,kw=[];
@@ -1495,7 +1585,7 @@ function isMin(x){return !(x.me>0)&&!(x.cp>0)&&x.dm>90}
 window.solverRe=stageRe;
 function capOf(x){if(/Bypass/.test(x.n))return 0.03;if(isPrem(x))return 0.006;if(OWN.test(x.fam||x.n))return S.type==="besi"?0.6:S.type==="koyun"?0.85:S.type==="buzagi"?0.95:0.45;if(isLiq(x))return 0.95;if(S.type==="buzagi"&&x.k)return 0.15;if(isMin(x))return /Tuz/.test(x.n)?0.005:0.015;if(/Melas/.test(x.n))return 0.06;if(/tam yağlı|bütün|Ayçiçeği tohumu/.test(x.n))return 0.10;if(x.k)return /saman|koçan/i.test(x.n)?0.2:0.6;if(x.ndf>55||x.me<2.1)return 0.15;return 0.35}
 function tgt(Dc){var R=refSut(),t=S.t.sut,s=SG(),D=isDry(),fL=S.fL||1,low=Dc<0.85*R.dmi,ex=(function(){var m=0;S.feeds.forEach(function(x){if(x.on&&x.kg>0&&x.dm>0)m+=x.kg*x.dm/100*x.me});return KL*fL*m>enBal().lim[1]*enBal().req})(),dlo=ex?(Dc<R.dmi*0.92?Dc*0.85:Math.min(Dc*0.98,Math.max(Dc*0.7,R.dmi*0.75))):Math.min(Dc*0.98,R.dmi*1.1),dhi=low?Math.max(dlo,R.dmi):ex?Math.max(dlo,Dc<R.dmi*0.92?Math.min(Dc*1.08,R.dmi):Dc*0.98):Math.max(dlo,Math.min(Dc*1.08,R.dmi*1.05));dhi=Math.max(dlo,Math.min(dhi,R.dmi*1.1)); /* plan, ineğin tahmini yem tüketiminin %110'unu aşmasın */
- var e=enBal(),AN=D&&(function(){try{var it=curItems();return it.length&&metrics(it).dcad<0}catch(er){return false}})(),XD=xProf().dcad||[-150,100],dc=function(x){var o=mx(x);return 435*o.na+256*o.k-282*o.cl-624*o.s};return{fL:fL,low:low,Dc:Dc,R:R,s:s,e:e,an:AN,rlo:e.lim[0]+0.03,rhi:(D&&S.b.bcs>=3.75)?Math.min(e.lim[1]-0.01,1.05):e.lim[1]-0.01, /* şişman kuru inek: enerji fazlası verilmez (ketozis/yağlı karaciğer) */dlo:dlo,dhi:dhi,extra:D?[{fn:function(x){return mx(x).na-0.10},op:">=",b:0},{fn:function(x){return 1.5-mx(x).k},op:">=",b:0}].concat(AN?[{fn:function(x){return dc(x)-XD[0]},op:">=",b:0},{fn:function(x){return XD[1]-dc(x)},op:">=",b:0}]:[]).concat(eeX()):[{fn:function(x){return mx(x).na-0.18},op:">=",b:0}].concat(eeX()).concat(aaX()),ndfD:t.NDFmax>0?t.NDFmax:80,fnMin:D?undefined:r4B("sagmal","fn")[0],par:[["cp",R.cp-1,R.cp+1.5],["ndf",t.NDFmin,t.NDFmax>0?t.NDFmax+(ex?6:0):80],["adf"].concat(D?[20,40]:r4B("sagmal","adf")),["kb"].concat(D?[t.kMin,t.kMax]:r4B("sagmal","kaba")),["ca",AN?1.0:s.ca,AN?1.5:(s.cax||1.2)],["ph",s.p,s.px||0.7],["sta"].concat(D?STR():r4B("sagmal","sta"))]}} /* sağmal: ADF, kaba payı, nişasta ve kaba NDF sınırları REF4 (alt sınır–üst sınır; R4RELAX'te kritik) */
+ var e=enBal(),AN=D&&(function(){try{var it=curItems();return it.length&&metrics(it).dcad<0}catch(er){return false}})(),XD=xProf().dcad||[-150,100],dc=function(x){var o=mx(x);return 435*o.na+256*o.k-282*o.cl-624*o.s};return{fL:fL,low:low,Dc:Dc,R:R,s:s,e:e,an:AN,rlo:e.lim[0]+0.03,rhi:(D&&S.b.bcs>=ref4(r4Cls(),"bcs").uk)?Math.min(e.lim[1]-0.01,1.05):e.lim[1]-0.01, /* şişman kuru inek: enerji fazlası verilmez (ketozis/yağlı karaciğer) */dlo:dlo,dhi:dhi,extra:D?[{fn:function(x){return mx(x).na-0.10},op:">=",b:0},{fn:function(x){return 1.5-mx(x).k},op:">=",b:0}].concat(AN?[{fn:function(x){return dc(x)-XD[0]},op:">=",b:0},{fn:function(x){return XD[1]-dc(x)},op:">=",b:0}]:[]).concat(eeX()):[{fn:function(x){return mx(x).na-0.18},op:">=",b:0}].concat(eeX()).concat(aaX()),ndfD:t.NDFmax>0?t.NDFmax:80,fnMin:D?undefined:r4B("sagmal","fn")[0],par:[["cp",R.cp-1,R.cp+1.5],["ndf",t.NDFmin,t.NDFmax>0?t.NDFmax+(ex?6:0):80],["adf"].concat(D?[20,40]:r4B("sagmal","adf")),["kb"].concat(D?[t.kMin,t.kMax]:r4B("sagmal","kaba")),["ca",AN?ref4(r4Cls(),"caAn").as:s.ca,AN?ref4(r4Cls(),"caAn").us:(s.cax||1.2)],["ph",s.p,s.px||0.7],["sta"].concat(D?STR():r4B("sagmal","sta"))]}} /* sağmal: ADF, kaba payı, nişasta ve kaba NDF sınırları REF4 (alt sınır–üst sınır; R4RELAX'te kritik) */
 function val(x,k){return k==="kb"?(x.k?100:0):k==="sta"?staOf(x):x[k]}
 /* items: [{x:feed,d:kgDM}] -> metrikler */
 /* ===== 2. aşama: yem protein parçaları (A çözünür, B yıkılabilir, C yıkılmaz; kd %/saat; dc = RUP bağırsak sindirimi %) — açık kaynaklardan derlenir (PFR) ===== */
@@ -1730,7 +1820,7 @@ function bGain(dm,meT,cpG,mm){var R=BREQ(),mec=dm>0?meT/dm:0,nema=nemF(mec),nega
  var b=BA(),mps=(mm&&mm.rdp>=0&&mm.drup>=0)?0.64*Math.min(130*meT/0.82/4.409,mm.rdp*kc)+mm.drup*kc:cpG*0.66, /* NASEM 2016 (NRC 2000 seviye 1): MP = 0,64 × min(0,13 × TDN, RDP) + sindirilen RUP; TDN = ME/0,82/4,409 */mpg=mps-R.mpm-(b.hf&&b.dp>=190?pregMP(b.dp):0),npg=Math.max(0,mpg*R.eff),swgp=ebg/0.956;for(var i=0;i<6;i++){var reS=0.0635*Math.pow(R.eqebw,0.75)*Math.pow(Math.max(0,0.956*swgp),1.097);swgp=Math.max(0,(npg+29.4*reS)/268)}var adgp=Math.max(0,swgp/0.96*1000);
  return{adg:adg,adgp:adgp,re:re,nema:nema,nega:nega,ffm:ffm,mps:mps,capped:capped,cap:cap}}
 function bMEreq(mec){var R=BREQ(),nema=nemF(mec),nega=negF(mec);if(nema<=0.1||nega<=0.05)return 1e9;return (R.nem/(nema*(BA().ion?1.12:1))+R.re/nega)*mec}
-function cardB(name,sc,why,act,note){var l=sc>=4?["Yüksek risk","no"]:sc>=2?["Orta risk","wa"]:["Düşük risk","ok"];return '<div class="rk"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'+(why.length?'<ul class="nt">'+why.map(function(x){return '<li>'+x+'</li>'}).join("")+'</ul>':'<p class="nt" style="padding:0;margin:2px 0;color:var(--mu)">Belirgin risk işareti yok.</p>')+(sc>=2&&act?'<p style="margin:4px 0;font-size:13px"><b>Ne yapılmalı:</b> '+act+'</p>':'')+(note?'<small>'+note+'</small>':'')+'</div>'}
+function cardB(name,sc,why,act,note){var l=sc>=4?["Yüksek risk","no"]:sc>=2?["Orta risk","wa"]:["Düşük risk","ok"];return '<div class="rk" data-sc="'+sc+'"><h3>'+name+'<em class="'+l[1]+'">'+l[0]+'</em></h3>'+(why.length?'<ul class="nt">'+why.map(function(x){return '<li>'+x+'</li>'}).join("")+'</ul>':'<p class="nt" style="padding:0;margin:2px 0;color:var(--mu)">Belirgin risk işareti yok.</p>')+(sc>=2&&act?'<p style="margin:4px 0;font-size:13px"><b>Ne yapılmalı:</b> '+act+'</p>':'')+(note?'<small>'+note+'</small>':'')+'</div>'}
 function renderCmpBesi(){var el=$("cmp"),b=BA(),B=BB[b.breed],HF=!!b.hf;
  var it=[];S.feeds.forEach(function(x){if(x.on&&x.kg>0&&x.dm>0)it.push({x:x,d:x.kg*x.dm/100,p:x.p||0})});
  if(!it.length){el.innerHTML="";return}
@@ -1777,13 +1867,13 @@ function renderCmpBesi(){var el=$("cmp"),b=BA(),B=BB[b.breed],HF=!!b.hf;
  +'<div class="sum"><div><b>'+f(adg,0)+' g</b><span>Günlük canlı ağırlık artışı (hedef '+f(tgtA,0)+')</span></div>'+(function(){var st=!HF&&window.wtStats?wtStats():null;return st?'<div><b>'+f(st.adg,0)+' g</b><span>Gerçek artış, tartımlardan ('+f(st.days,0)+' gün; tahminden '+(st.adg>adg?'+':'')+f(st.adg-adg,0)+' g)</span></div>':''})()+'<div><b>'+f(g.adg,0)+' / '+(g.adgp>2500?'&gt; 2.500':f(g.adgp,0))+' g</b><span>Enerjiye / proteine göre artış'+(g.adgp>2500?' (protein sınırlamıyor)':'')+'</span></div><div><b>'+f(fcr,1)+'</b><span>Yem dönüşümü (kg KM / kg artış)</span></div><div><b>'+(m.cost>0?f(ckg)+' TL':'—')+'</b><span>kg canlı ağırlık artışı maliyeti'+(m.cost>0?costNote(m):' (yem fiyatları girilmedi)')+'</span></div>'+(b.price>0&&adg>50&&m.cost>0?'<div><b>'+f(adg/1000*b.price-m.cost)+' TL</b><span>Günlük brüt kazanç (artış × fiyat − yem)</span></div>':'')+'</div>'
  +'<h2>Gelecek</h2><ul class="nt">'+fut.map(li).join("")+'</ul><h2>Çözümler</h2><ul class="nt">'+sol.map(li).join("")+'</ul>';
  /* riskler */
- var a=0,aw=[],bl=0,bw=[],u=0,uw=[],h=0,hw=[];
- if(sta>40){a+=2;aw.push('Nişasta %'+f(sta,0)+' (%40 üstü)')}else if(sta>P.sta[1]){a+=1;aw.push('Nişasta %'+f(sta,0)+' dönem üst sınırının üstünde')}
+ var a=0,aw=[],bl=0,bw=[],u=0,uw=[],h=0,hw=[],c4=HF?"duve":"besi",T4=function(k){return ref4(c4,k)||{}},stK=T4("sta").uk; /* V226: düve kartlarının eşikleri REF4.duve / duve:dönem (tablo, kart, öğretici aynı sayı); dönem sınırları PHT */
+ if(sta>stK){a+=2;aw.push('Nişasta %'+f(sta,0)+' (%'+f(stK,0)+' üstü)')}else if(sta>P.sta[1]){a+=1;aw.push('Nişasta %'+f(sta,0)+' dönem üst sınırının üstünde')}
  if(kp<P.kb[0]){a+=2;aw.push('Kaba yem %'+f(kp,0)+' (dönem için en az %'+P.kb[0]+')')}
  if(m.fn<P.fn){a+=2;aw.push('Kaba yemden gelen NDF %'+f(m.fn,1)+' (en az %'+P.fn+')')}
  if(m.me>P.me[1]){a+=1;aw.push('Enerji yoğunluğu '+f(m.me,2)+' Mcal/kg yüksek')}
- if(R.phase===0&&(100-kp)>60){a+=1;aw.push('Adaptasyon döneminde kesif payı %'+f(100-kp,0)+': kademeli geçiş gerekir')}
- if(m.s>0.3){a+=1;aw.push('Kükürt %'+f(m.s,2)+' (%0,3 üstü: PEM ve bakır eksikliği; DDGS/melas payını azaltın)')}
+ if(R.phase===0&&(100-kp)>T4("kesif").us){a+=1;aw.push('Adaptasyon döneminde kesif payı %'+f(100-kp,0)+': kademeli geçiş gerekir')}
+ if(m.s>T4("s").us){a+=1;aw.push('Kükürt %'+f(m.s,2)+' (%'+f(T4("s").us,1)+' üstü: PEM ve bakır eksikliği; DDGS/melas payını azaltın)')}
  if(m.pendf<P.fn){a+=1;aw.push('peNDF %'+f(m.pendf,1)+' düşük')}
  var alf=0;it.forEach(function(o){if(/yonca/i.test(o.x.fam||o.x.n))alf+=o.d});alf=dm>0?alf/dm*100:0;
  if(alf>30){bl+=2;bw.push('Yonca payı %'+f(alf,0)+' KM (baklagil şişmesi)')}
@@ -1798,17 +1888,17 @@ function renderCmpBesi(){var el=$("cmp"),b=BA(),B=BB[b.breed],HF=!!b.hf;
  if(a>=2){h+=1;hw.push('Asidoz riski karaciğer apsesine zemin hazırlar')}
  var heat=b.temp>=30?'<p class="wa" style="margin:4px 0;font-size:13px"><b>Isı stresi:</b> '+f(b.temp,0)+' °C; yem tüketimi NASEM\'e göre '+(b.temp>=35?'%10–35':'%3–10')+' düşer, gece serinliği önemli. Gölge, su ve sabah-akşam yemleme uygulayın.</p>':'';
  var risks;
- if(HF){var ov=0,ovw=[],ug=0,ugw=[],pre=!GEB&&b.bw<0.55*b.fin;
-  if(pre&&adg>1000){ov+=3;ovw.push('Tohumlama öncesi dönemde artış '+f(adg,0)+' g/gün (900–1.000 g üstü: meme dokusu yağlanır, ileride süt verimi düşer)')}else if(pre&&adg>900){ov+=1;ovw.push('Artış '+f(adg,0)+' g/gün, üst sınırda')}
-  if(b.bcs>=3.75){ov+=2;ovw.push('Kondisyon '+f(b.bcs,2)+' (3,75 üstü: yağlı düve, güç doğum ve doğum sonrası sorun riski)')}
+ if(HF){var ov=0,ovw=[],ug=0,ugw=[],pre=!GEB&&b.bw<0.55*b.fin,tAd=T4("adg"),tAo=T4("adgOran"),bcU=T4("bcs").uk;
+  if(pre&&adg>tAd.uk){ov+=3;ovw.push('Tohumlama öncesi dönemde artış '+f(adg,0)+' g/gün ('+f(tAd.us,0)+'–'+f(tAd.uk,0)+' g üstü: meme dokusu yağlanır, ileride süt verimi düşer)')}else if(pre&&adg>tAd.us){ov+=1;ovw.push('Artış '+f(adg,0)+' g/gün, üst sınırda')}
+  if(b.bcs>=bcU){ov+=2;ovw.push('Kondisyon '+f(b.bcs,2)+' ('+f(bcU,2)+' üstü: yağlı düve, güç doğum ve doğum sonrası sorun riski)')}
   if(m.me>P.me[1]){ov+=1;ovw.push('Enerji yoğunluğu '+f(m.me,2)+' Mcal/kg dönem için yüksek')}
-  if(GEB){if(adg<tgtA*0.8){ug+=2;ugw.push('Artış '+f(adg,0)+' g/gün; yavru hariç hedefin ('+f(tgtA,0)+' g) %80\'inin altında: doğumda vücut ağırlığı düşük kalır (güç doğum, ilk laktasyonda düşük verim)')}
-   if(GEB&&adg>tgtA*1.3&&adg>800){ov+=2;ovw.push('Gebe düvede artış '+f(adg,0)+' g/gün (yavru hariç hedef '+f(tgtA,0)+' g): yağlanma, güç doğum ve doğum sonrası ketozis riski')}}
-  else{if(adg<600){ug+=2;ugw.push('Artış '+f(adg,0)+' g/gün (600 g altı: ilk doğum gecikir)')}
-  if(adg<tgtA*0.8){ug+=1;ugw.push('Hedefin ('+f(tgtA,0)+' g) %80\'inin altında; ilk doğum yaşı '+f(b.cage,0)+' ayı aşar')}}
-  if(m.cp<cpT-1){ug+=1;ugw.push('Protein düşük: iskelet ve kas gelişimi yavaşlar')}
+  if(GEB){if(adg<tgtA*tAo.as/100){ug+=2;ugw.push('Artış '+f(adg,0)+' g/gün; yavru hariç hedefin ('+f(tgtA,0)+' g) %'+f(tAo.as,0)+'\'inin altında: doğumda vücut ağırlığı düşük kalır (güç doğum, ilk laktasyonda düşük verim)')}
+   if(GEB&&adg>tgtA*tAo.us/100&&adg>800){ov+=2;ovw.push('Gebe düvede artış '+f(adg,0)+' g/gün (yavru hariç hedef '+f(tgtA,0)+' g): yağlanma, güç doğum ve doğum sonrası ketozis riski')}}
+  else{if(adg<tAd.ak){ug+=2;ugw.push('Artış '+f(adg,0)+' g/gün ('+f(tAd.ak,0)+' g altı: ilk doğum gecikir)')}
+  if(adg<tgtA*tAo.as/100){ug+=1;ugw.push('Hedefin ('+f(tgtA,0)+' g) %'+f(tAo.as,0)+'\'inin altında; ilk doğum yaşı '+f(b.cage,0)+' ayı aşar')}}
+  if(m.cp<cpT+T4("cp").as){ug+=1;ugw.push('Protein düşük: iskelet ve kas gelişimi yavaşlar')}
   risks='<h2>Sağlık ve gelişim riskleri (düve)</h2>'+heat
-  +cardB('Aşırı besleme / yağlanma',ov,ovw,(GEB?'Gebe düvede artışı yavru hariç 600–800 g/gün (son 2 ayda en çok 600 g) aralığında tutun':'Tohumlama öncesi artışı 700–900 g/gün aralığında tutun')+'; enerji yoğunluğunu düşürün, kaba yemi artırın; kondisyonu 3,0–3,5 arasında hedefleyin.','NRC 2001: puberte öncesi Holstein düvelerde 0,9–1,0 kg/gün üstü artış meme gelişimini olumsuz etkiler.')
+  +cardB('Aşırı besleme / yağlanma',ov,ovw,(GEB?'Gebe düvede artışı yavru hariç 600–800 g/gün (son 2 ayda en çok 600 g) aralığında tutun':'Tohumlama öncesi artışı '+f(tAd.as,0)+'–'+f(tAd.us,0)+' g/gün aralığında tutun')+'; enerji yoğunluğunu düşürün, kaba yemi artırın; kondisyonu 3,0–3,5 arasında hedefleyin.','NRC 2001: puberte öncesi Holstein düvelerde 0,9–1,0 kg/gün üstü artış meme gelişimini olumsuz etkiler.')
   +cardB('Yetersiz büyüme',ug,ugw,GEB?(SON?'Doğuma '+f(b.dleft,0)+' gün kaldı: enerjiyi yükseltip hızlı kilo aldırmayın. Kaba yem kalitesini ve proteini düzeltin, yem tüketimini koruyun; doğum sonrası hedef olgun ağırlığın %82\'sidir (≈ '+f(b.tgtM,0)+' kg, yavru hariç).':'Enerji ve protein yoğunluğunu ölçülü artırın; doğum sonrası hedef olgun ağırlığın %82\'sidir (≈ '+f(b.tgtM,0)+' kg, yavru hariç; doğum öncesi tartıda yavruyla birlikte ≈ %94).'):'Enerji ve protein yoğunluğunu artırın; tohumlama için olgun ağırlığın %55\'i (ör. Holstein ~375 kg, 13–15 ay) hedeflenir.','')
   +cardB('Asidoz (rumen asiditesi)',a,aw,'Kaba yemi artırın, nişastayı düşürün; kesif yemi kademeli artırın.','Düvelerde kaba yem payı en az %50–65 olmalı.')}
  else risks=(window.besiRisk&&besiRisk())?rkRenderB(besiRisk()):'<h2>Sağlık riskleri (besi)</h2>'+heat
@@ -1841,6 +1931,7 @@ function renderKIn(){var k=K_def();$("kmode").value=k.mode;$("kbreed").innerHTML
 function kMat(){var k=K_def(),B=KB[k.breed];return kuzu()?(k.sex==="d"?B.ew:B.rm):B.ew}
 function kEVg(W,sx){return (sx==="d"?2.1+0.45*W:2.5+0.35*W)/4.184} /* AFRC 1993: büyüyen kuzuda kazancın enerji değeri, MJ/kg canlı ağırlık (erkek 2,5+0,35W; dişi 2,1+0,45W) → Mcal */
 function kKf(me){return Math.max(0.3,0.78*me/4.4+0.006)} /* AFRC 1993: kf = 0,78·qm + 0,006; qm = ME/GE (GE ≈ 4,4 Mcal/kg KM) */
+var IKIZ=2; /* ikiz ve üstü kuzu: gebelik toksemisi ve laktasyon kartlarında ihtiyaç artışı (yerel tanım; öğretici de bunu okur) */
 function kPhase(){var k=K_def();if(!kuzu())return k.mode;var P=k.bw/kMat();return P<0.35?0:P<0.55?1:2}
 var KPH={0:{n:"Kuzu büyütme (olgun ağırlığın %35'i altı)",me:[2.5,3.1],sta:[15,32],ndf:[22,45],adf:[12,28],kb:[20,60],fn:8,dm:[40,92],ca:[0.45,1.0],p:[0.22,0.40],cp:[13,21]},1:{n:"Toklu geliştirme (olgunluğun %35–55'i)",me:[2.6,3.05],sta:[20,35],ndf:[18,40],adf:[10,25],kb:[15,45],fn:5,dm:[40,92],ca:[0.45,1.0],p:[0.22,0.40],cp:[12,17]},2:{n:"Toklu bitiş (olgunluğun %55'i üstü)",me:[2.7,3.15],sta:[25,35],ndf:[15,32],adf:[8,20],kb:[15,35],fn:4,dm:[40,92],ca:[0.45,1.0],p:[0.22,0.40],cp:[11,16]},
  idame:{n:"Koyun idame / erken gebelik",me:[1.9,2.4],sta:[3,20],ndf:[40,68],adf:[25,45],kb:[60,100],fn:25,dm:[35,92],ca:[0.25,0.8],p:[0.20,0.40],cp:[9,13]},gebe:{n:"Koyun geç gebelik (son 6 hafta)",me:[2.2,2.7],sta:[10,25],ndf:[35,55],adf:[20,38],kb:[45,90],fn:20,dm:[35,92],ca:[0.38,0.9],p:[0.24,0.45],cp:[10.5,15]},lak:{n:"Koyun laktasyon",me:[2.3,2.8],sta:[12,28],ndf:[32,50],adf:[18,34],kb:[40,85],fn:18,dm:[35,92],ca:[0.38,0.9],p:[0.27,0.45],cp:[12.5,17]}};
@@ -1906,45 +1997,46 @@ function renderCmpK(){var el=$("cmp"),k=K_def(),B=KB[k.breed],KZ=kuzu();
   :'<div><b>'+(g.bal>0?'+':'')+f(g.bal,2)+' Mcal</b><span>Enerji dengesi (alınan '+f(g.meU!==undefined?g.meU:m.meT,2)+(g.capped?', yenebilen kadarı':'')+', ihtiyaç '+f(R.me,2)+')</span></div><div><b>'+(g.dbw>0?'+':'')+f(g.dbw,1)+' kg</b><span>30 günde canlı ağırlık</span></div>'+(k.mode==="lak"&&k.price>0&&m.cost>0?'<div><b>'+(NP?'—':f(R.milk*k.price-m.cost)+' TL')+'</b><span>Yem sonrası günlük gelir'+(NP?' (fiyat girilmedi: '+m.nop.length+' yem)':'')+'</span></div>':''))
  +'<div><b>'+(m.cost>0?f(m.cost)+' TL':'—')+'</b><span>baş başına günlük yem maliyeti'+(m.cost>0?costNote(m):' (fiyat girilmedi)')+'</span></div></div><h2>Gelecek</h2><ul class="nt">'+fut.map(li).join("")+'</ul><h2>Çözümler</h2><ul class="nt">'+sol.map(li).join("")+'</ul>';
  /* riskler */
- var a=0,aw=[],en=0,enw=[],u=0,uw=[],cu=0,cuw=[],cf=[];
+ var a=0,aw=[],en=0,enw=[],u=0,uw=[],cu=0,cuw=[],cf=[],T=function(q){return ref4(C4,q)||{}},tCu=T("cu"),tSt=T("sta"); /* V226: küçükbaş risk kartı eşikleri REF4.kuzu / REF4.koyun ve dönemleri (tablo, kart, öğretici aynı sayı); dönem sınırları KPT */
  it.forEach(function(o){if(CUF.test(o.x.fam||o.x.n))cf.push(o.x.n.replace(/,.*$/,''))});
- if(cf.length){cu+=2;cuw.push('Sığır yemi kullanılıyor: '+esc(cf.join(", "))+'. Sığır yemlerinde bakır 15–30 mg/kg olabilir; koyun için üst sınır 15 mg/kg, pratik hedef 5–10 mg/kg.')}
- if(m.cu>REF.sheepCu.yasal){cu+=3;cuw.push('Rasyon bakırı '+f(m.cu,1)+' mg/kg ('+REF.sheepCu.yasal+' üstü: yasal sınır, koyun için zehirli düzey)')}else if(m.cu>REF.sheepCu.pratik){cu+=1;cuw.push('Rasyon bakırı '+f(m.cu,1)+' mg/kg ('+REF.sheepCu.pratik+' üstü: molibden düşükse birikim yapar; pratik üst sınır '+REF.sheepCu.ust+')')}
- if(m.s>0.3){a+=1;aw.push('Kükürt %'+f(m.s,2)+' (%0,3 üstü: PEM riski)')}
- if(m.sta>P.sta[1]+4){a+=2;aw.push('Nişasta %'+f(m.sta,0)+' (dönem üst sınırı %'+P.sta[1]+')')}else if(m.sta>P.sta[1]){a+=1;aw.push('Nişasta %'+f(m.sta,0)+' üst sınırda')}
+ if(cf.length){cu+=2;cuw.push('Sığır yemi kullanılıyor: '+esc(cf.join(", "))+'. Sığır yemlerinde bakır 15–30 mg/kg olabilir; koyun için üst sınır '+f(tCu.uk,0)+' mg/kg, pratik hedef en çok '+f(tCu.us,0)+' mg/kg.')}
+ if(m.cu>tCu.uk){cu+=3;cuw.push('Rasyon bakırı '+f(m.cu,1)+' mg/kg ('+f(tCu.uk,0)+' üstü: yasal sınır, koyun için zehirli düzey)')}else if(m.cu>tCu.us){cu+=1;cuw.push('Rasyon bakırı '+f(m.cu,1)+' mg/kg ('+f(tCu.us,0)+' üstü: molibden düşükse birikim yapar; yasal üst sınır '+f(tCu.uk,0)+')')}
+ if(m.s>T("s").us){a+=1;aw.push('Kükürt %'+f(m.s,2)+' (%'+f(T("s").us,1)+' üstü: PEM riski)')}
+ if(m.sta>tSt.uk){a+=2;aw.push('Nişasta %'+f(m.sta,0)+' (dönem üst sınırı %'+P.sta[1]+')')}else if(m.sta>P.sta[1]){a+=1;aw.push('Nişasta %'+f(m.sta,0)+' üst sınırda')}
  var tKb=ref4(C4,"kaba")||{},kbAk=(tKb.ak!==null&&tKb.ak!==undefined)?tKb.ak:null,kpR=Math.round(kp); /* V224 (O13): kaba yem payı tabloyla aynı iki kademe — dönem alt sınırının altı 1 puan (dikkat), REF4 alt kritiğinin altı 2 puan */
  if(kbAk!==null&&kpR<kbAk){a+=2;aw.push('Kaba yem %'+f(kp,0)+' (kritik sınır %'+f(kbAk,0)+' altında; dönem için en az %'+P.kb[0]+')')}else if(kpR<P.kb[0]){a+=kbAk!==null?1:2;aw.push('Kaba yem %'+f(kp,0)+' (en az %'+P.kb[0]+')')}
  if(m.fn<P.fn){a+=1;aw.push('Kaba yemden gelen NDF %'+f(m.fn,1)+' (en az %'+P.fn+')')}
  if(m.me>P.me[1]){a+=1;aw.push('Enerji yoğunluğu '+f(m.me,2)+' Mcal/kg yüksek')}
- var ks=100-kp;if(ks>85){en+=3;enw.push('Kesif yem payı %'+f(ks,0)+' (%85 üstü: tam kesif besi, enterotoksemi riski en yüksek)')}else if(ks>70){en+=2;enw.push('Kesif yem payı %'+f(ks,0)+' (%70 üstü)')}
- if(m.sta>35){en+=1;enw.push('Nişasta %'+f(m.sta,0)+' (%35 üstü: bağırsakta hızlı fermantasyon)')}
- if(KZ&&kPhase()===0&&ks>60){en+=1;enw.push('Genç kuzuda kesif payı yüksek: kademeli alıştırma şart')}
+ var ks=100-kp,tKs=T("kesif"),tSe=T("staEn");if(ks>tKs.uk){en+=3;enw.push('Kesif yem payı %'+f(ks,0)+' (%'+f(tKs.uk,0)+' üstü: tam kesif besi, enterotoksemi riski en yüksek)')}else if(ks>tKs.us){en+=2;enw.push('Kesif yem payı %'+f(ks,0)+' (%'+f(tKs.us,0)+' üstü)')}
+ if(m.sta>tSe.us){en+=1;enw.push('Nişasta %'+f(m.sta,0)+' (%'+f(tSe.us,0)+' üstü: bağırsakta hızlı fermantasyon)')}
+ if(KZ&&kPhase()===0&&ks>T("kesifGenc").us){en+=1;enw.push('Genç kuzuda kesif payı yüksek: kademeli alıştırma şart')}
  /* V224 (O13/O11/Y4): üriner taş kartı tabloyla aynı sınır ve yuvarlamayı kullanır (REF4.kuzu.cpr alt kritik 1,2; dönem tablosu P üst sınırı); tahmini Ca/P ile yüksek puan verilmez; dişide puanlanmaz */
- var tCk=ref4(C4,"cpr")||{},cAk=(tCk.ak!==null&&tCk.ak!==undefined)?tCk.ak:1.2,cprR=Math.round(cpr*10)/10,estT=CEST.est?' — değerler tahmini (külden): etikete/analize bakın':'';
- cpr=cprR; /* öğretici (veri.js) bu kalıpları okur: sayılar REF4.kuzu.cpr alt kritiği (1,2) ve tablo sınırlarıyla aynıdır */
- if(!(m.ph>0)){}else if(cpr<1.2){u+=3;if(CEST.est)u-=2;uw.push('Ca:P '+f(cpr,1)+' (1,2 altı: fosfat taşı için yüksek risk)'+estT)}else if(cpr<2&&KZ){u+=2;if(CEST.est)u-=1;uw.push('Ca:P '+f(cpr,1)+' (kuzuda 2:1 önerilir)'+estT)}else if(cpr<1.5){u+=1;uw.push('Ca:P '+f(cpr,1)+' düşük'+estT)}
- if(m.ph>0.40){u+=1;uw.push('Fosfor %'+f(m.ph,2)+' (%0,40 üstü)'+estT)}
+ var tCk=T("cpr"),cAk=tCk.ak,cAs=tCk.as,cprR=Math.round(cpr*10)/10,estT=CEST.est?' — değerler tahmini (külden): etikete/analize bakın':'';
+ cpr=cprR; /* sayılar REF4 (kuzu/koyun cpr: alt kritik ve alt sınır), tabloyla aynı yuvarlama */
+ if(!(m.ph>0)){}else if(cpr<cAk){u+=3;if(CEST.est)u-=2;uw.push('Ca:P '+f(cpr,1)+' ('+f(cAk,1)+' altı: fosfat taşı için yüksek risk)'+estT)}else if(cpr<cAs&&KZ){u+=2;if(CEST.est)u-=1;uw.push('Ca:P '+f(cpr,1)+' (kuzuda '+f(cAs,0)+':1 önerilir)'+estT)}else if(cpr<cAs){u+=1;uw.push('Ca:P '+f(cpr,1)+' düşük'+estT)}
+ if(m.ph>P.p[1]){u+=1;uw.push('Fosfor %'+f(m.ph,2)+' (%'+f(P.p[1],2)+' üstü)'+estT)}
  if(MALE){u+=1;uw.push('Erkek kuzu: üretra dar, tıkanma riski yüksek')}
- if(it.some(function(o){return /^(Buğday(?! samanı)|Pirinç kepeği|Buğday kepeği)/.test(o.x.fam||o.x.n)&&o.d/dm>0.15})){u+=1;uw.push('Buğday / kepek payı yüksek: fosfor ve silika taş riskini artırır')}
- if(KZ&&!MALE){u=0;uw=['Dişi kuzu: idrar yolu kısa ve geniştir, taş tıkanması beklenmez; bu kart dişide puanlanmaz.'+(cprR<2&&m.ph>0?' Kalsiyum–fosfor dengesi (Ca:P '+f(cpr,1)+') kemik gelişimi için yine de düzeltilmelidir (tablo ve katkı planı).':'')]}
- var heat=k.temp>=30?'<p class="wa" style="margin:4px 0;font-size:13px"><b>Isı stresi:</b> '+f(k.temp,0)+' °C; yem tüketimi düşer, gölge ve su sağlayın, yemi serin saatlerde verin.</p>':'';
+ if(it.some(function(o){return /^(Buğday(?! samanı)|Pirinç kepeği|Buğday kepeği)/.test(o.x.fam||o.x.n)&&o.d/dm*100>T("bkep").us})){u+=1;uw.push('Buğday / kepek payı yüksek: fosfor ve silika taş riskini artırır')}
+ if(KZ&&!MALE){u=0;uw=['Dişi kuzu: idrar yolu kısa ve geniştir, taş tıkanması beklenmez; bu kart dişide puanlanmaz.'+(cprR<cAs&&m.ph>0?' Kalsiyum–fosfor dengesi (Ca:P '+f(cpr,1)+') kemik gelişimi için yine de düzeltilmelidir (tablo ve katkı planı).':'')]}
+ var heat=k.temp>=T("sicaklik").us?'<p class="wa" style="margin:4px 0;font-size:13px"><b>Isı stresi:</b> '+f(k.temp,0)+' °C; yem tüketimi düşer, gölge ve su sağlayın, yemi serin saatlerde verin.</p>':'';
  var risks='<h2>Sağlık riskleri ('+(KZ?'kuzu/toklu besi':'koyun')+')</h2>'+heat;
- if(KZ)risks+=cardB('Asidoz (rumen asiditesi)',a,aw,'Kaba yemi dönem alt sınırının üstüne çıkarın; tahılı kaba kırın veya bütün verin; kesif yemi 15–20 günde kademeli artırın (300 g ile başlayıp 3 günde 200 g artırma); nişasta+şeker %35\'i aşmasın.','Teagasc, UC Davis ve NRC 2007 besi kuzusu önerilerine göre puanlandı. Yüksek kükürtlü yem (melas, DDGS) ve ani tahıl artışı polioensefalomalasiye (tiamin eksikliği) zemin hazırlar.')
+ if(KZ)risks+=cardB('Asidoz (rumen asiditesi)',a,aw,'Kaba yemi dönem alt sınırının üstüne çıkarın; tahılı kaba kırın veya bütün verin; kesif yemi 15–20 günde kademeli artırın (300 g ile başlayıp 3 günde 200 g artırma); nişasta+şeker %'+f(tSe.us,0)+'\'i aşmasın.','Teagasc, UC Davis ve NRC 2007 besi kuzusu önerilerine göre puanlandı. Yüksek kükürtlü yem (melas, DDGS) ve ani tahıl artışı polioensefalomalasiye (tiamin eksikliği) zemin hazırlar.')
   +cardB('Enterotoksemi (Clostridium perfringens D, aşırı yeme hastalığı)',en,enw,'Kesif yeme başlamadan önce C. perfringens C–D (+ tetanoz) aşısını 2 doz (2–6 hafta ara) uygulayın; yem değişimini kademeli yapın; yemliği boş bırakıp doldurmayın; uzun kıyımlı kaba yem sürekli önde olsun.','Tam kesif besi mümkündür ancak aşılama ve kademeli geçiş olmadan ani ölümlere yol açar.')
-  +cardB(MALE?'Üriner taş (idrar taşı)':'Üriner taş (dişide değerlendirilmez)',u,uw,'Ca:P oranını 2:1\'e getirin (kireç taşı), tuz %0,5–1, su sürekli temiz ve bol; gerekirse rasyona %0,5 amonyum klorür için danışmanınıza sorun; buğday ve kepek payını sınırlayın.','NRC 2007 / OSU: erkek kuzularda fosfat taşları ana sorundur; Ca:P ≥ 2:1 ve amonyum klorür standart önlemdir.')
-  +cardB('Bakır zehirlenmesi',cu,cuw,'Sığır yemini ve sığır mineral premiksini koyunlara vermeyin; koyuna özel yem ve mineral kullanın; bakır birikimi haftalar sonra ani hemoliz ve ölümle ortaya çıkar.','Koyun bakırı karaciğerde biriktirir; molibden düşükse 10 mg/kg üstü bile birikim yapar. Rasyon bakırı kütüphane/analiz mineral değerlerinden hesaplanır (10 mg/kg üstü puanlanır); premiks bakırını mutlaka girin.');
+  +cardB(MALE?'Üriner taş (idrar taşı)':'Üriner taş (dişide değerlendirilmez)',u,uw,'Ca:P oranını '+f(cAs,0)+':1\'e getirin (kireç taşı), tuz %0,5–1, su sürekli temiz ve bol; gerekirse rasyona %0,5 amonyum klorür için danışmanınıza sorun; buğday ve kepek payını sınırlayın.','NRC 2007 / OSU: erkek kuzularda fosfat taşları ana sorundur; Ca:P ≥ 2:1 ve amonyum klorür standart önlemdir.')
+  +cardB('Bakır zehirlenmesi',cu,cuw,'Sığır yemini ve sığır mineral premiksini koyunlara vermeyin; koyuna özel yem ve mineral kullanın; bakır birikimi haftalar sonra ani hemoliz ve ölümle ortaya çıkar.','Koyun bakırı karaciğerde biriktirir; molibden düşükse '+f(tCu.us,0)+' mg/kg üstü bile birikim yapar. Rasyon bakırı kütüphane/analiz mineral değerlerinden hesaplanır ('+f(tCu.us,0)+' mg/kg üstü puanlanır); premiks bakırını mutlaka girin.');
  else{var tx=0,txw=[],hc=0,hcw=[];
-  if(k.mode==="gebe"){if(g.bal<-0.25){tx+=3;txw.push('Geç gebelikte enerji açığı '+f(-g.bal,2)+' Mcal/gün')}if(k.nl>=2){tx+=1;txw.push(k.nl+' kuzu: rumen hacmi daralır, ihtiyaç %50–80 artar')}if(k.bcs>=4){tx+=2;txw.push('Kondisyon '+f(k.bcs,1)+' (yağlı koyun: toksemi ve güç doğum riski)')}else if(k.bcs<=2){tx+=1;txw.push('Kondisyon düşük ('+f(k.bcs,1)+')')}if(m.me<P.me[0]){tx+=1;txw.push('Enerji yoğunluğu düşük: kaba yem hacmi tüketimi sınırlar')}
-   if(m.ca<P.ca[0]){hc+=2;hcw.push('Kalsiyum %'+f(m.ca,2)+' (en az %'+P.ca[0]+')')}if(m.ca>1.0){hc+=1;hcw.push('Kalsiyum çok yüksek: doğumda Ca düzenlemesi zorlaşır')}if(k.dg>=135&&m.cp<R.cp-1){tx+=1;txw.push('Protein düşük: kolostrum ve kuzu doğum ağırlığı düşer')} /* V224 (D6): hipokalsemi kartından çıkarıldı (konu dışıydı) */
+  var tBc=T("bcs"),tEn=T("enDenge");
+  if(k.mode==="gebe"){if(g.bal<tEn.ak){tx+=3;txw.push('Geç gebelikte enerji açığı '+f(-g.bal,2)+' Mcal/gün')}if(k.nl>=IKIZ){tx+=1;txw.push(k.nl+' kuzu: rumen hacmi daralır, ihtiyaç %50–80 artar')}if(k.bcs>=tBc.uk){tx+=2;txw.push('Kondisyon '+f(k.bcs,1)+' (yağlı koyun: toksemi ve güç doğum riski)')}else if(k.bcs<=tBc.ak){tx+=1;txw.push('Kondisyon düşük ('+f(k.bcs,1)+')')}if(m.me<P.me[0]){tx+=1;txw.push('Enerji yoğunluğu düşük: kaba yem hacmi tüketimi sınırlar')}
+   if(m.ca<P.ca[0]){hc+=2;hcw.push('Kalsiyum %'+f(m.ca,2)+' (en az %'+P.ca[0]+')')}if(m.ca>T("ca").uk){hc+=1;hcw.push('Kalsiyum çok yüksek: doğumda Ca düzenlemesi zorlaşır')}if(k.dg>=135&&m.cp<R.cp+T("cp").as){tx+=1;txw.push('Protein düşük: kolostrum ve kuzu doğum ağırlığı düşer')} /* V224 (D6): hipokalsemi kartından çıkarıldı (konu dışıydı) */
    risks+=cardB('Gebelik toksemisi (ketozis)',tx,txw,'Son 6 haftada kesif yemi kademeli olarak 300–700 g/güne çıkarın (ikiz/üçüz için üst sınır); kaliteli kuru ot verin, saman payını düşürün; yem ve su erişimini (yemlik boyu 40 cm/koyun) sağlayın.','Hesaplanan gebelik ihtiyacı Cannas 2004 / NRC 2007 denklemiyle; kuzu doğum ağırlığı tekiz 4,8, ikiz 4,0, üçüz 3,2 kg varsayıldı.')
    +cardB('Hipokalsemi (doğum öncesi)',hc,hcw,'Rasyon kalsiyumunu %0,4–0,9 aralığında tutun; yoncayı tamamen kesmeyin; kuzulamadan önce kalsiyum dengesini mineral premiksle sağlayın.','')
    +cardB('Asidoz',a,aw,'Kesif yemi kademeli artırın, kaba yem sürekli önde olsun.','')}
-  else if(k.mode==="lak"){var mg=0,mgw=[];if(g.bal<-0.6){mg+=3;mgw.push('Enerji açığı '+f(-g.bal,2)+' Mcal/gün: süt düşer, kuzu büyümesi yavaşlar, kondisyon kaybı')}if(k.nl>=2&&m.me<P.me[0]){mg+=1;mgw.push('İkiz emziren koyunda enerji yoğunluğu düşük')}if(m.cp<R.cp-1){mg+=1;mgw.push('Protein düşük: süt proteini ve verim düşer')}
+  else if(k.mode==="lak"){var mg=0,mgw=[];if(g.bal<tEn.ak){mg+=3;mgw.push('Enerji açığı '+f(-g.bal,2)+' Mcal/gün: süt düşer, kuzu büyümesi yavaşlar, kondisyon kaybı')}if(k.nl>=IKIZ&&m.me<P.me[0]){mg+=1;mgw.push('İkiz emziren koyunda enerji yoğunluğu düşük')}if(m.cp<R.cp+T("cp").as){mg+=1;mgw.push('Protein düşük: süt proteini ve verim düşer')}
    if(m.ca<P.ca[0]){hc+=2;hcw.push('Kalsiyum %'+f(m.ca,2)+' (laktasyonda en az %'+P.ca[0]+')')}if(m.ph<P.p[0]){hc+=1;hcw.push('Fosfor düşük')}
    risks+=cardB('Enerji açığı ve kuzu büyümesi',mg,mgw,'Kesif yemi kuzu sayısına göre 500–1000 g/güne çıkarın; kaliteli kaba yem verin; sağmal ırklarda süt kontrolüyle izleyin.','İlk 8 hafta süt verimi en yüksektir; bu dönemde kondisyon kaybı 0,5 puanı geçmesin.')
    +cardB('Hipokalsemi / mineral',hc,hcw,'Laktasyon rasyonunda Ca %0,4–0,9, P %0,27–0,45; koyuna özel mineral premiks kullanın.','')
    +cardB('Asidoz',a,aw,'Kesif yemi kademeli artırın; sağmal koyunda kesif payı %60\'ı aşmasın.','')}
-  else{var cz=0,czw=[];if(g.bal<-0.2){cz+=2;czw.push('Enerji açığı: kondisyon kaybı')}if(g.bal>0.4){cz+=1;czw.push('Enerji fazlası: yağlanma, döl verimi düşer')}if(k.bcs<=2){cz+=1;czw.push('Kondisyon düşük: koç katımı öncesi 2,5–3,5 hedeflenir')}
+  else{var cz=0,czw=[];if(g.bal<tEn.as){cz+=2;czw.push('Enerji açığı: kondisyon kaybı')}if(g.bal>tEn.us){cz+=1;czw.push('Enerji fazlası: yağlanma, döl verimi düşer')}if(k.bcs<=tBc.ak){cz+=1;czw.push('Kondisyon düşük: koç katımı öncesi '+f(tBc.as,1)+'–'+f(tBc.us,1)+' hedeflenir')}
    risks+=cardB('Kondisyon ve döl verimi',cz,czw,'Koç katımından 3 hafta önce başlayıp 3 hafta sonrasına kadar flushing (günlük 250–500 g tahıl veya kaliteli mera) uygulayın; kondisyonu 3–3,5\'te tutun.','NRC 2007: flushing idamenin %10 üstü enerji.')
    +cardB('Asidoz',a,aw,'Kesif yemi kademeli artırın.','')}
   risks+=cardB('Bakır zehirlenmesi',cu,cuw,'Sığır yemini ve sığır mineral premiksini koyunlara vermeyin; koyuna özel yem ve mineral kullanın.','Koyun bakırı karaciğerde biriktirir. Rasyon bakırı kütüphane/analiz mineral değerlerinden hesaplanır; premiks bakırını mutlaka girin.')}
@@ -2019,25 +2111,25 @@ function renderCmpC(){var el=$("cmp"),c=C_def(),it=cItems();if(!it.length){el.in
  else{fut.push('Sütten kesilmiş buzağı: beklenen katı yem tüketimi '+f(stP,2)+' kg KM/gün; idame '+f(R.mem,2)+' Mcal ME (NRC 2001 düve: NEm 0,086 × CA<sup>0,75</sup>, verim '+f(R.km,2)+'; büyüme RE = 0,0635 × EQEBW<sup>0,75</sup> × EBG<sup>1,097</sup>).');if(R.cold>0)fut.push('Soğuk stresi: günlük ek '+f(R.cold,2)+' Mcal ME; yem miktarını artırın, kuru ve rüzgârsız barınak sağlayın.');if(R.heat>0)fut.push('Sıcak stresi: '+f(c.temp,0)+' °C; gölge ve bol temiz su sağlayın, yemi serin saatlerde verin (idame payı program tahmini).')}
  if(g.adg<g.adgp*0.9)fut.push('Enerji sınırlayıcı: protein '+f(g.adgp,0)+' g taşıyabilir, enerji '+f(g.adg,0)+' g.');else if(g.adgp<g.adg*0.9)fut.push('Protein sınırlayıcı: enerji '+f(g.adg,0)+' g, protein '+f(g.adgp,0)+' g taşıyor; '+(W?'büyütme yeminin proteinini (%16–20)':'ikame/başlangıç yemi proteinini')+' kontrol edin.');
  if(ratio<0.9&&lim==="enerji"){var need=R.me-g.mei;if(need>0.05&&need<500)sol.push('Hedef artış için günlük yaklaşık '+f(Math.max(0,need),2)+' Mcal ME daha gerekiyor'+(W?': büyütme yemini artırın.':KES?': başlangıç yemi alımını artırın (sütten kesime hazırlık döneminde süt artırılmaz); sütü, katı yem 1–1,5 kg KM\'ye ulaşmadan tamamen kesmeyin.':': yaklaşık '+f(need/5.37/0.125,1)+' L süt veya '+f(need/4.6*1000/0.95,0)+' g ikame tozu daha; ya da başlangıç yemi alımını artırın.'))}
- if(!W&&lq<0.10*c.bw&&c.age<42&&sd<0.5)sol.push('Süt miktarını canlı ağırlığın en az %10\'una ('+f(0.10*c.bw,1)+' L) çıkarın; büyüme için %15–20 önerilir.');
+ var sL0=(ref4("buzagi","sutBW")||{}).as/100;if(!W&&lq<sL0*c.bw&&c.age<42&&sd<0.5)sol.push('Süt miktarını canlı ağırlığın en az %'+f(sL0*100,0)+'\'una ('+f(sL0*c.bw,1)+' L) çıkarın; büyüme için %15–20 önerilir.');
  if(!W&&sd<stP*0.6&&c.age>14)sol.push('Başlangıç yemi tüketimi düşük: taze ve az miktarda günlük yenileyin, temiz su ilk günden önde olsun; yeme 3–4. günden itibaren başlanır.');
  if(sd>0&&m.scp<(W?16:18))sol.push('Katı yem proteini düşük (%'+f(m.scp,1)+'): '+(W?'%16–20':'%18–22')+' HP başlangıç/büyütme yemi kullanın.');
  if(!sol.length)sol.push(ratio<0.9?(lim==="protein"?'Artış hedefin altında ve protein sınırlıyor: '+(W?'büyütme yeminin proteinini (%16–20) artırın.':KES?'başlangıç yeminin proteinini (%18–22) artırın.':'süt/ikame miktarını veya başlangıç yeminin proteinini (%18–22) artırın.'):'Artış hedefin altında: '+(W?'katı yem miktarını ve enerjisini':'süt/ikame ve başlangıç yemi miktarını')+' gözden geçirin.'):'Program hedefe uygun. Haftalık tartım ve göğüs çevresi ölçümüyle doğrulayın.');else sol.push('Katı yem karışımını en düşük maliyetle dengelemek için Çözüm asistanını kullanın (süt miktarı sabit tutulur).');
  var head='<h2>Durum</h2><p class="'+vd[1]+'" style="margin:0 0 4px;font-weight:600">'+vd[0]+' <span style="font-weight:400;font-size:13px;color:var(--mu)">'+(W?'sütten kesilmiş':'süt dönemi')+', '+f(c.bw,0)+' kg, '+c.age+' günlük '+CB[c.breed].n+'</span></p><div class="sum"><div><b>'+f(adg,0)+' g</b><span>Günlük artış (hedef '+f(c.adg,0)+')</span></div><div><b>'+f(g.adg,0)+' / '+(g.adgp>2500?'&gt; 2.500':f(g.adgp,0))+' g</b><span>Enerjiye / proteine göre artış'+(g.adgp>2500?' (protein sınırlamıyor)':'')+'</span></div>'+(W?'':'<div><b>'+f(lq,1)+' L</b><span>Günlük süt / sulu ikame (canlı ağırlığa oranı %'+f(lq/c.bw*100,0)+', '+f(perMeal,1)+' L/öğün'+(m.lql>m.lq+1e-6?'; ikame %12,5 toz oranıyla sulandırılmış sayıldı':'')+')</span></div>')+'<div><b>'+costV(m.cost,m)+'</b><span>baş başına günlük yem maliyeti'+(m.cost>0?costNote(m):'')+'</span></div></div><h2>Gelecek</h2><ul class="nt">'+fut.map(li).join("")+'</ul><h2>Çözümler</h2><ul class="nt">'+sol.map(li).join("")+'</ul>';
  /* riskler */
- var cs=0,csw=[],ab=0,abw=[],ac=0,acw=[],gr=0,grw=[];
- if(R.cold>0){cs+=c.temp<0?3:c.temp<R.lct-5?2:1;csw.push('Ortam '+f(c.temp,0)+' °C, alt kritik sıcaklık '+R.lct+' °C: idame ihtiyacı %'+f(R.cold/(R.nem/R.km)*100,0)+' artar')}
+ var cs=0,csw=[],ab=0,abw=[],ac=0,acw=[],gr=0,grw=[],T=function(k){return ref4("buzagi",k)||{}},tT=T(!W&&c.age<21?"sicaklikGenc":"sicaklik"),tL=T("sutBW"); /* V226: buzağı risk kartı eşikleri REF4.buzagi / buzagi:sut / buzagi:kesim (tablo, kart, öğretici aynı sayı); enerji ihtiyacı (R.cold) NASEM modelinden */
+ if(c.temp<tT.as){cs+=c.temp<tT.acilAlt?3:c.temp<tT.ak?2:1;csw.push('Ortam '+f(c.temp,0)+' °C, alt kritik sıcaklık '+f(tT.as,0)+' °C: idame ihtiyacı %'+f(R.cold/(R.nem/R.km)*100,0)+' artar')}
  if(R.cold>0&&g.bal<R.cold){cs+=1;csw.push('Ek enerji karşılanmıyor: büyüme durur, hastalık direnci düşer')}
- if(c.temp>=30){cs+=1;csw.push('Isı stresi: su tüketimi artar, süt kalitesi hızla bozulur')}
- if(!W){if(perMeal>4){ab+=2;abw.push('Öğün başına '+f(perMeal,1)+' L (4 L üstü): abomazum kapasitesini aşar, öğün sayısını artırın')}else if(perMeal>3.5&&c.age<14){ab+=1;abw.push('Yeni doğanda öğün '+f(perMeal,1)+' L yüksek sınırda')}
-  if(c.meals<2){ab+=2;abw.push('Günde tek öğün: ozmotik yük ve açlık süresi artar')}
+ if(c.temp>=tT.uk){cs+=1;csw.push('Isı stresi: su tüketimi artar, süt kalitesi hızla bozulur')}
+ if(!W){var tO=T("ogunL");if(perMeal>tO.uk){ab+=2;abw.push('Öğün başına '+f(perMeal,1)+' L ('+f(tO.uk,0)+' L üstü): abomazum kapasitesini aşar, öğün sayısını artırın')}else if(perMeal>tO.us&&c.age<14){ab+=1;abw.push('Yeni doğanda öğün '+f(perMeal,1)+' L yüksek sınırda')}
+  if(c.meals<T("ogun").as){ab+=2;abw.push('Günde tek öğün: ozmotik yük ve açlık süresi artar')}
   if(hasMR){ab+=1;abw.push('Süt ikame yemi: toz/su oranı %12,5–15 (en çok %15), sıcaklık 39–40 °C ve her öğünde aynı olmalı')}
-  if(lq>0.2*c.bw&&c.meals<=2){ab+=1;abw.push('Yüksek süt miktarı iki öğünde: üç öğüne bölün')}}
- var sol2=sd>0;if(sol2){var hiS=W;if(m.ssta>35&&hiS){ac+=2;acw.push('Katı yem nişastası %'+f(m.ssta,0)+' (%35 üstü)')}if(m.skb<5&&hiS){ac+=2;acw.push('Kaba yem %'+f(m.skb,0)+' (sütten kesimde en az %5 kuru ot/saman)')}if(m.sndf<12){ac+=1;acw.push('Katı yem NDF %'+f(m.sndf,1)+' düşük')}if(W&&it.some(function(o){return /silaj/i.test(o.x.n)})){ac+=1;acw.push('Silaj: 3–4 aydan küçük buzağıda sınırlı verilmeli')}}
- if(adg<c.adg*0.7){gr+=2;grw.push('Artış hedefin %70\'inin altında')}if(!W&&lq<0.10*c.bw&&c.age<42&&sd<0.5){gr+=2;grw.push('Süt canlı ağırlığın %10\'unun altında')}if(!W&&!KES&&Math.round(lqd*100)<Math.round(R.minLq*100)){gr+=1;grw.push('Süt kuru maddesi önerilen alt sınırın (doğum ağırlığının %1,5\'i, pratik kural) altında ('+f(lqd,2)+' / '+f(R.minLq,2)+' kg)')}if(g.mps>0&&g.adgp<g.adg*0.85){gr+=1;grw.push('Protein büyümeyi sınırlıyor')}if(!W&&c.age>21&&sd<0.1){gr+=1;grw.push('3 haftadan büyük buzağıda katı yem alımı yok: rumen gelişimi gecikir')}
+  if(lq>tL.us/100*c.bw&&c.meals<=T("ogun").as){ab+=1;abw.push('Yüksek süt miktarı iki öğünde: üç öğüne bölün')}}
+ var sol2=sd>0;if(sol2){var hiS=W,tSs=T("ssta"),tSk=T("skb"),tSn=T("sndf"),snM=W?tSn.ak:tSn.as;if(m.ssta>tSs.us&&hiS){ac+=2;acw.push('Katı yem nişastası %'+f(m.ssta,0)+' (%'+f(tSs.us,0)+' üstü)')}if(m.skb<tSk.as&&hiS){ac+=2;acw.push('Kaba yem %'+f(m.skb,0)+' (sütten kesimde en az %'+f(tSk.as,0)+' kuru ot/saman)')}if(m.sndf<snM){ac+=1;acw.push('Katı yem NDF %'+f(m.sndf,1)+' düşük')}if(W&&it.some(function(o){return /silaj/i.test(o.x.n)})){ac+=1;acw.push('Silaj: 3–4 aydan küçük buzağıda sınırlı verilmeli')}}
+ var tAo=T("adgOran");if(adg<c.adg*tAo.ak/100){gr+=2;grw.push('Artış hedefin %'+f(tAo.ak,0)+'\'inin altında')}if(!W&&lq<tL.as/100*c.bw&&c.age<42&&sd<0.5){gr+=2;grw.push('Süt canlı ağırlığın %'+f(tL.as,0)+'\'unun altında')}if(!W&&!KES&&Math.round(lqd*100)<Math.round(R.minLq*100)){gr+=1;grw.push('Süt kuru maddesi önerilen alt sınırın (doğum ağırlığının %1,5\'i, pratik kural) altında ('+f(lqd,2)+' / '+f(R.minLq,2)+' kg)')}if(g.mps>0&&g.adgp<g.adg*0.85){gr+=1;grw.push('Protein büyümeyi sınırlıyor')}if(!W&&c.age>21&&sd<0.1){gr+=1;grw.push('3 haftadan büyük buzağıda katı yem alımı yok: rumen gelişimi gecikir')}
  var risks='<h2>Sağlık riskleri (buzağı)</h2>'+cardB('Soğuk / ısı stresi',cs,csw,'Soğukta süt miktarını veya ikame yoğunluğunu artırın (her 5 °C için yaklaşık +50 g toz), üçüncü öğün ekleyin, ılık su verin, kuru ve derin altlık, buzağı yeleği; sıcakta gölge, taze su, sütü serin saatlerde verin.','NASEM 2021: alt kritik sıcaklık 3 haftadan küçükte 15 °C, büyükte 5 °C; her derece için 2,01 kcal ME/kg CA<sup>0,75</sup>. 25 °C üstü ısı stresi payı program tahminidir (NASEM\'de yoktur).')
  +(W?'':cardB('Abomazum şişmesi / sindirim bozukluğu',ab,abw,'Öğün başına en çok 3–4 L; ikame sabit oranda (%12,5–15), 39–40 °C ve aynı saatlerde; emzik ile yavaş içirin; ekipman hijyeni (toplam bakteri < 20.000 cfu/mL). İshalde sütü kesmeyin, elektroliti sütten 2–4 saat sonra ayrı verin; %8 üstü dehidrasyonda veteriner.','Ağız sütü: doğumdan sonra ilk 6 saatte 4 L (canlı ağırlığın %10\'u, Brix ≥ %22), 8–12. saatte ikinci öğün.'))
- +cardB('Sütten kesim asidozu',ac,acw,'Başlangıç yemi kaba öğütülmüş veya tekstürlü olsun; nişasta %35\'i aşmasın; kesilmiş buzağıya %5–10 kuru ot verin; sütü son 1–2 haftada kademeli azaltın (bir günde kesmeyin).','Arpa ve buğday rumen pH\'sını mısır ve yulaftan daha hızlı düşürür.')
+ +cardB('Sütten kesim asidozu',ac,acw,'Başlangıç yemi kaba öğütülmüş veya tekstürlü olsun; nişasta %'+f(T("ssta").us,0)+'\'i aşmasın; kesilmiş buzağıya %5–10 kuru ot verin; sütü son 1–2 haftada kademeli azaltın (bir günde kesmeyin).','Arpa ve buğday rumen pH\'sını mısır ve yulaftan daha hızlı düşürür.')
  +cardB('Yetersiz büyüme / bağışıklık',gr,grw,W?'Büyütme yemini serbest, kuru otu sınırlı verin; sürüden ayrı grupta 1–2 ay izleyin.':(KES?'Sütten kesime hazırlık döneminde sütü artırmayın; başlangıç yemini ve suyu serbest verin, kesimi katı yem 1–1,5 kg KM olunca 7–10 günde tamamlayın':'Süt miktarını canlı ağırlığın %15–20\'sine çıkarın, başlangıç yemi ve suyu ilk haftadan önde tutun')+'; koksidiyoz (3 haftadan sonra kanlı ishal) için koruyucu program konusunda veterinere danışın.','ABD ortalaması sütten kesim öncesi 740 g/gün (NAHMS 2014); hedef 56 günde doğum ağırlığının iki katı.');
  el.innerHTML='<h2>Rasyon değerlendirmesi</h2><table class="c"><tr><th>Parametre</th><th>Çiftlik</th><th>Referans</th><th>Durum</th></tr>'+tr+'</table><p class="tot" style="margin:10px 0 4px">'+rows.length+' parametreden '+okc+' tanesi uygun</p>'+(notes.length?'<ul class="nt">'+notes.sort(function(x,y){return y.d-x.d}).map(function(n,i){return '<li>'+(i===0?'<b>Öncelik: </b>':'')+n.m+'</li>'}).join("")+'</ul>':'')+head+risks
  +'<p class="s mn"><b>Dönem: '+(W?'sütten kesilmiş':'süt dönemi')+'.</b> İdame '+f(R.nem,2)+' Mcal NEm → '+f(R.mem,2)+' Mcal ME (verim '+f(R.km,2)+(R.cold>0?', soğuk stresi dahil':'')+'); hedef artış için RE '+f(R.re,2)+' Mcal, büyüme verimi '+f(R.kf,2)+' (süt 0,56; katı yem Galyean denklemi); toplam '+f(R.me,2)+' Mcal ME/gün. Metabolik protein '+f(R.mp,0)+' g/gün (NPg = 166,2 × EBG + 6,1276 × RE/EBG; MP→NP 0,68). Boşluk payı: yalnız süt %6, süt+yem %7, kesilmiş %15. Sütün ME\'si 5,37, ikame 4,6–4,7 Mcal/kg KM (NASEM 2021). Kaynaklar: NASEM 2021 bölüm 10, Drackley 2021, Penn State ve BAMN buzağı rehberleri, Merck Veterinary Manual.</p>'+(window.hzGuide?hzGuide("buzagi"):'')+(window.vxGuide?vxGuide("buzagi"):'')+(window.fdGuide?fdGuide():'')+(window.xTable&&(m.sdm||0)>0?xTable(m):'')}
@@ -2615,38 +2707,38 @@ function yRiskEval(L,PX,prem,g,pre){ /* L: [{x, s(yaş pay)}] */
  var young=g==="buzagi"||g==="kuzu",male=g==="besi"||g==="kuzu"||/Toklu/.test(pre||""),sheep=g==="koyun"||g==="kuzu",milk=g==="sut"||/Koyun süt|Keçi süt/.test(pre||""),kasap=/Toklu besi|Kuzu büyütme|Besi/i.test(pre||""); /* V224 (Y2): "Kuru dönem" yemi sağmal sayılmaz (tampon uyarısı yok) */
  var R={o:o,g:g},C={yacid:[],ynpn:[],ygos:[],yuro:[],ymyco:[],ymin:[]};function add(k,p,t,src,kd){C[k].push({p:p,t:t,s:src||'',kd:kd||'r'})}
  /* asidoz (kesif yemin kendisi; kaba yemle birlikte yenir) */
- var RF=milk||g==="duve"?[28,33]:g==="besi"?[35,42]:young?[30,38]:[32,40];
+ var Y=function(k){return ref4("yem",k)||{}},tRF=Y(milk||g==="duve"?"rfsSut":g==="besi"?"rfsBesi":young?"rfsGenc":"rfsDiger"),RF=[tRF.us,tRF.uk]; /* V226: çiftlik yemi kartlarının eşikleri REF4.yem'den (kart ve öğretici aynı sayı) */
  if(o.rfs>RF[1])add('yacid',2,'Rumende yıkılan nişasta ≈ %'+f(o.rfs,0)+' KM — bu grup için yüksek (≤ %'+RF[0]+')','Owens 1998; Ferraretto 2013');else if(o.rfs>RF[0])add('yacid',1,'Rumende yıkılan nişasta ≈ %'+f(o.rfs,0)+' KM — hedef ≤ %'+RF[0],'Owens 1998');
- var WB=milk?[35,50]:[45,60];if(o.wb>WB[1])add('yacid',2,'Buğday/arpa yemin %'+numEk(o.wb,0,"p")+' — hızlı yıkılır; en çok %'+WB[0]+', mısırla dengeleyin','Owens 1998; NASEM 2021');else if(o.wb>WB[0])add('yacid',1,'Buğday/arpa %'+f(o.wb,0)+' (en çok %'+WB[0]+')','Owens 1998');
- if(milk&&o.sta>25&&o.bik<0.5)add('yacid',1,'Sağmal kesif yeminde tampon yok (sodyum bikarbonat %0,75–1,5 önerilir)','Hutjens; Erdman 1988','m');
+ var tWB=Y(milk?"wbSut":"wbDiger"),WB=[tWB.us,tWB.uk];if(o.wb>WB[1])add('yacid',2,'Buğday/arpa yemin %'+numEk(o.wb,0,"p")+' — hızlı yıkılır; en çok %'+WB[0]+', mısırla dengeleyin','Owens 1998; NASEM 2021');else if(o.wb>WB[0])add('yacid',1,'Buğday/arpa %'+f(o.wb,0)+' (en çok %'+WB[0]+')','Owens 1998');
+ if(milk&&o.sta>Y("staTampon").us&&o.bik<Y("bik").as)add('yacid',1,'Sağmal kesif yeminde tampon yok (sodyum bikarbonat %0,75–1,5 önerilir)','Hutjens; Erdman 1988','m');
  /* üre */
- if(o.urea>0&&young)add('ynpn',4,'Genç hayvan yeminde üre (%'+f(o.urea,1)+') — rumeni gelişmemiş hayvanda yasak (Yemlerin Piyasaya Arzı Yön., 20.12.2025 değ.)','TR Yönetmelik 2025; AB 2023/1708');else if(o.urea>2.005)add('ynpn',4,'Üre %'+f(o.urea,1)+' — kesif yemde %2 üstü: zehirlenme riski; tam yemde yasal üst sınır %0,88','AB 2023/1708; FAO');else if(o.urea>1.005)add('ynpn',2,'Üre %'+f(o.urea,1)+' — kesif yemde en çok %1 (rasyonu %0,88 yasal sınırın altında tutmak için)','AB 2023/1708');
- if(o.urea>0&&o.sta<20)add('ynpn',1,'Üre var ama nişasta %'+f(o.sta,0)+' düşük — amonyak kullanılamaz, kana geçer','NASEM 2021');
+ if(o.urea>0&&young)add('ynpn',4,'Genç hayvan yeminde üre (%'+f(o.urea,1)+') — rumeni gelişmemiş hayvanda yasak (Yemlerin Piyasaya Arzı Yön., 20.12.2025 değ.)','TR Yönetmelik 2025; AB 2023/1708');else if(o.urea>Y("ure").uk+0.005)add('ynpn',4,'Üre %'+f(o.urea,1)+' — kesif yemde %'+f(Y("ure").uk,0)+' üstü: zehirlenme riski; tam yemde yasal üst sınır %0,88','AB 2023/1708; FAO');else if(o.urea>Y("ure").us+0.005)add('ynpn',2,'Üre %'+f(o.urea,1)+' — kesif yemde en çok %'+f(Y("ure").us,0)+' (rasyonu %0,88 yasal sınırın altında tutmak için)','AB 2023/1708');
+ if(o.urea>0&&o.sta<Y("ureSta").as)add('ynpn',1,'Üre var ama nişasta %'+f(o.sta,0)+' düşük — amonyak kullanılamaz, kana geçer','NASEM 2021');
  if(o.urea>0&&!young)add('ynpn',0,'Üre etikette belirtilmeli; 2–3 haftada kademeli alıştırın; çiğ (ısıl işlemsiz) soya ile birlikte vermeyin (üreaz)','TR Yönetmelik 2025; FAO');
  /* gossipol */
- var GL=g==="buzagi"?100:g==="kuzu"?60:g==="koyun"?300:500,fg=(o.cot-o.cotw)*12+o.cotw*50;o.fg=fg; /* serbest gossipol ≈ küspe 1.200, bütün tohum 5.000 mg/kg (yasal üst değerler; analiz yoksa) */
- if(fg>GL)add('ygos',3,'Tahmini serbest gossipol ≈ '+f(fg,0)+' mg/kg — bu grup için yasal üst sınır '+GL+' mg/kg (pamuk küspesi/tohumu %'+f(o.cot,0)+')','Tebliğ 2014/11; AB 2002/32');else if(fg>GL*0.7)add('ygos',2,'Tahmini serbest gossipol ≈ '+f(fg,0)+' mg/kg — yasal sınırın ('+GL+') %70’ini aşıyor','Tebliğ 2014/11');else if(young&&o.cot>0)add('ygos',1,'Genç hayvan yeminde pamuk küspesi (%'+f(o.cot,0)+'); serbest gossipol analizi isteyin','EFSA 2017');
- if(milk&&o.cot>20)add('ygos',1,'Sağmal kesif yeminde pamuk küspesi %'+f(o.cot,0)+' — pratik üst sınır %15–20','Mena 2001; UGA SB 59');
+ var tGL=Y(g==="buzagi"?"gosBuzagi":g==="kuzu"?"gosKuzu":g==="koyun"?"gosKoyun":"gosSigir"),GL=tGL.uk,fg=(o.cot-o.cotw)*12+o.cotw*50;o.fg=fg; /* serbest gossipol ≈ küspe 1.200, bütün tohum 5.000 mg/kg (yasal üst değerler; analiz yoksa) */
+ if(fg>GL)add('ygos',3,'Tahmini serbest gossipol ≈ '+f(fg,0)+' mg/kg — bu grup için yasal üst sınır '+GL+' mg/kg (pamuk küspesi/tohumu %'+f(o.cot,0)+')','Tebliğ 2014/11; AB 2002/32');else if(fg>tGL.us)add('ygos',2,'Tahmini serbest gossipol ≈ '+f(fg,0)+' mg/kg — yasal sınırın ('+GL+') '+pctEk(tGL.us/GL*100,0)+' aşıyor','Tebliğ 2014/11');else if(young&&o.cot>0)add('ygos',1,'Genç hayvan yeminde pamuk küspesi (%'+f(o.cot,0)+'); serbest gossipol analizi isteyin','EFSA 2017');
+ if(milk&&o.cot>Y("cotSut").us)add('ygos',1,'Sağmal kesif yeminde pamuk küspesi %'+f(o.cot,0)+' — pratik üst sınır %15–20','Mena 2001; UGA SB 59');
  if(o.cot>5&&male&&g!=="besi"&&!kasap)add('ygos',1,'Damızlık erkekte (koç/boğa) gossipol sperm kalitesini düşürür; pamuk küspesini çıkarın','EFSA 2017','o');
  /* idrar taşı */
- if(male){if(o.cpr<1.5)add('yuro',3,'Ca:P '+f(o.cpr,1)+' — 1,5 altı; erkek hayvanda fosfat taşı (en az 2:1)','OSU Beef 2017; NASEM 2016');else if(o.cpr<2)add('yuro',2,'Ca:P '+f(o.cpr,1)+' — en az 2:1','OSU Beef 2017');
-  if(o.ph>0.6)add('yuro',1,'Fosfor %'+f(o.ph,2)+' yüksek (kepek, DDGS, gluten fazlası)','NASEM 2016');
-  if(o.salt<0.5)add('yuro',1,'Tuz eşdeğeri %'+f(o.salt,2)+' — kesif yemde %0,5–1 tuz su tüketimini artırır','OSU Beef 2017','m');
-  if(sheep&&o.nh4<0.3)add('yuro',1,'Erkek kuzu/toklu yeminde amonyum klorür yok (%0,5 = 4–5 kg/ton)','NMSU; OSU 2017','m')}
+ if(male){var tCp=Y("cpr");if(o.cpr<tCp.ak)add('yuro',3,'Ca:P '+f(o.cpr,1)+' — '+f(tCp.ak,1)+' altı; erkek hayvanda fosfat taşı (en az '+f(tCp.as,0)+':1)','OSU Beef 2017; NASEM 2016');else if(o.cpr<tCp.as)add('yuro',2,'Ca:P '+f(o.cpr,1)+' — en az '+f(tCp.as,0)+':1','OSU Beef 2017');
+  if(o.ph>Y("ph").us)add('yuro',1,'Fosfor %'+f(o.ph,2)+' yüksek (kepek, DDGS, gluten fazlası)','NASEM 2016');
+  if(o.salt<Y("tuz").as)add('yuro',1,'Tuz eşdeğeri %'+f(o.salt,2)+' — kesif yemde %0,5–1 tuz su tüketimini artırır','OSU Beef 2017','m');
+  if(sheep&&o.nh4<Y("nh4").as)add('yuro',1,'Erkek kuzu/toklu yeminde amonyum klorür yok (%0,5 = 4–5 kg/ton)','NMSU; OSU 2017','m')}
  /* küf / mikotoksin */
- var MY=milk?[30,50]:[45,65];if(o.myco>MY[1])add('ymyco',2,'Aflatoksin riski yüksek hammaddeler (mısır, pamuk küspesi, DDGS, gluten) yemin %'+numEk(o.myco,0,"p")+(milk?' — yüksek verimde aflatoksinin %6’ya kadarı süte M1 olarak geçer: yasal 5 µg/kg yem bile 10 kg kesifte 30 L sütte ≈ 0,10 µg/kg (sınır 0,05) eder':''),'Tebliğ 2014/11; TGK Bulaşanlar','r');else if(o.myco>MY[0])add('ymyco',1,'Mikotoksin riski taşıyan hammadde payı %'+f(o.myco,0),'Tebliğ 2014/11');
- if(o.dmPct<86)add('ymyco',2,'Nem ≈ %'+f(100-o.dmPct,1)+' — %14 üstü küflenme ve mikotoksin riski','Yem hijyeni');else if(o.dmPct<87)add('ymyco',1,'Nem ≈ %'+f(100-o.dmPct,1)+' — depolama için en çok %13','Yem hijyeni');
- if(o.myco>MY[0]&&o.tox<0.1)add('ymyco',1,'Toksin bağlayıcı yok; hammadde aflatoksin analizi önerilir','EFSA','m');
+ var tMY=Y(milk?"mySut":"myDiger"),MY=[tMY.us,tMY.uk];if(o.myco>MY[1])add('ymyco',2,'Aflatoksin riski yüksek hammaddeler (mısır, pamuk küspesi, DDGS, gluten) yemin %'+numEk(o.myco,0,"p")+(milk?' — yüksek verimde aflatoksinin %6’ya kadarı süte M1 olarak geçer: yasal 5 µg/kg yem bile 10 kg kesifte 30 L sütte ≈ 0,10 µg/kg (sınır 0,05) eder':''),'Tebliğ 2014/11; TGK Bulaşanlar','r');else if(o.myco>MY[0])add('ymyco',1,'Mikotoksin riski taşıyan hammadde payı %'+f(o.myco,0),'Tebliğ 2014/11');
+ var tNm=Y("nem");if(o.dmPct<100-tNm.uk)add('ymyco',2,'Nem ≈ %'+f(100-o.dmPct,1)+' — %'+f(tNm.uk,0)+' üstü küflenme ve mikotoksin riski','Yem hijyeni');else if(o.dmPct<100-tNm.us)add('ymyco',1,'Nem ≈ %'+f(100-o.dmPct,1)+' — depolama için en çok %'+f(tNm.us,0),'Yem hijyeni');
+ if(o.myco>MY[0]&&o.tox<Y("tox").as)add('ymyco',1,'Toksin bağlayıcı yok; hammadde aflatoksin analizi önerilir','EFSA','m');
  /* yasal mineral sınırları */
- if(sheep&&o.cu>15)add('ymin',3,'Bakır '+f(o.cu,0)+' mg/kg — koyunda yasal üst sınır 15 (bakır zehirlenmesi)','AB 1831/2003; 2018/1039');else if(sheep&&o.cu>12)add('ymin',1,'Bakır '+f(o.cu,0)+' mg/kg — koyunda pratik hedef ≤ 10–12','NRC 2007');
- if(!sheep&&o.cu>30)add('ymin',2,'Bakır '+f(o.cu,0)+' mg/kg — sığırda yasal üst sınır 30 (buzağıda 15)','AB 2018/1039');
- if(g==="buzagi"&&Math.round(o.cu)>15&&!(o.cu>30))add('ymin',2,'Bakır '+f(o.cu,0)+' mg/kg — buzağı (geviş getirmeye başlamamış) yeminde yasal üst sınır 15','AB 2018/1039'); /* V224 (O6): tablo, uyarı ve premiks etiketi aynı sayı */
- if(o.se>0.5)add('ymin',3,'Selenyum '+f(o.se,2)+' mg/kg — yasal üst sınır 0,5 (tam yem eşdeğeri)','AB 1831/2003');
- if(o.zn>120)add('ymin',2,'Çinko '+f(o.zn,0)+' mg/kg — yasal üst sınır 120','AB 2016/1095');
+ var tCk=Y("cuKoyun"),cuS=Y("cuSigir").uk,cuB=Y("cuBuzagi").uk;if(sheep&&o.cu>tCk.uk)add('ymin',3,'Bakır '+f(o.cu,0)+' mg/kg — koyunda yasal üst sınır '+f(tCk.uk,0)+' (bakır zehirlenmesi)','AB 1831/2003; 2018/1039');else if(sheep&&o.cu>tCk.us)add('ymin',1,'Bakır '+f(o.cu,0)+' mg/kg — koyunda pratik hedef ≤ 10–'+f(tCk.us,0),'NRC 2007');
+ if(!sheep&&o.cu>cuS)add('ymin',2,'Bakır '+f(o.cu,0)+' mg/kg — sığırda yasal üst sınır '+f(cuS,0)+' (buzağıda '+f(cuB,0)+')','AB 2018/1039');
+ if(g==="buzagi"&&Math.round(o.cu)>cuB&&!(o.cu>cuS))add('ymin',2,'Bakır '+f(o.cu,0)+' mg/kg — buzağı (geviş getirmeye başlamamış) yeminde yasal üst sınır '+f(cuB,0),'AB 2018/1039'); /* V224 (O6): tablo, uyarı ve premiks etiketi aynı sayı */
+ if(o.se>Y("se").uk)add('ymin',3,'Selenyum '+f(o.se,2)+' mg/kg — yasal üst sınır '+f(Y("se").uk,1)+' (tam yem eşdeğeri)','AB 1831/2003');
+ if(o.zn>Y("zn").uk)add('ymin',2,'Çinko '+f(o.zn,0)+' mg/kg — yasal üst sınır '+f(Y("zn").uk,0),'AB 2016/1095');
  if(o.small.length)add('ymin',1,'Partinin %0,5’inden azı katılan '+o.small.length+' katkı ('+esc(o.small.slice(0,4).join(', '))+'): önce kepekle ön karışım yapın (homojenlik, CV < %10)','Kansas State MF3393','m');
- if(o.s>0.45)add('ymin',1,'Kükürt %'+f(o.s,2)+' — DDGS/gluten/melas fazlası; toplam rasyonda %0,3–0,4’ü geçmemeli (PEM)','NASEM 2016');
+ if(o.s>Y("s").us)add('ymin',1,'Kükürt %'+f(o.s,2)+' — DDGS/gluten/melas fazlası; toplam rasyonda %0,3–0,4’ü geçmemeli (PEM)','NASEM 2016');
  var sum=function(L,k){return L.reduce(function(s,x){return s+((!k||k.indexOf(x.kd)>=0)?x.p:0)},0)};
- Object.keys(C).forEach(function(k){R[k]={L:C[k],sc:sum(C[k]),rm:sum(C[k],'rm'),r:sum(C[k],'r')}});R.th={RF:RF,WB:WB,GL:GL,MY:MY,milk:milk,male:male,sheep:sheep,young:young,g:g,kuru:/kuru/i.test(pre||"")&&g==="duve"};return R} /* R.th: öğretici eşik tablosu için (V207) */
+ Object.keys(C).forEach(function(k){R[k]={L:C[k],sc:sum(C[k]),rm:sum(C[k],'rm'),r:sum(C[k],'r')}});R.th={RF:RF,WB:WB,GL:GL,GLu:tGL.us,MY:MY,milk:milk,male:male,sheep:sheep,young:young,g:g,kuru:/kuru/i.test(pre||"")&&g==="duve"};return R} /* R.th: öğretici eşik tablosu için (V207) */
 var YRT={yacid:'Asidoz (rumen asiditesi)',ynpn:'Üre (NPN) zehirlenmesi',ygos:'Gossipol (pamuk küspesi)',yuro:'İdrar taşı (erkek hayvan)',ymyco:'Küf ve mikotoksin (aflatoksin)',ymin:'Yasal sınırlar ve karışım homojenliği'};
 var YACT={yacid:['Hızlı yıkılan tahılı (buğday, arpa, tritikale) sınırlayın, mısırla dengeleyin; tahılı kaba kırın (un yapmayın).','Sağmal kesif yemine %0,75–1,5 sodyum bikarbonat + %0,3–0,5 magnezyum oksit ekleyin.','Kesif yemi tek öğünde 3–4 kg’dan fazla vermeyin; günlük kesifi 3 öğüne bölün ya da TMR’ye katın.','Lifli enerji kaynakları (pancar posası, soya kabuğu, kepek) nişastanın bir kısmının yerini alabilir.'],
  ynpn:['Üre kesif yemde en çok %1 (tam rasyonda yasal üst sınır %0,88; azotun en çok %30’u üreden); buzağı ve kuzu yemine katmayın (yasak).','Üre yalnız yeterli nişastayla (≥ %20) çalışır; 2–3 haftada kademeli alıştırın.','Homojen karıştırın (önce az miktar kepekle ön karışım); topak ve sulu yemde üre çözünür, tek hayvana fazla gelir.','Belirti (titreme, salya, şişme) görülürse hemen veteriner; sirke (asetik asit) ilk yardım.'],
