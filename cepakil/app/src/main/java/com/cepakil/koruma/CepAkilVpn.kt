@@ -86,7 +86,7 @@ class CepAkilVpn : VpnService() {
         try { a.addDisallowedApplication(packageName) } catch (_: Exception) { }
         arayuz = try { a.establish() } catch (_: Exception) { null } ?: return
         calisiyor = true
-        acik = true
+        etkin = this
         if (!aliciKayitli) {
             try {
                 val f = android.content.IntentFilter().apply {
@@ -102,7 +102,9 @@ class CepAkilVpn : VpnService() {
 
     private fun durdur() {
         calisiyor = false
-        acik = false
+        // Yalnız çalışan oturum kendisiyse "kapalı" işaretle: kapatıp hemen açınca eski oturumun
+        // gecikmeli kapanışı yeni oturumu kapalı göstermesin.
+        if (etkin === this) etkin = null
         if (aliciKayitli) { try { unregisterReceiver(paketAlici) } catch (_: Exception) { }; aliciKayitli = false }
         try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (_: Exception) { }
         try { arayuz?.close() } catch (_: Exception) { }
@@ -211,8 +213,8 @@ class CepAkilVpn : VpnService() {
         }
 
         /** CepAkıl'ın KENDİ web koruması şu an çalışıyor mu? (Başka bir VPN'in açık olması sayılmaz.) */
-        @Volatile private var acik = false
-        fun aktifMi(@Suppress("UNUSED_PARAMETER") context: Context): Boolean = acik
+        @Volatile private var etkin: CepAkilVpn? = null
+        fun aktifMi(@Suppress("UNUSED_PARAMETER") context: Context): Boolean = etkin != null
 
         /**
          * Telefonda "Özel DNS" elle bir sağlayıcıya ayarlı mı? Öyleyse site adı sorguları şifreli
