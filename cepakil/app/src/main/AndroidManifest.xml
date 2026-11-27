@@ -78,11 +78,16 @@
             </intent-filter>
         </activity>
 
-        <!-- Web koruması: yalnız DNS sorularını denetleyen yerel VPN (kullanıcı açar). -->
+        <!--
+            Web koruması: yalnız DNS sorularını denetleyen yerel VPN (kullanıcı açar).
+            "systemExempted" türü, kullanıcının VPN onayı verdiği uygulamalara tanınır (çalışma anında
+            Android VPN onayına bakar); Lint yalnız izin listesini bildiği için uyarısı bastırılır.
+        -->
         <service
             android:name=".koruma.CepAkilVpn"
             android:exported="false"
             android:foregroundServiceType="systemExempted"
+            tools:ignore="ForegroundServicePermission"
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
