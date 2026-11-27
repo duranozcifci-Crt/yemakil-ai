@@ -372,7 +372,9 @@ function yerSoz(k){return yerK(k).split(" ").filter(function(w){return w&&!KOY_E
 function ilceK(m){return m?m.il+"|"+(m.mrk?"*":m.ilce):""}
 /* yalnız il adının yazılıp yazılmamasıyla ayrılan yazılar aynı yerdir ("Polatlı" = "Polatlı Ankara"); iki yazıda FARKLI il varsa değildir */
 function ilAyir(ks){var a=[],b=[];ks.split(" ").forEach(function(w){if(!w)return;(IL81.indexOf(w)>=0?b:a).push(w)});return {y:a.join(" "),il:b.join(" ")}}
-function ilFarki(a,b){var x=ilAyir(a),y=ilAyir(b);return !!x.y&&x.y===y.y&&(!x.il||!y.il||x.il===y.il)}
+/* il yazılmamışsa programın bildiği il esas alınır (yalnız "Ereğli" = Konya Ereğli; "Ereğli Zonguldak" ile aynı yer değildir) */
+function ilEtk(ks){var a=ilAyir(ks);if(a.il)return a.il;var m=nkIlce(ks);return m?yerK(m.il):""}
+function ilFarki(a,b){var x=ilAyir(a),y=ilAyir(b);if(!x.y||x.y!==y.y)return false;var p=ilEtk(a),q=ilEtk(b);return !p||!q||p===q}
 function nkTarBul(yer,fid){var T=nkTar(),k=yerK(yer);if(!k)return null;var r=T[k]&&T[k].f&&T[k].f[fid];if(r)return {k:k,v:r.v,t:r.t,ad:T[k].ad};
  var ks=yerSoz(k),m0=nkIlce(yer),ik=ilceK(m0),best=null,bs=0,diger=null;
  Object.keys(T).forEach(function(x){var e=T[x]&&T[x].f&&T[x].f[fid];if(!e||!(e.v>0))return;var sc=0;if(yerSoz(x)===ks)sc=3;else if(ilFarki(ks,yerSoz(x)))sc=2;else if(m0){var mx=nkIlce(x);if(mx&&ilceK(mx)===ik)sc=2;else if(mx&&mx.il===m0.il&&(!diger||String(e.t||"")>String(diger.t||"")))diger={ad:T[x].ad||x,v:e.v,t:e.t}}

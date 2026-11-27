@@ -1369,7 +1369,7 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   ok('Besi, artış varken: yem dönüşümü sayı olarak yazılır (—  yalnız artış yokken)',/^\d+,\d$/.test(bs1[0])&&parseFloat(bs1[0].replace(',','.'))>3,JSON.stringify(bs1));
   /* O6 */
   await kur3('sut',{mode:'duve',bw:150,age:5,dp:0},[['^Kuru yonca',2],['^Arpa',1.5],['^Soya küspesi',0.4]]);tx=await cmpTx();
-  ok('Düve 150 kg (O6): "HP kritik yüksek" ile "protein sınırlıyor" birlikteyken metin gram/yüzde farkını açıklar (hayvan az yiyor → asıl sorun yem tüketimi) ve "Protein artırmak artışı yükseltir" / "proteinini artırın" demez',/HP, %\s+20,0[^\n]*Kritik yüksek/.test(tx)&&/protein sınırlıyor/.test(tx)&&/Ama hayvan az yiyor/.test(tx)&&/Asıl sorun yem tüketimi/.test(tx)&&!/Protein artırmak artışı yükseltir/.test(tx)&&!/proteinini \([^)]*\) artırın/.test(tx),(tx.match(/Rasyonun protein oranı[^\n]*/)||['yok'])[0].slice(0,200));
+  ok('Düve 150 kg (O6): "HP kritik yüksek" ile "protein sınırlıyor" birlikteyken metin gram/yüzde farkını açıklar (hayvan az yiyor → asıl sorun yem tüketimi) ve "Protein artırmak artışı yükseltir" / "proteinini artırın" demez',/HP, %\s+20,0[\s\S]{0,120}?Kritik yüksek/.test(tx)&&/protein sınırlıyor/.test(tx)&&/Ama hayvan az yiyor/.test(tx)&&/Asıl sorun yem tüketimi/.test(tx)&&!/Protein artırmak artışı yükseltir/.test(tx)&&!/proteinini \([^)]*\) artırın/.test(tx),(tx.match(/Rasyonun protein oranı[^\n]*/)||['yok'])[0].slice(0,200));
   await kur3('koyun',{mode:'kuzu',bw:30,adg:300,sex:'e'},[['^Kuru yonca',0.3],['^Arpa',0.8],['^Soya küspesi',0.1]]);tx=await cmpTx();
   ok('Kuzu 30 kg (O6): protein sınırlıyor + KM alımı düşük + HP yüzdesi yeterliyken aynı sade açıklama çıkar',/protein sınırlıyor/.test(tx)&&/Ama hayvan az yiyor/.test(tx),(tx.match(/Rasyonun protein oranı[^\n]*/)||['yok'])[0].slice(0,160));
   /* O10 */
@@ -1409,10 +1409,10 @@ ok('SW önbellek adı sürüm formatında',/yemakil-v\d+/.test(sw)||!sw);
   await q.setViewportSize({width:360,height:800});await q.waitForTimeout(150);const mk360=await q.evaluate(()=>{mikroSolve();return document.documentElement.scrollWidth});await q.setViewportSize({width:390,height:844});
   ok('Katkı reçetesi: 390 ve 360 px\'te yana taşma yok (uzun premiks adı, uygulama kartı)',rk.sw<=390&&rb.sw<=390&&mk360<=360,rk.sw+'/'+rb.sw+'/'+mk360);
   /* düşük 13: yedek hatırlatması */
-  const hd=await q.evaluate(()=>{var bk=JSON.stringify(S),o={};var bos=function(){S.saved=[];S.vx=[];if(S.ym)S.ym.saved=[];var m=MK_def();m.saved=[];m.lblSaved=[];FL_def().saved=[];if(S.bb)S.bb.wts=[];S.fd=[];S.feeds.forEach(function(x){if(x.src==="analiz")x.src="";x.ext=undefined})};bos();o.bos=!!hasData();
-   bos();MK_def().saved=[{id:1}];o.recete=!!hasData();bos();FL_def().saved=[{id:2}];o.yemEt=!!hasData();bos();MK_def().lblSaved=[{id:3}];o.premEt=!!hasData();bos();B_def().wts=[{d:"2026-11-01",w:300}];o.tartim=!!hasData();bos();S.fd=[{id:4}];o.saha=!!hasData();
-   var S0=JSON.parse(bk);Object.keys(S).forEach(function(k){delete S[k]});Object.keys(S0).forEach(function(k){S[k]=S0[k]});return o});
-  ok('Yedek hatırlatması (düşük): yalnız kayıtlı katkı reçetesi, yem/premiks etiketi, besi tartımı ya da saha kaydı varken de "yedeklenecek veri var" sayılır; hiçbiri yokken sayılmaz',!hd.bos&&hd.recete&&hd.yemEt&&hd.premEt&&hd.tartim&&hd.saha,JSON.stringify(hd));
+  const hd=await q.evaluate(()=>{var bk=JSON.stringify(S),o={};var bos=function(){S.saved=[];S.vx=[];if(S.ym)S.ym.saved=[];var m=MK_def();m.saved=[];m.lblSaved=[];FL_def().saved=[];if(S.bb)S.bb.wts=[];S.fd=[];S.feeds.forEach(function(x){if(x.src==="analiz")x.src="";x.ext=undefined})};var HD=function(){save();bkStatus();return /henüz yedek alınmadı/.test($("bkSt").innerText)};bos();o.bos=HD();
+   bos();MK_def().saved=[{id:1}];o.recete=HD();bos();FL_def().saved=[{id:2}];o.yemEt=HD();bos();MK_def().lblSaved=[{id:3}];o.premEt=HD();bos();B_def().wts=[{d:"2026-11-01",w:300}];o.tartim=HD();bos();S.fd=[{id:4}];o.saha=HD();
+   var S0=JSON.parse(bk);Object.keys(S).forEach(function(k){delete S[k]});Object.keys(S0).forEach(function(k){S[k]=S0[k]});save();return o});
+  ok('Yedek hatırlatması (düşük): yalnız kayıtlı katkı reçetesi, yem/premiks etiketi, besi tartımı ya da saha kaydı varken de "yedeklenecek veri var" sayılır; hiçbiri yokken sayılmaz ("henüz yedek alınmadı" yazısı)',!hd.bos&&hd.recete&&hd.yemEt&&hd.premEt&&hd.tartim&&hd.saha,JSON.stringify(hd));
   ok('Denetim 27.11.2026 senaryoları: JS hatası yok',!qe.length,qe.slice(0,3).join(' | '));await q.evaluate(()=>localStorage.clear());await q.close();}
 
  await b.close();done();
