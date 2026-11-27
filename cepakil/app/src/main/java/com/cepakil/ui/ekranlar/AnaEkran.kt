@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import com.cepakil.koruma.CepAkilVpn
 import com.cepakil.koruma.KorumaAyarlari
+import com.cepakil.koruma.Planlayici
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -83,8 +85,10 @@ fun AnaEkran(
     val d by vm.durum.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var korumaSayisi by remember { mutableIntStateOf(0) }
+    var listeSorusu by remember { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         val a = KorumaAyarlari(context)
+        listeSorusu = !a.listeSoruldu && !a.tehditListeleri
         korumaSayisi = listOf(
             a.tehditListeleri,
             a.anlikKoruma,
@@ -103,6 +107,17 @@ fun AnaEkran(
         baglantiyaGit = baglantiyaGit,
         cihazEylemi = { cihazEylemi(context, it) },
         koruma = korumaSayisi to korumayaGit,
+        listeSorusu = if (!listeSorusu) null else { kabul ->
+            val a = KorumaAyarlari(context)
+            a.listeSoruldu = true
+            if (kabul) {
+                a.tehditListeleri = true
+                Planlayici.uygula(context)
+                Planlayici.simdiGuncelle(context)
+                korumaSayisi += 1
+            }
+            listeSorusu = false
+        },
     )
 }
 
@@ -119,6 +134,8 @@ fun AnaEkranIcerik(
     cihazEylemi: (Bulgu) -> (() -> Unit)? = { null },
     /** Açık koruma sayısı (3 üzerinden) ve Ayarlar'a gitme eylemi. */
     koruma: Pair<Int, () -> Unit>? = null,
+    /** İlk açılış sorusu: tehdit listeleri indirilsin mi? (true = indir). Sorulmayacaksa null. */
+    listeSorusu: ((Boolean) -> Unit)? = null,
 ) {
     val kayit = d.kayit
     LazyColumn(
@@ -210,6 +227,28 @@ fun AnaEkranIcerik(
             }
         }
 
+        listeSorusu?.let { yanit ->
+            item {
+                Grup {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Tehdit listeleri indirilsin mi?", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.size(4.dp))
+                        Text(
+                            "CepAkıl, bilinen zararlı ve sahte siteleri tanımak için herkese açık listeleri (Türkiye'nin resmi USOM listesi dahil) " +
+                                "günde bir telefona indirebilir (yaklaşık 12 MB). Yalnız liste indirilir; senin hiçbir verin gönderilmez. " +
+                                "İstediğin zaman Ayarlar'dan kapatabilirsin.",
+                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { yanit(false) }) { Text("Şimdi değil") }
+                            androidx.compose.material3.Button(onClick = { yanit(true) }) { Text("İndir") }
+                        }
+                    }
+                }
+            }
+        }
+
         koruma?.let { (sayi, git) ->
             item {
                 Grup {
@@ -250,7 +289,7 @@ fun AnaEkranIcerik(
                 metin = "Ekran kilidi, güvenlik güncellemesi tarihi, Wi-Fi şifrelemesi, USB hata ayıklama ve yüklü uygulamaların izinleri, kodları, " +
                     "nereden yüklendikleri ile açık erişilebilirlik / cihaz yöneticisi / bildirim erişimi hizmetleri. " +
                     "Tehdit listeleri telefona indirildiyse bağlantılar ve dosyalar bilinen zararlılarla da karşılaştırılır; hiçbir verin gönderilmez. " +
-                    "Tarama yalnız sen düğmeye bastığında çalışır. Koruma puanı bu kontrollerin özetidir; bir güvenlik garantisi değildir.",
+                    "Tam tarama yalnız sen düğmeye bastığında çalışır; arka plan korumaları yalnız Ayarlar'dan açtıysan çalışır. Koruma puanı bu kontrollerin özetidir; bir güvenlik garantisi değildir.",
             )
         }
     }

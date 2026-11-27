@@ -26,24 +26,25 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Birim testleri
-        run: ./gradlew --no-daemon testDebugUnitTest
-      - name: Hata ayıklama APK'sı
-        run: ./gradlew --no-daemon assembleDebug
+        run: ./gradlew --no-daemon testDebugUnitTest -Psurum=${{ github.run_number }}
+      # Deneme (debug) ve kullanıcıya giden küçültülmüş yayın (release) sürümü; ikisi de depodaki sabit anahtarla imzalanır.
+      - name: APK'lar (deneme + yayın)
+        run: ./gradlew --no-daemon assembleDebug assembleRelease -Psurum=${{ github.run_number }}
       - name: Android Lint
-        run: ./gradlew --no-daemon lintDebug
+        run: ./gradlew --no-daemon lintDebug -Psurum=${{ github.run_number }}
       # Söz denetimi: APK'da internet izni olmamalı (kütüphaneler gizlice eklemesin).
       # Söz: kişisel verilere erişen izinler (SMS, kişiler, konum, kamera, mikrofon, depolama...) asla istenmez.
       - name: Gereksiz izin yok mu?
         run: |
           AAPT2="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt2"
-          "$AAPT2" dump permissions app/build/outputs/apk/debug/app-debug.apk | tee izinler.txt
+          "$AAPT2" dump permissions app/build/outputs/apk/release/app-release.apk | tee izinler.txt
           for IZIN in READ_SMS RECEIVE_SMS SEND_SMS READ_CONTACTS WRITE_CONTACTS READ_CALL_LOG READ_PHONE_STATE ACCESS_FINE_LOCATION \
                       ACCESS_COARSE_LOCATION ACCESS_BACKGROUND_LOCATION CAMERA RECORD_AUDIO READ_EXTERNAL_STORAGE WRITE_EXTERNAL_STORAGE \
                       MANAGE_EXTERNAL_STORAGE READ_MEDIA_IMAGES READ_MEDIA_VIDEO BIND_ACCESSIBILITY_SERVICE BIND_DEVICE_ADMIN GET_ACCOUNTS; do
             if grep -q "android.permission.$IZIN'" izinler.txt; then echo "::error::APK gereksiz izin içeriyor: $IZIN"; exit 1; fi
           done
           # Play Protect, dosyadan kurulan ve bildirim/erişilebilirlik hizmeti tanımlayan uygulamaları engeller.
-          "$AAPT2" dump xmltree --file AndroidManifest.xml app/build/outputs/apk/debug/app-debug.apk > manifest.txt
+          "$AAPT2" dump xmltree --file AndroidManifest.xml app/build/outputs/apk/release/app-release.apk > manifest.txt
           for H in BIND_NOTIFICATION_LISTENER_SERVICE BIND_ACCESSIBILITY_SERVICE; do
             if grep -q "android.permission.$H" manifest.txt; then echo "::error::APK Play Protect engeline takılacak hizmet içeriyor: $H"; exit 1; fi
           done
@@ -75,46 +76,45 @@ jobs:
           working-directory: cepakil
           script: |
             adb install -r ornek/build/outputs/apk/debug/ornek-debug.apk
-            ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true; S=$?; mkdir -p cihaz-ekran; (adb exec-out run-as com.cepakil tar -c -C files ekran > cihaz-ekran.tar && tar -xf cihaz-ekran.tar -C cihaz-ekran) || true; adb logcat -d -v time > cihaz-ekran/logcat.txt || true; adb shell pm list packages -3 > cihaz-ekran/paketler.txt || true; exit $S
-      # Yalnız elle başlatılınca: APK'yı aynı dala ekler (sohbetten doğrudan göndermek için).
-      - name: APK'yı dala ekle
+            ./gradlew --no-daemon connectedDebugAndroidTest -Psurum=${{ github.run_number }} -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true; S=$?; mkdir -p cihaz-ekran; (adb exec-out run-as com.cepakil tar -c -C files ekran > cihaz-ekran.tar && tar -xf cihaz-ekran.tar -C cihaz-ekran) || true; adb logcat -d -v time > cihaz-ekran/logcat.txt || true; adb shell pm list packages -3 > cihaz-ekran/paketler.txt || true; exit $S
+            adb logcat -c || true
+            adb install -r app/build/outputs/apk/release/app-release.apk
+            adb shell am start -W -n com.cepakil/.MainActivity
+            sleep 12; mkdir -p cihaz-ekran/ekran; adb shell pidof com.cepakil || { echo "Yayın sürümü açılmadı"; exit 1; }; adb exec-out screencap -p > cihaz-ekran/ekran/10_yayin_surumu.png; adb logcat -d -v time | grep -E "FATAL EXCEPTION|AndroidRuntime: " > cihaz-ekran/yayin-cokme.txt; if [ -s cihaz-ekran/yayin-cokme.txt ] && grep -q "com.cepakil" cihaz-ekran/yayin-cokme.txt; then echo "Yayın sürümü çöktü"; cat cihaz-ekran/yayin-cokme.txt; exit 1; fi
+      - name: Tasarım ekran görüntüleri
         if: github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: ./gradlew --no-daemon recordPaparazziDebug -Pgoruntu -Psurum=${{ github.run_number }}
+      # Yalnız elle başlatılınca: APK, ekran görüntüleri ve (hata varsa) kanıtlar "cepakil-cikti" dalına
+      # TEK commit olarak yazılır (eskisinin üzerine). Böylece 19 MB'lık APK'lar depo geçmişinde birikmez.
+      - name: Çıktıları yayınla (cepakil-cikti dalı)
+        if: always() && github.event_name == 'workflow_dispatch'
         run: |
-          mkdir -p indir ekran
-          cp app/build/outputs/apk/debug/app-debug.apk indir/CepAkil.apk
-          # Tasarım ekran görüntüleri (başarısız olsa da APK eklenir)
-          if ./gradlew --no-daemon recordPaparazziDebug -Pgoruntu; then
-            rm -f ekran/*.png; cp app/src/test/snapshots/images/*.png ekran/ || true
-            git add ekran
+          C="$RUNNER_TEMP/cikti"; rm -rf "$C"; mkdir -p "$C/ekran"
+          echo "${{ github.sha }} ${{ job.status }} 0.2.${{ github.run_number }}" > "$C/durum.txt"
+          cp cihaz-ekran/ekran/*.png "$C/ekran/" 2>/dev/null || true
+          if [ "${{ job.status }}" = "success" ]; then
+            cp app/build/outputs/apk/release/app-release.apk "$C/CepAkil.apk"
+            cp app/src/test/snapshots/images/*.png "$C/ekran/" 2>/dev/null || true
           else
-            echo "::warning::Ekran görüntüleri üretilemedi"
+            mkdir -p "$C/hata"
+            find app/build/outputs/androidTest-results -name "*.xml" -exec cp {} "$C/hata/" \; 2>/dev/null || true
+            cp cihaz-ekran/paketler.txt cihaz-ekran/yayin-cokme.txt "$C/hata/" 2>/dev/null || true
+            if [ -f cihaz-ekran/logcat.txt ]; then grep -E "cepakil|AndroidRuntime|FATAL|TestRunner" cihaz-ekran/logcat.txt | tail -n 400 > "$C/hata/logcat-ozet.txt"; fi
           fi
-          git clean -fdq app/src/test/snapshots || true
-          # Sanal telefondan alınan gerçek ekran görüntüleri
-          if ls cihaz-ekran/ekran/*.png >/dev/null 2>&1; then cp cihaz-ekran/ekran/*.png ekran/; git add ekran; fi
+          cd "$C"
+          git init -q
+          git checkout -q --orphan cepakil-cikti
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add indir/CepAkil.apk
-          git commit -m "CepAkıl APK (otomatik)"
-          git push origin HEAD:${{ github.ref_name }}
-      # Elle başlatılmış derlemede testler başarısız olursa: kanıtları (ekran görüntüsü, rapor, logcat) dala ekle.
-      - name: Hata kanıtlarını dala ekle
-        if: failure() && github.event_name == 'workflow_dispatch'
-        run: |
-          rm -rf hata && mkdir -p hata
-          cp -r cihaz-ekran/* hata/ 2>/dev/null || true
-          find app/build/outputs/androidTest-results -name "*.xml" -exec cp {} hata/ \; 2>/dev/null || true
-          if [ -f hata/logcat.txt ]; then grep -E "cepakil|AndroidRuntime|FATAL|TestRunner" hata/logcat.txt | tail -n 400 > hata/logcat-ozet.txt; rm hata/logcat.txt; fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f hata
-          git commit -m "CepAkıl test hatası kanıtları (otomatik)" || exit 0
-          git push origin HEAD:${{ github.ref_name }}
+          git add -A
+          git commit -q -m "CepAkıl derleme çıktısı (otomatik)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/cepakil-cikti
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: cepakil-debug-apk
-          path: cepakil/app/build/outputs/apk/debug/*.apk
+          name: cepakil-apk
+          path: cepakil/app/build/outputs/apk/release/*.apk
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()

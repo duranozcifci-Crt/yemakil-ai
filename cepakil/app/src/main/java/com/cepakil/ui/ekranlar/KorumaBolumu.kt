@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -44,6 +45,7 @@ import com.cepakil.ui.bilesenler.Grup
 import com.cepakil.ui.bilesenler.GrupAyraci
 import com.cepakil.ui.bilesenler.IkincilDugme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -76,6 +78,7 @@ fun KorumaBolumu() {
         if (r.resultCode == Activity.RESULT_OK) {
             a.webKoruma = true
             CepAkilVpn.baslat(context)
+            kapsam.launch { delay(700); tazele++; delay(1500); tazele++ }
         }
         tazele++
     }
@@ -91,12 +94,22 @@ fun KorumaBolumu() {
         Anahtar(
             "Çevrimiçi tehdit veritabanı",
             "Herkese açık listeler (Türkiye'nin resmi USOM listesi, OpenPhish, URLhaus) günde bir telefona indirilir; " +
-                "bağlantılar, mesajlar ve açtığın siteler bunlarla; mağaza dışından yüklenen uygulamalar da bildirilmiş zararlı Android uygulamaları listesiyle karşılaştırılır. Senin hiçbir verin gönderilmez.\n$tehditDurumu",
+                "bağlantılar, mesajlar ve açtığın siteler bunlarla karşılaştırılır. " +
+                // Zararlı uygulama listesi yalnız gerçekten indirilmişse söz edilir.
+                (if (db != null && db.hashler.isNotEmpty()) "Mağaza dışından yüklenen uygulamalar da bildirilmiş zararlı Android uygulamaları listesiyle karşılaştırılır. " else "") +
+                "Senin hiçbir verin gönderilmez.\n$tehditDurumu",
             a.tehditListeleri, "koruma_tehdit",
         ) { acik ->
             a.tehditListeleri = acik
+            a.listeSoruldu = true
             Planlayici.uygula(context)
-            if (acik && a.sonGuncelleme == 0L) Planlayici.simdiGuncelle(context)
+            if (acik) {
+                if (a.sonGuncelleme == 0L) Planlayici.simdiGuncelle(context)
+            } else {
+                // Kapatınca indirilen listeler telefondan silinir.
+                a.sonGuncelleme = 0L
+                kapsam.launch(Dispatchers.IO) { TehditGuncelleyici.sil(context) }
+            }
             tazele++
         }
         if (a.tehditListeleri) {
@@ -142,11 +155,12 @@ fun KorumaBolumu() {
                 "Android bunu bir \"VPN\" olarak gösterir, ama trafiğin başka bir sunucuya gönderilmez: yalnız site adları telefonda kontrol edilir, sayfa içeriklerine bakılmaz. " +
                 "Başka bir VPN açıkken çalışmaz." +
                 (if (a.engellenenSayisi > 0) "\nŞimdiye kadar engellenen: ${a.engellenenSayisi}" else "") +
+                (if (CepAkilVpn.ozelDnsElleAyarli(context)) "\nDikkat: Telefonunda \"Özel DNS\" elle ayarlanmış. Bu durumda web koruması siteleri göremez; Android Ayarlar > Bağlantılar > Diğer bağlantı ayarları > Özel DNS'i \"Otomatik\" yapman gerekir." else "") +
                 (if (a.webKoruma && !vpnAcik) "\nŞu an çalışmıyor (telefon yeniden başlamış ya da başka VPN açılmış olabilir). Açmak için anahtara dokun." else ""),
             vpnAcik, "koruma_web",
         ) { acik ->
             if (acik) {
-                if (!a.tehditListeleri) { a.tehditListeleri = true; Planlayici.uygula(context); Planlayici.simdiGuncelle(context) }
+                if (!a.tehditListeleri) { a.tehditListeleri = true; a.listeSoruldu = true; Planlayici.uygula(context); Planlayici.simdiGuncelle(context) }
                 val hazirlik = VpnService.prepare(context)
                 if (hazirlik == null) {
                     a.webKoruma = true
@@ -158,8 +172,47 @@ fun KorumaBolumu() {
                 a.webKoruma = false
                 CepAkilVpn.durdur(context)
             }
+            // Hizmet bir an sonra açılır/kapanır; durumu yeniden oku.
+            kapsam.launch { delay(700); tazele++; delay(1500); tazele++ }
             tazele++
         }
+
+        // Yanlış engellenen bir siteyi buradan açabilirsin (bildirimi kaçırmış olsan da).
+        val engellenenler = a.sonEngellenenler.filter { it !in a.izinliSiteler }
+        if (engellenenler.isNotEmpty()) {
+            GrupAyraci(16.dp)
+            AltBaslik("Son engellenen siteler", "Güvendiğin bir site yanlışlıkla engellendiyse izin verebilirsin.")
+            engellenenler.take(8).forEach { h ->
+                SiteSatiri(h, "İzin ver") { a.izinliSiteler = a.izinliSiteler + h; tazele++ }
+            }
+        }
+        val izinliler = a.izinliSiteler.sorted()
+        if (izinliler.isNotEmpty()) {
+            GrupAyraci(16.dp)
+            AltBaslik("İzin verdiğin siteler", "Web koruması bu siteleri engellemez.")
+            izinliler.forEach { h ->
+                SiteSatiri(h, "Kaldır") { a.izinliSiteler = a.izinliSiteler - h; tazele++ }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AltBaslik(baslik: String, aciklama: String) {
+    Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)) {
+        Text(baslik, style = MaterialTheme.typography.titleSmall)
+        Text(aciklama, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun SiteSatiri(host: String, eylem: String, tikla: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(start = 16.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(host, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f), maxLines = 2)
+        TextButton(onClick = tikla) { Text(eylem) }
     }
 }
 

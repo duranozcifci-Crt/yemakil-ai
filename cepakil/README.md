@@ -20,7 +20,7 @@ dosya ve bağlantıları fark etmesine yardımcı olur.
 
 | Özellik | Nasıl çalışır | Varsayılan |
 |---|---|---|
-| **Çevrimiçi tehdit veritabanı** | `koruma/TehditGuncelleyici` günde bir (WorkManager, yalnız internet varken) anahtarsız, herkese açık listeleri `filesDir/tehdit` altına indirir: **USOM** zararlı bağlantı listesi (yedek: USOM-Blocklists kopyası), **OpenPhish** kimlik avı listesi, **URLhaus** ve **phishing-filter** sunucu listeleri (malware-filter projesinin kopyaları; her biri için yedek adresler denenir). HTML ya da boş yanıt liste sayılmaz. `analiz/TehditVeritabani` bağlantı, mesaj, açılan site ve dosya içindeki bağlantı kontrollerinde telefonda karşılaştırır. Ayrıca **bildirilmiş zararlı Android uygulamalarının SHA-256 listesi**: MalwareBazaar üyelik anahtarı istediği için `.github/workflows/cepakil-veri.yml` her gün depo sırrındaki `ABUSECH_KEY` ile son 1000 APK kaydını alır, birikmiş listeyi (en çok 100.000) `cepakil-veri` dalındaki `apk_sha256.txt` olarak yayınlar; uygulama yalnız bu dosyayı indirir. Mağaza denetiminden geçmemiş kullanıcı uygulamalarının `base.apk` parmak izi (sürüm başına bir kez hesaplanıp saklanır) bu listeyle karşılaştırılır; eşleşme kesin "Bilinen zararlı yazılım" bulgusudur. Liste yenilendiğinde anlık koruma açıksa önceden yüklü uygulamalar da yeniden karşılaştırılır. Ortak barındırma platformları (Google, GitHub, Firebase…) sunucu olarak engellenmez. | Açık |
+| **Çevrimiçi tehdit veritabanı** | `koruma/TehditGuncelleyici` günde bir (WorkManager, yalnız internet varken) anahtarsız, herkese açık listeleri `filesDir/tehdit` altına indirir: **USOM** zararlı bağlantı listesi (yedek: USOM-Blocklists kopyası), **OpenPhish** kimlik avı listesi, **URLhaus** ve **phishing-filter** sunucu listeleri (malware-filter projesinin kopyaları; her biri için yedek adresler denenir). HTML ya da boş yanıt liste sayılmaz. `analiz/TehditVeritabani` bağlantı, mesaj, açılan site ve dosya içindeki bağlantı kontrollerinde telefonda karşılaştırır. Ayrıca **bildirilmiş zararlı Android uygulamalarının SHA-256 listesi**: MalwareBazaar üyelik anahtarı istediği için `.github/workflows/cepakil-veri.yml` her gün depo sırrındaki `ABUSECH_KEY` ile son 1000 APK kaydını alır, birikmiş listeyi (en çok 100.000) `cepakil-veri` dalındaki `apk_sha256.txt` olarak yayınlar; uygulama yalnız bu dosyayı indirir. Mağaza denetiminden geçmemiş kullanıcı uygulamalarının `base.apk` parmak izi (sürüm başına bir kez hesaplanıp saklanır) bu listeyle karşılaştırılır; eşleşme kesin "Bilinen zararlı yazılım" bulgusudur. Liste yenilendiğinde anlık koruma açıksa önceden yüklü uygulamalar da yeniden karşılaştırılır. Ortak barındırma platformları (Google, GitHub, Firebase…) sunucu olarak engellenmez. | Kapalı; ilk açılışta ana sayfadaki "Tehdit listeleri indirilsin mi?" sorusuna "İndir" denirse açılır. Kapatılınca indirilen listeler silinir. |
 | **Anlık uygulama koruması** | `koruma/KorumaIsi` ~15 dakikada bir (Android'in en sık periyodik aralığı) yeni yüklenen/güncellenen uygulamaları değerlendirir; değişiklik yoksa hiçbir şey okumaz. Riskliyse bildirim; dokununca uygulama ayrıntısı açılır. | Kapalı |
 | ~~Gelen mesajları otomatik tara~~ | **Kaldırıldı.** Google Play Protect, dosyadan kurulan ve `NotificationListenerService` (ya da erişilebilirlik hizmeti) tanımlayan uygulamaların kurulumunu dolandırıcılık önlemi olarak engelliyor ("Uygulama, cihazınızı korumak için engellendi"). CI artık bu hizmetleri içeren APK'yı reddeder. Mesajlar "Paylaş > CepAkıl" ile denetlenir. Uygulama ileride Play Store'da yayımlanırsa yeniden değerlendirilebilir. | — |
 | **Web koruması** | `koruma/CepAkilVpn` yalnız DNS sorgularını yakalayan yerel VPN'dir (sanal DNS 10.111.222.2'ye giden UDP/53). Tehdit listesindeki ya da banka/e-Devlet taklidi alan adlarına NXDOMAIN döner, bildirim gösterir ("Bu siteye izin ver" eylemiyle). Diğer sorgular telefonun gerçek DNS sunucusuna `protect()` edilmiş soketle iletilir; trafik başka sunucuya yönlendirilmez. Özel DNS (DoH/DoT) kullanan tarayıcılarda devre dışı kalabilir; başka VPN açıkken çalışmaz. | Kapalı |
@@ -251,6 +251,7 @@ Gereken: Android Studio (Ladybug 2024.2 veya yenisi) ya da JDK 17 + Android SDK 
 cd cepakil
 ./gradlew testDebugUnitTest   # kural testleri (bilgisayarda, cihaz gerekmez)
 ./gradlew assembleDebug       # app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease     # küçültülmüş yayın sürümü: app/build/outputs/apk/release/app-release.apk
 ./gradlew lintDebug           # Android Lint
 ```
 
@@ -262,7 +263,7 @@ değişiklikte şunları çalıştırır: kural testleri, APK derlemesi, Lint,
 uçtan uca testler** (`app/src/androidTest/UcUcaTest.kt`: tarama, mağaza dışı
 deneme uygulamasının — `ornek/` modülü — yakalanması, kaldırılınca listeden
 düşmesi, dolandırıcılık mesajı, sekmeler). Biri başarısız olursa APK yayımlanmaz;
-derlenen APK “cepakil-debug-apk” adıyla indirilebilir.
+derlenen APK “cepakil-apk” adıyla indirilebilir.
 
 > Hata ayıklama APK'sı test içindir. Google Play'e yüklemek için kendi imza
 > anahtarınızla `assembleRelease`/`bundleRelease` çalıştırıp
@@ -299,3 +300,29 @@ cepakil/
 - RAR/7z arşivlerinin içi denetlenmez.
 - Arayüz metinleri Kotlin kodunda Türkçe yazılmıştır; başka dil eklenecekse
   `strings.xml`'e taşınmalıdır.
+
+## 9. İmza, sürüm ve derleme çıktıları
+
+- **Sabit imza:** Deneme ve yayın sürümleri `imza/cepakil.jks` ile imzalanır; bu sayede yeni sürüm eskisi silinmeden
+  üzerine kurulur (ayarlar ve tarama kaydı korunur). **Bu anahtar depoda açık durur**: kişisel/deneme dağıtımı için
+  yeterlidir, ama anahtarı bilen biri aynı imzayla "güncelleme" görünümlü bir APK üretebilir. Uygulama mağazada ya da
+  geniş çevrede dağıtılacaksa gizli tutulan ayrı bir anahtara geçilmelidir (geçişte uygulama bir kez silinip yeniden kurulur).
+- **Sürüm:** `versionCode` = GitHub derleme numarası, `versionName` = `0.2.<numara>` (`-Psurum=N`).
+- **Kullanıcıya giden APK** küçültülmüş yayın (release, R8) sürümüdür. Sanal telefonda uçtan uca testler deneme sürümüyle
+  koşar; ardından yayın sürümü aynı telefona kurulup açılır ve çökme olmadığı denetlenir.
+- **Çıktılar** (APK, ekran görüntüleri, hata kanıtları) çalışma dalına değil, her seferinde tek commit olarak üzerine
+  yazılan `cepakil-cikti` dalına konur; böylece depo geçmişi büyümez. `durum.txt`: derlenen commit, sonuç, sürüm.
+
+## 10. Tehdit veritabanının biçimi ve kuralları
+
+- Kayıtların kendisi değil 64 bitlik özetleri sıralı dizide tutulur (~480 bin kayıt ≈ 4 MB bellek; metin olarak ~60 MB'tı).
+  İndirmeden sonra `filesDir/tehdit/tehdit.bin` yazılır; açılışta yalnız bu dosya okunur (onlarca ms).
+- **Ortak hizmetler:** `duckdns.org`, `blogspot.com`, `vercel.app` gibi her kullanıcıya alt alan adı veren hizmetlerin
+  kendisi engellenmez, listedeki **alt alan adı** engellenir. Google/GitHub/Dropbox gibi yol tabanlı paylaşım
+  hizmetleri, bağlantı kısaltıcılar ve dosya paylaşım siteleri yalnız **tam adres** eşleşirse yakalanır.
+- **Korunan alanlar:** Uygulamanın tanıdığı kurumların resmi adresleri ve temel hizmetler (Google, WhatsApp, e-Devlet…)
+  hiçbir liste yüzünden engellenmez.
+- **Web koruması:** yalnız CepAkıl'ın kendi hizmeti çalışıyorsa "açık" görünür. Son engellenen 15 site telefonda tutulur;
+  Ayarlar > Koruma'dan izin verilebilir ya da izin geri alınabilir. "Özel DNS" elle ayarlıysa kullanıcı uyarılır.
+- **Testler:** `UcUcaTest.t6_koruma` sanal telefonda bildirimi, listedeki sitenin engellenmesini, normal sitenin
+  çözülmesini ve "İzin ver" akışını denetler.

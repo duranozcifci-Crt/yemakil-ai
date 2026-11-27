@@ -61,12 +61,14 @@ class CepAkilVpn : VpnService() {
         try { a.addDisallowedApplication(packageName) } catch (_: Exception) { }
         arayuz = try { a.establish() } catch (_: Exception) { null } ?: return
         calisiyor = true
+        acik = true
         Thread { TehditGuncelleyici.yukle(this) }.start()
         okuyucu = Thread(::dongu, "cepakil-dns").apply { start() }
     }
 
     private fun durdur() {
         calisiyor = false
+        acik = false
         try { arayuz?.close() } catch (_: Exception) { }
         arayuz = null
         okuyucu?.interrupt()
@@ -109,7 +111,7 @@ class CepAkilVpn : VpnService() {
         if (a.izinliSiteler.any { ad == it || ad.endsWith(".$it") }) return false
         // Liste yenilenince eski kararlar geçersiz olur.
         val db = TehditKaynagi.veritabani
-        if (db !== kararVeritabani) { kararlar.clear(); kararVeritabani = db }
+        if (db !== kararVeritabani || kararlar.size > 4000) { kararlar.clear(); kararVeritabani = db }
         return kararlar.getOrPut(ad) { db?.hostListede(ad) == true || sahteSiteMi(ad) }
     }
 
@@ -132,6 +134,7 @@ class CepAkilVpn : VpnService() {
     private fun bildir(ad: String) {
         val a = KorumaAyarlari(this)
         a.engellenenSayisi = a.engellenenSayisi + 1
+        a.engellenenEkle(ad)
         val simdi = System.currentTimeMillis()
         if (simdi - sonBildirim < 5_000) return
         sonBildirim = simdi
@@ -181,11 +184,16 @@ class CepAkilVpn : VpnService() {
             context.startService(Intent(context, CepAkilVpn::class.java).setAction(DURDUR))
         }
 
-        /** Sistem VPN'in açık olduğunu biliyor mu? (Ayarlar ekranındaki durum için) */
-        fun aktifMi(context: Context): Boolean = try {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            @Suppress("DEPRECATION")
-            cm.allNetworks.any { cm.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true }
+        /** CepAkıl'ın KENDİ web koruması şu an çalışıyor mu? (Başka bir VPN'in açık olması sayılmaz.) */
+        @Volatile private var acik = false
+        fun aktifMi(@Suppress("UNUSED_PARAMETER") context: Context): Boolean = acik
+
+        /**
+         * Telefonda "Özel DNS" elle bir sağlayıcıya ayarlı mı? Öyleyse site adı sorguları şifreli
+         * olarak doğrudan o sağlayıcıya gider ve web koruması onları göremez.
+         */
+        fun ozelDnsElleAyarli(context: Context): Boolean = try {
+            android.provider.Settings.Global.getString(context.contentResolver, "private_dns_mode") == "hostname"
         } catch (_: Exception) { false }
     }
 }

@@ -14,13 +14,32 @@ android {
         applicationId = "com.cepakil"
         minSdk = 26          // Android 8.0
         targetSdk = 35       // Android 15
-        versionCode = 1
-        versionName = "0.1.0"
+        // Derleme sistemi her derlemede artan bir numara verir (-Psurum=N); böylece yeni sürüm eskisinin üzerine kurulur.
+        val surum = (project.findProperty("surum") as String?)?.toIntOrNull() ?: 1
+        versionCode = surum
+        versionName = "0.2.$surum"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Sabit imza: her derleme aynı anahtarla imzalanır, bu yüzden yeni sürüm eskisi silinmeden üzerine kurulur.
+    // DİKKAT: Bu anahtar depoda açık durur (kişisel/deneme dağıtımı için). Uygulama mağazada ya da geniş
+    // çevrede dağıtılacaksa gizli tutulan ayrı bir anahtara geçilmelidir (bkz. README "İmza").
+    signingConfigs {
+        create("sabit") {
+            storeFile = rootProject.file("imza/cepakil.jks")
+            storePassword = "cepakil-acik"
+            keyAlias = "cepakil"
+            keyPassword = "cepakil-acik"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("sabit")
+        }
         release {
+            signingConfig = signingConfigs.getByName("sabit")
+            isShrinkResources = true
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

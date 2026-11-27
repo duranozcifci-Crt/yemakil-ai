@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.Lifecycle
 import androidx.test.espresso.Espresso
@@ -131,5 +132,64 @@ class UcUcaTest {
         bekle("Çevrimiçi tehdit veritabanı")
         bekle("Web koruması")
         foto("8_ayarlar")
+    }
+
+    /** Koruma özellikleri gerçekten çalışıyor mu: bildirim, web korumasının engellemesi ve iletmesi, izin listesi. */
+    @Test fun t6_koruma() {
+        val ctx = k.activity.applicationContext
+        val a = com.cepakil.koruma.KorumaAyarlari(ctx)
+        kabuk("pm grant com.cepakil android.permission.POST_NOTIFICATIONS")
+        kabuk("appops set com.cepakil ACTIVATE_VPN allow")
+
+        // 1) Anlık koruma uyarısı bildirim olarak görünüyor mu?
+        com.cepakil.koruma.Bildirimler.uygulamaUyarisi(ctx, "com.cepakil.ornek", "Deneme Uyarisi", true, "Deneme")
+        val nm = ctx.getSystemService(android.app.NotificationManager::class.java)
+        k.waitUntil(15_000) {
+            nm.activeNotifications.any { it.notification.extras.getCharSequence("android.title")?.contains("Deneme Uyarisi") == true }
+        }
+        nm.cancelAll()
+
+        // 2) Web koruması: listedeki site engelleniyor, normal site açılıyor.
+        val engelli = "cepakil-deneme-engelli.example"
+        fun listeyiKur() {
+            com.cepakil.analiz.TehditKaynagi.veritabani =
+                com.cepakil.analiz.TehditVeritabani(emptySet(), setOf(engelli), emptySet(), 1L)
+        }
+        listeyiKur()
+        org.junit.Assert.assertNull("VPN onayı verilemedi", android.net.VpnService.prepare(ctx))
+        a.webKoruma = true
+        com.cepakil.koruma.CepAkilVpn.baslat(ctx)
+        k.waitUntil(20_000) { com.cepakil.koruma.CepAkilVpn.aktifMi(ctx) }
+        Thread.sleep(1500)
+        val once = a.engellenenSayisi
+        repeat(4) {
+            if (a.engellenenSayisi == once) {
+                listeyiKur()
+                kabuk("ping -c 1 -W 3 $engelli")
+                Thread.sleep(1500)
+            }
+        }
+        org.junit.Assert.assertTrue("Listedeki site engellenmedi", a.engellenenSayisi > once)
+        org.junit.Assert.assertTrue(engelli in a.sonEngellenenler)
+        val normal = kabuk("ping -c 1 -W 5 google.com")
+        org.junit.Assert.assertTrue("Web koruması açıkken normal site çözülemedi: $normal", normal.contains("PING"))
+
+        // 3) Ayarlar: korumanın açık göründüğü ve engellenen siteye izin verilebildiği.
+        sekme("ana")
+        sekme("ayarlar")
+        bekle("Son engellenen siteler")
+        k.onNodeWithText("İzin ver").performScrollTo()
+        foto("9_koruma")
+        k.onNodeWithText("İzin ver").performClick()
+        k.waitUntil(10_000) { engelli in a.izinliSiteler }
+        bekle("İzin verdiğin siteler")
+
+        // Temizlik
+        com.cepakil.koruma.CepAkilVpn.durdur(ctx)
+        k.waitUntil(15_000) { !com.cepakil.koruma.CepAkilVpn.aktifMi(ctx) }
+        a.webKoruma = false
+        a.izinliSiteler = emptySet()
+        a.engellenenleriTemizle()
+        com.cepakil.analiz.TehditKaynagi.veritabani = null
     }
 }

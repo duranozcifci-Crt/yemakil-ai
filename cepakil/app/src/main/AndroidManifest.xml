@@ -29,13 +29,13 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!--
-        İnternet: YALNIZ herkese açık tehdit listelerini (USOM, OpenPhish, URLhaus)
+        İnternet: YALNIZ kullanıcı onaylarsa herkese açık tehdit listelerini (USOM, OpenPhish, URLhaus)
         indirmek ve web korumasında DNS sorularını telefonun kendi DNS sunucusuna iletmek için.
         Kullanıcının hiçbir verisi (dosya, mesaj, uygulama listesi, açtığı siteler) gönderilmez.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Anlık koruma ve mesaj uyarıları için (Android 13+ açıkça sorulur). -->
+    <!-- Anlık koruma ve web koruması uyarıları için (Android 13+; yalnız özellik açılınca sorulur). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application

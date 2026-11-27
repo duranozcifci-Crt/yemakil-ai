@@ -45,24 +45,48 @@ object TehditGuncelleyici {
             "https://raw.githubusercontent.com/duranozcifci-Crt/yemakil-ai/cepakil-veri/apk_sha256.txt",
         )),
     )
+    private const val HAZIR = "tehdit.bin"
     private const val AZAMI_BOYUT = 25L * 1024 * 1024
 
     private fun klasor(context: Context) = File(context.filesDir, "tehdit").apply { mkdirs() }
 
-    /** Telefondaki kopyayı belleğe yükler (yoksa sessizce geçer). Arka planda çağrılmalı. */
+    /**
+     * Telefondaki kopyayı belleğe yükler (yoksa sessizce geçer). Arka planda çağrılmalı.
+     * Hazır ikili dosya (tehdit.bin) varsa doğrudan okunur; yoksa indirilen listelerden kurulur.
+     */
     @Synchronized
     fun yukle(context: Context, zorla: Boolean = false) {
         if (!zorla && TehditKaynagi.veritabani != null) return
         val k = klasor(context)
-        fun oku(ad: String) = File(k, ad).takeIf { it.exists() }?.readText()
+        val hazir = File(k, HAZIR)
+        if (!zorla && hazir.exists()) {
+            hazir.inputStream().use { TehditVeritabani.oku(it) }?.let { TehditKaynagi.veritabani = it; return }
+        }
         if (kaynaklar.none { File(k, it.dosya).exists() }) return
-        TehditKaynagi.veritabani = TehditVeritabani.ayristir(
-            null,
-            listOfNotNull(oku("urlhaus_host.txt"), oku("phishing_host.txt")).joinToString("\n"),
-            listOfNotNull(oku("openphish.txt"), oku("usom.txt")).joinToString("\n"),
-            oku("apk_sha256.txt"),
-            KorumaAyarlari(context).sonGuncelleme,
-        )
+        val kurucu = TehditVeritabani.Companion.Kurucu()
+        fun isle(ad: String, satir: (String) -> Unit) {
+            val f = File(k, ad)
+            if (f.exists()) try { f.useLines { it.forEach(satir) } } catch (_: Exception) { }
+        }
+        isle("urlhaus_host.txt", kurucu::hostSatiri)
+        isle("phishing_host.txt", kurucu::hostSatiri)
+        isle("openphish.txt", kurucu::sayfaSatiri)
+        isle("usom.txt", kurucu::sayfaSatiri)
+        isle("apk_sha256.txt", kurucu::hashSatiri)
+        val vt = kurucu.bitir(KorumaAyarlari(context).sonGuncelleme)
+        TehditKaynagi.veritabani = vt
+        try {
+            val gecici = File(k, "$HAZIR.tmp")
+            gecici.outputStream().use { vt.yaz(it) }
+            gecici.renameTo(hazir)
+        } catch (_: Exception) { hazir.delete() }
+    }
+
+    /** İndirilmiş listeleri ve bellekteki kopyayı siler (kullanıcı özelliği kapatınca). */
+    @Synchronized
+    fun sil(context: Context) {
+        klasor(context).listFiles()?.forEach { it.delete() }
+        TehditKaynagi.veritabani = null
     }
 
     /** Listeleri indirir. En az biri başarılıysa true. Arka planda çağrılmalı. */

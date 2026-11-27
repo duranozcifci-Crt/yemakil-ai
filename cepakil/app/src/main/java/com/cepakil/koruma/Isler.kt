@@ -26,8 +26,8 @@ class TehditIsi(c: Context, p: WorkerParameters) : CoroutineWorker(c, p) {
         if (!TehditGuncelleyici.indir(ctx)) return Result.retry()
         // Liste yenilendi: önceden yüklü bir uygulama artık bilinen zararlılar arasında mı?
         if (a.anlikKoruma) {
-            val hashler = com.cepakil.analiz.TehditKaynagi.veritabani?.hashler.orEmpty()
-            if (hashler.isNotEmpty()) {
+            val hashler = com.cepakil.analiz.TehditKaynagi.veritabani?.hashler
+            if (hashler != null && hashler.isNotEmpty()) {
                 val p = ctx.getSharedPreferences("koruma", Context.MODE_PRIVATE)
                 val bildirilen = p.getStringSet("zararli_bildirilen", emptySet()).orEmpty()
                 UygulamaKaynagi(ctx).tumUygulamalar(sistemDahil = false)

@@ -119,4 +119,43 @@ class TehditVeDnsTest {
         // Parmak izi farklıysa eşleşme yok.
         assertTrue(UygulamaDegerlendirici.degerlendir(u.copy(sha256 = "c".repeat(64))).bulgular.none { it.baslik == "Bilinen zararlı yazılım" })
     }
+
+    @Test fun ortakHizmetinAltAlanAdiEngellenir() {
+        val v = TehditVeritabani.ayristir(
+            null, "0.0.0.0 sahte-banka.duckdns.org\n0.0.0.0 duckdns.org\n0.0.0.0 www.blogspot.com\n",
+            "ziraat-onay.vercel.app\nis.gd\n1fichier.com\nhttps://is.gd/abc123\n", null, 1L,
+        )
+        assertTrue(v.hostListede("sahte-banka.duckdns.org"))
+        assertTrue(v.hostListede("ziraat-onay.vercel.app"))
+        // Hizmetin kendisi, kısaltıcılar ve dosya paylaşım siteleri tümden engellenmez.
+        assertTrue(!v.hostListede("duckdns.org"))
+        assertTrue(!v.hostListede("baska.duckdns.org"))
+        assertTrue(!v.hostListede("blogspot.com"))
+        assertTrue(!v.hostListede("is.gd"))
+        assertTrue(!v.hostListede("1fichier.com"))
+        // Kısaltıcıdaki tam adres yine yakalanır.
+        assertEquals("Bilinen zararlı bağlantı", v.baglantiBulgusu("https://is.gd/abc123", "is.gd")?.baslik)
+    }
+
+    @Test fun resmiSitelerListeyleEngellenemez() {
+        val v = TehditVeritabani.ayristir(
+            null, "0.0.0.0 ziraatbank.com.tr\n0.0.0.0 giris.turkiye.gov.tr\n0.0.0.0 google.com\n",
+            "turkiye.gov.tr\nwww.whatsapp.com\n", null, 1L,
+        )
+        for (h in listOf("ziraatbank.com.tr", "www.ziraatbank.com.tr", "giris.turkiye.gov.tr", "turkiye.gov.tr", "google.com", "web.whatsapp.com")) {
+            assertTrue(h, !v.hostListede(h))
+            assertNull(h, v.baglantiBulgusu("https://$h/", h))
+        }
+        assertEquals(0, v.hostlar.size)
+    }
+
+    @Test fun ikiliBicimGidisDonus() {
+        val b = java.io.ByteArrayOutputStream()
+        vt.yaz(b)
+        val g = TehditVeritabani.oku(b.toByteArray().inputStream())!!
+        assertEquals(vt.kayitSayisi, g.kayitSayisi)
+        assertTrue(g.hostListede("cdn.kotu-dagitim.example"))
+        assertTrue("a".repeat(64) in g.hashler)
+        assertNull(TehditVeritabani.oku("bozuk".toByteArray().inputStream()))
+    }
 }
