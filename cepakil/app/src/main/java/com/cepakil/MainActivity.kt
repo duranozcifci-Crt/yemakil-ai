@@ -51,8 +51,11 @@ class MainActivity : ComponentActivity() {
         if (i.action == Intent.ACTION_SEND && i.type == "text/plain") {
             i.getStringExtra(Intent.EXTRA_TEXT)?.take(4000)?.let { paylasilan = it }
         }
-        i.getStringExtra(Bildirimler.EK_PAKET)?.let { acilacakPaket = it }
+        // Dışarıdan gelen değer denetlenir: yalnız geçerli biçimde bir paket adı kabul edilir.
+        i.getStringExtra(Bildirimler.EK_PAKET)?.takeIf { paketAdiDeseni.matches(it) }?.let { acilacakPaket = it }
     }
+
+    private val paketAdiDeseni = Regex("^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+$")
 
     /** Bildirim kanalları, arka plan işleri ve telefondaki tehdit listesi kopyası. */
     private fun korumayiHazirla() {

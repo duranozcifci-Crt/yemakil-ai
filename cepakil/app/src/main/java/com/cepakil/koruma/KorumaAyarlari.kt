@@ -40,6 +40,26 @@ class KorumaAyarlari(context: Context) {
 
     fun engellenenleriTemizle() = p.edit().remove("son_engellenen").apply()
 
+    /** Haftada bir arka planda tam kontrol ve (bir şey varsa) hatırlatma bildirimi. */
+    var haftalikKontrol: Boolean
+        get() = p.getBoolean("haftalik", false)
+        set(v) = p.edit().putBoolean("haftalik", v).apply()
+
+    /** Son güncellemede indirilemeyen listelerin adları (boşsa hepsi indi). */
+    var inmeyenListeler: String
+        get() = p.getString("inmeyen", "").orEmpty()
+        set(v) = p.edit().putString("inmeyen", v).apply()
+
+    /** Yayındaki en yeni sürümün numarası (yüklü olandan büyükse "yeni sürüm var" gösterilir). */
+    var yayindakiSurum: Int
+        get() = p.getInt("yayindaki_surum", 0)
+        set(v) = p.edit().putInt("yayindaki_surum", v).apply()
+
+    /** Bildirimi gönderilmiş son yeni sürüm (aynı sürüm için tekrar bildirim gitmesin). */
+    var bildirilenSurum: Int
+        get() = p.getInt("bildirilen_surum", 0)
+        set(v) = p.edit().putInt("bildirilen_surum", v).apply()
+
     var sonGuncelleme: Long
         get() = p.getLong("son_guncelleme", 0)
         set(v) = p.edit().putLong("son_guncelleme", v).apply()

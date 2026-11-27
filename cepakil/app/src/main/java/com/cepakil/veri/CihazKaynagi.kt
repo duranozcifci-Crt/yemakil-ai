@@ -28,7 +28,20 @@ class CihazKaynagi(private val context: Context) {
             wifi = wifiGuvenligi(),
             kullaniciSertifikalari = kullaniciSertifikalari(),
             magazaDisiKlavyeler = magazaDisiKlavyeler(),
+            playProtect = playProtect(),
         )
+    }
+
+    /**
+     * Play Protect durumu: Google'ın "package_verifier_user_consent" ayarı (1 = açık, -1 = kapalı).
+     * Her telefonda okunamayabilir; o zaman null döner ve hiçbir şey söylenmez.
+     */
+    private fun playProtect(): Boolean? = guvenli(null) {
+        when (Settings.Global.getInt(context.contentResolver, "package_verifier_user_consent", 0)) {
+            1 -> true
+            -1 -> false
+            else -> null
+        }
     }
 
     /** Kullanıcının elle eklediği CA sertifikaları ("user:" ile başlayanlar). İzin gerekmez. */

@@ -5,10 +5,10 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.VpnService
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import com.cepakil.analiz.BaglantiDenetleyici
 import com.cepakil.analiz.DnsPaketi
-import com.cepakil.analiz.Seviye
 import com.cepakil.analiz.TehditKaynagi
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -44,9 +44,32 @@ class CepAkilVpn : VpnService() {
         if (intent?.action == DURDUR) {
             durdur(); stopSelf(); return START_NOT_STICKY
         }
+        onPlanaAl()
         if (!calisiyor) baslat()
+        if (!calisiyor) { stopSelf(); return START_NOT_STICKY }
         return START_STICKY
     }
+
+    /**
+     * Hizmeti "ön plan hizmeti" yapar (sabit bildirimle): telefon yeniden başlayınca arka plandan
+     * başlatılabilmesi ve Android/Samsung'un hizmeti uyutmaması için. İzin verilmezse hizmet yine çalışır.
+     */
+    private fun onPlanaAl() {
+        try {
+            val b = Bildirimler.webKorumasiAcik(this)
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(Bildirimler.KALICI_ID, b, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
+            } else {
+                startForeground(Bildirimler.KALICI_ID, b)
+            }
+        } catch (_: Exception) { }
+    }
+
+    /** Yeni uygulama yüklenince anında haber al (hizmet çalıştığı sürece). */
+    private val paketAlici = object : android.content.BroadcastReceiver() {
+        override fun onReceive(c: Context, i: Intent) { Planlayici.korumayiSimdiCalistir(c.applicationContext) }
+    }
+    private var aliciKayitli = false
 
     override fun onRevoke() { durdur(); super.onRevoke() }
     override fun onDestroy() { durdur(); super.onDestroy() }
@@ -58,10 +81,21 @@ class CepAkilVpn : VpnService() {
             .addDnsServer(SANAL_DNS)
             .addRoute(SANAL_DNS, 32)
             .setBlocking(true)
+        // Android VPN'leri varsayılan olarak "kotalı" sayar; o zaman Wi-Fi'da bile güncellemeler ve yedeklemeler bekler.
+        if (Build.VERSION.SDK_INT >= 29) a.setMetered(false)
         try { a.addDisallowedApplication(packageName) } catch (_: Exception) { }
         arayuz = try { a.establish() } catch (_: Exception) { null } ?: return
         calisiyor = true
         acik = true
+        if (!aliciKayitli) {
+            try {
+                val f = android.content.IntentFilter().apply {
+                    addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REPLACED); addDataScheme("package")
+                }
+                androidx.core.content.ContextCompat.registerReceiver(this, paketAlici, f, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+                aliciKayitli = true
+            } catch (_: Exception) { }
+        }
         Thread { TehditGuncelleyici.yukle(this) }.start()
         okuyucu = Thread(::dongu, "cepakil-dns").apply { start() }
     }
@@ -69,6 +103,8 @@ class CepAkilVpn : VpnService() {
     private fun durdur() {
         calisiyor = false
         acik = false
+        if (aliciKayitli) { try { unregisterReceiver(paketAlici) } catch (_: Exception) { }; aliciKayitli = false }
+        try { stopForeground(STOP_FOREGROUND_REMOVE) } catch (_: Exception) { }
         try { arayuz?.close() } catch (_: Exception) { }
         arayuz = null
         okuyucu?.interrupt()
@@ -112,23 +148,7 @@ class CepAkilVpn : VpnService() {
         // Liste yenilenince eski kararlar geçersiz olur.
         val db = TehditKaynagi.veritabani
         if (db !== kararVeritabani || kararlar.size > 4000) { kararlar.clear(); kararVeritabani = db }
-        return kararlar.getOrPut(ad) { db?.hostListede(ad) == true || sahteSiteMi(ad) }
-    }
-
-    /**
-     * Listede olmasa da alan adının kendisi açıkça sahteyse engellenir: kurum adı + kötüye
-     * kullanılan uzantı / ücretsiz barındırma, karışık alfabe ya da harf oynanmış taklit.
-     * Kurumun kendi adının başka uzantısı (ör. trendyol.com.tr) şirketin kendisine ait
-     * olabileceği için engellenmez.
-     */
-    private fun sahteSiteMi(ad: String): Boolean {
-        val s = BaglantiDenetleyici.denetle("https://$ad")
-        if (s.seviye != Seviye.KIRMIZI) return false
-        val sld = BaglantiDenetleyici.kayitliAlanAdi(ad).substringBefore('.')
-        if (BaglantiDenetleyici.kurumlar.any { k -> k.resmi.any { it.substringBefore('.') == sld } }) return false
-        return s.bulgular.any { b ->
-            b.seviye == Seviye.KIRMIZI && (b.baslik.contains("çok benziyor") || b.baslik.contains("Karışık alfabe") || b.baslik.contains("resmi adres değil"))
-        }
+        return kararlar.getOrPut(ad) { db?.hostListede(ad) == true || BaglantiDenetleyici.webdeEngellenmeli(ad) }
     }
 
     private fun bildir(ad: String) {
@@ -176,12 +196,18 @@ class CepAkilVpn : VpnService() {
         private const val SANAL_IP = "10.111.222.1"
         private const val SANAL_DNS = "10.111.222.2"
 
+        /** Uygulama açıkken başlatma. */
         fun baslat(context: Context) {
-            context.startService(Intent(context, CepAkilVpn::class.java))
+            try { context.startService(Intent(context, CepAkilVpn::class.java)) } catch (_: Exception) { arkaPlandanBaslat(context) }
+        }
+
+        /** Telefon açılışında (uygulama arka plandayken) başlatma. */
+        fun arkaPlandanBaslat(context: Context) {
+            try { androidx.core.content.ContextCompat.startForegroundService(context, Intent(context, CepAkilVpn::class.java)) } catch (_: Exception) { }
         }
 
         fun durdur(context: Context) {
-            context.startService(Intent(context, CepAkilVpn::class.java).setAction(DURDUR))
+            try { context.startService(Intent(context, CepAkilVpn::class.java).setAction(DURDUR)) } catch (_: Exception) { }
         }
 
         /** CepAkıl'ın KENDİ web koruması şu an çalışıyor mu? (Başka bir VPN'in açık olması sayılmaz.) */

@@ -16,28 +16,28 @@ import java.net.URL
 object TehditGuncelleyici {
 
     /** Her kaynak için sırayla denenen adresler (ilk çalışan kullanılır). Hepsi anahtarsız ve herkese açık. */
-    private data class Kaynak(val dosya: String, val adresler: List<String>)
+    private data class Kaynak(val dosya: String, val adresler: List<String>, /** Kullanıcıya gösterilen ad; null ise isteğe bağlı kaynak (inmezse haber verilmez). */ val ad: String? = null)
 
     private val kaynaklar = listOf(
         // USOM: Türkiye Ulusal Siber Olaylara Müdahale Merkezi'nin zararlı bağlantı listesi (Türkiye'yi hedefleyen sahte siteler).
         Kaynak("usom.txt", listOf(
             "https://www.usom.gov.tr/url-list.txt",
             "https://raw.githubusercontent.com/elliotwutingfeng/USOM-Blocklists/main/urls.txt",
-        )),
+        ), "USOM"),
         // OpenPhish: güncel kimlik avı (sahte giriş) sayfaları.
-        Kaynak("openphish.txt", listOf("https://openphish.com/feed.txt")),
+        Kaynak("openphish.txt", listOf("https://openphish.com/feed.txt"), "OpenPhish"),
         // URLhaus (abuse.ch) zararlı yazılım sunucuları; malware-filter projesinin herkese açık kopyası, günde iki kez.
         Kaynak("urlhaus_host.txt", listOf(
             "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts.txt",
             "https://urlhaus-filter.pages.dev/urlhaus-filter-hosts.txt",
             "https://curbengh.github.io/malware-filter/urlhaus-filter-hosts.txt",
-        )),
+        ), "URLhaus"),
         // Kimlik avı sunucuları (OpenPhish + IPThreat derlemesi), aynı projeden.
         Kaynak("phishing_host.txt", listOf(
             "https://malware-filter.gitlab.io/malware-filter/phishing-filter-hosts.txt",
             "https://phishing-filter.pages.dev/phishing-filter-hosts.txt",
             "https://curbengh.github.io/phishing-filter/phishing-filter-hosts.txt",
-        )),
+        ), "kimlik avı listesi"),
         // Bildirilmiş zararlı Android uygulamalarının SHA-256 parmak izleri. MalwareBazaar üyelik anahtarı
         // istediği için CepAkıl'ın kendi GitHub görevi (cepakil-veri.yml) her gün indirip herkese açık yayınlar;
         // anahtar uygulamaya konmaz.
@@ -93,17 +93,22 @@ object TehditGuncelleyici {
     fun indir(context: Context): Boolean {
         val k = klasor(context)
         var basarili = 0
+        val inmeyen = mutableListOf<String>()
         for (s in kaynaklar) {
+            var indi = false
             for (adres in s.adresler) {
                 if (indirDosya(adres, File(k, s.dosya + ".tmp"))) {
                     File(k, s.dosya + ".tmp").renameTo(File(k, s.dosya))
-                    basarili++
+                    indi = true
                     break
                 }
             }
+            if (indi) basarili++ else s.ad?.let { inmeyen += it }
         }
+        val a = KorumaAyarlari(context)
+        a.inmeyenListeler = inmeyen.joinToString(", ")
         if (basarili > 0) {
-            KorumaAyarlari(context).sonGuncelleme = System.currentTimeMillis()
+            a.sonGuncelleme = System.currentTimeMillis()
             yukle(context, zorla = true)
         }
         return basarili > 0

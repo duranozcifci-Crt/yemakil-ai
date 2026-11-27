@@ -85,9 +85,11 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
         run: ./gradlew --no-daemon recordPaparazziDebug -Pgoruntu -Psurum=${{ github.run_number }}
-      # Yalnız elle başlatılınca: APK, ekran görüntüleri ve (hata varsa) kanıtlar "cepakil-cikti" dalına
-      # TEK commit olarak yazılır (eskisinin üzerine). Böylece 19 MB'lık APK'lar depo geçmişinde birikmez.
-      - name: Çıktıları yayınla (cepakil-cikti dalı)
+      # Yalnız elle başlatılınca: başarılı derlemenin APK'sı ve ekran görüntüleri "cepakil-cikti" dalına,
+      # başarısız derlemenin kanıtları "cepakil-hata" dalına TEK commit olarak yazılır (eskisinin üzerine).
+      # Uygulama içi "yeni sürüm" denetimi cepakil-cikti/durum.txt dosyasını okur; bu yüzden o dal yalnız
+      # testlerden geçmiş sürümü taşır.
+      - name: Çıktıları yayınla (cepakil-cikti / cepakil-hata dalı)
         if: always() && github.event_name == 'workflow_dispatch'
         run: |
           C="$RUNNER_TEMP/cikti"; rm -rf "$C"; mkdir -p "$C/ekran"
@@ -104,12 +106,13 @@ jobs:
           fi
           cd "$C"
           git init -q
-          git checkout -q --orphan cepakil-cikti
+          DAL=cepakil-cikti; if [ "${{ job.status }}" != "success" ]; then DAL=cepakil-hata; fi
+          git checkout -q --orphan "$DAL"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "CepAkıl derleme çıktısı (otomatik)"
-          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/heads/cepakil-cikti
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "HEAD:refs/heads/$DAL"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

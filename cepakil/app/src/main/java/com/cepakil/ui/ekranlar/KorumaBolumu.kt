@@ -87,10 +87,31 @@ fun KorumaBolumu() {
     val tehditDurumu = when {
         !a.tehditListeleri -> "Kapalı. Bağlantı ve dosya kontrolleri yalnız yazılış ve kod kurallarıyla yapılır."
         db == null || a.sonGuncelleme == 0L -> "Listeler henüz indirilmedi. İnternete bağlıyken birkaç dakika içinde indirilir."
-        else -> "Son güncelleme: ${tarihYaz(a.sonGuncelleme)} · ${"%,d".format(db.kayitSayisi).replace(',', '.')} kayıt"
+        else -> "Son güncelleme: ${tarihYaz(a.sonGuncelleme)} · ${"%,d".format(db.kayitSayisi).replace(',', '.')} kayıt" +
+            (if (a.inmeyenListeler.isNotBlank()) "\nSon denemede indirilemeyen: ${a.inmeyenListeler} (eski kopyası varsa o kullanılıyor)." else "") +
+            "\nGünlük güncelleme Wi-Fi'da yapılır; 3 gün Wi-Fi olmazsa mobil veriden indirilir."
+    }
+    val pilSerbest = remember(tazele) {
+        try { context.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) != false } catch (_: Exception) { true }
     }
 
     Grup {
+        // Arka plan korumalarından biri açıksa ve Android pil kısıtlaması uyguluyorsa: uyar ve tek dokunuşla düzelt.
+        if (!pilSerbest && (a.anlikKoruma || a.webKoruma || a.haftalikKontrol || a.tehditListeleri)) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Telefon CepAkıl'ı uyutabilir", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.error)
+                Text(
+                    "Android (özellikle Samsung) az açılan uygulamaları pil için uyutur; o zaman arka plan korumaları ve günlük güncelleme durur. " +
+                        "CepAkıl'ı pil kısıtlamasından çıkarman önerilir. Samsung'da ayrıca: Ayarlar > Pil > Arka plan kullanım sınırları > \"Hiç uyumayan uygulamalar\"a CepAkıl'ı ekle.",
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(0.dp))
+                TextButton(onClick = { com.cepakil.veri.AyarYonlendirici.pilKisitlamasi(context) }, modifier = Modifier.testTag("pil_kisitlamasi")) {
+                    Text("Pil kısıtlamasını kaldır")
+                }
+            }
+            GrupAyraci(16.dp)
+        }
         Anahtar(
             "Çevrimiçi tehdit veritabanı",
             "Herkese açık listeler (Türkiye'nin resmi USOM listesi, OpenPhish, URLhaus) günde bir telefona indirilir; " +
@@ -122,7 +143,9 @@ fun KorumaBolumu() {
                             val ok = withContext(Dispatchers.IO) {
                                 TehditGuncelleyici.indir(context).also { if (it) TehditGuncelleyici.yukle(context, zorla = true) }
                             }
-                            guncellemeSonucu = if (ok) "Listeler güncellendi." else "Güncellenemedi. İnternet bağlantını kontrol edip yeniden dene."
+                            guncellemeSonucu = if (ok && a.inmeyenListeler.isBlank()) "Listeler güncellendi."
+                            else if (ok) "Kısmen güncellendi; indirilemeyen: ${a.inmeyenListeler}."
+                            else "Güncellenemedi. İnternet bağlantını kontrol edip yeniden dene."
                             guncelleniyor = false
                             tazele++
                         }
@@ -137,7 +160,7 @@ fun KorumaBolumu() {
         Anahtar(
             "Anlık uygulama koruması",
             "Yeni yüklenen ya da güncellenip yeni izin isteyen uygulamalar arka planda (yaklaşık 15 dakikada bir, pil dostu) değerlendirilir; " +
-                "riskliyse bildirim gelir. Hiçbir uygulama silinmez ya da durdurulmaz." +
+                "riskliyse bildirim gelir. Web koruması da açıksa yeni yükleme anında yakalanır. Hiçbir uygulama silinmez ya da durdurulmaz." +
                 if (a.anlikKoruma && !bildirimVar) "\nBildirim izni kapalı: uyarılar gösterilemez. Açmak için anahtara yeniden dokun." else "",
             a.anlikKoruma, "koruma_anlik",
         ) { acik ->
@@ -153,7 +176,9 @@ fun KorumaBolumu() {
             "Web koruması",
             "Telefonda bilinen zararlı ve sahte sitelere (ör. banka ya da e-Devlet taklitleri) gidilmeden engellenir; tüm tarayıcılarda ve uygulamalarda çalışır. " +
                 "Android bunu bir \"VPN\" olarak gösterir, ama trafiğin başka bir sunucuya gönderilmez: yalnız site adları telefonda kontrol edilir, sayfa içeriklerine bakılmaz. " +
-                "Başka bir VPN açıkken çalışmaz." +
+                "Başka bir VPN açıkken çalışmaz. Telefon yeniden başlayınca kendiliğinden açılır; çalışırken sabit bir bildirim görünür." +
+                (if (a.webKoruma && !a.tehditListeleri) "\nTehdit veritabanı kapalı: yalnız adı açıkça sahte olan siteler engellenir. Tam koruma için veritabanını aç." else "") +
+                (if (a.webKoruma && !bildirimVar) "\nBildirim izni kapalı: engellenen siteyi tarayıcı yalnız \"siteye ulaşılamıyor\" diye gösterir; nedenini aşağıdaki listeden görebilirsin." else "") +
                 (if (a.engellenenSayisi > 0) "\nŞimdiye kadar engellenen: ${a.engellenenSayisi}" else "") +
                 (if (CepAkilVpn.ozelDnsElleAyarli(context)) "\nDikkat: Telefonunda \"Özel DNS\" elle ayarlanmış. Bu durumda web koruması siteleri göremez; Android Ayarlar > Bağlantılar > Diğer bağlantı ayarları > Özel DNS'i \"Otomatik\" yapman gerekir." else "") +
                 (if (a.webKoruma && !vpnAcik) "\nŞu an çalışmıyor (telefon yeniden başlamış ya da başka VPN açılmış olabilir). Açmak için anahtara dokun." else ""),
@@ -174,6 +199,18 @@ fun KorumaBolumu() {
             }
             // Hizmet bir an sonra açılır/kapanır; durumu yeniden oku.
             kapsam.launch { delay(700); tazele++; delay(1500); tazele++ }
+            tazele++
+        }
+
+        GrupAyraci(16.dp)
+        Anahtar(
+            "Haftalık kontrol hatırlatması",
+            "Haftada bir arka planda tam kontrol yapılır (ayarlar ve uygulamalar); incelemen gereken bir şey varsa tek bir bildirim gelir. Hiçbir şey değiştirilmez.",
+            a.haftalikKontrol, "koruma_haftalik",
+        ) { acik ->
+            a.haftalikKontrol = acik
+            Planlayici.uygula(context)
+            if (acik && !bildirimVar) bildirimIzniIste()
             tazele++
         }
 

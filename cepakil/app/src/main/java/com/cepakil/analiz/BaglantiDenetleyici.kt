@@ -360,6 +360,56 @@ object BaglantiDenetleyici {
 
     fun belgeliUzantiMi(alan: String): Boolean = belgeliUzantilar.any { alan.endsWith(it) } || alan in setOf("gov.tr", "edu.tr")
 
+    /** Dolandırıcılık sitelerinin kurum adının yanına eklediği tipik kelimeler. */
+    private val oltaKelimeleri = setOf(
+        "giris", "login", "signin", "onay", "dogrulama", "dogrula", "verify", "sube", "subesi", "mobil", "mobile",
+        "kampanya", "odeme", "odemeler", "iade", "borc", "ceza", "hediye", "cekilis", "destek", "guvenlik", "hesap",
+        "hesabim", "sifre", "bireysel", "internet", "online", "aidat", "basvuru", "takip", "kargo", "teslimat",
+        "gumruk", "fatura", "puan", "bonus", "indirim", "firsat", "kredi", "kart", "musteri", "islem", "guncelle",
+        "guncelleme", "aktivasyon", "kimlik", "secure", "account", "update", "support", "tr", "turkiye", "resmi",
+    )
+
+    /** Adreste adı geçen (ama resmi adresi bu olmayan) kurum; yoksa null. */
+    private fun adiGecenKurum(host: String, kayitliAd: String): Kurum? {
+        val parcalar = host.split('.', '-', '_').toSet()
+        val bitisik = host.replace("-", "").replace(".", "")
+        for (k in kurumlar) {
+            val geciyor = k.anahtarlar.any { a ->
+                when {
+                    a.startsWith("=") -> a.substring(1) in parcalar
+                    k.kisaAd -> a in parcalar
+                    else -> bitisik.contains(a)
+                }
+            }
+            if (!geciyor) continue
+            return if (kayitliAd in k.resmi) null else k
+        }
+        return null
+    }
+
+    /**
+     * Web koruması bu alan adını LİSTEDE OLMASA DA engellesin mi?
+     *
+     * Yalnız çok açık durumda evet: adreste bir kurumun adı geçiyor, adres o kurumun resmi adresi
+     * (ya da aynı adın başka uzantısı) değil VE yanında tipik bir olta kelimesi ("giris", "onay",
+     * "sube"…), kötüye kullanılan bir uzantı ya da ücretsiz barındırma var.
+     * Harf benzerliği ("pcloud" ~ "icloud") bilerek sayılmaz: gerçek siteleri engelliyordu.
+     */
+    fun webdeEngellenmeli(hostHam: String): Boolean {
+        val host = hostHam.lowercase(Locale.ROOT).trimEnd('.')
+        if (!host.contains('.') || belgeliUzantiMi(host)) return false
+        val kayitli = kayitliAlanAdi(host)
+        if (belgeliUzantiMi(kayitli)) return false
+        val kurum = adiGecenKurum(host, kayitli) ?: return false
+        val ad = kayitli.substringBefore('.')
+        if (kurum.resmi.any { it.substringBefore('.') == ad }) return false
+        val parcalar = host.split('.', '-', '_')
+        val uzanti = host.substringAfterLast('.')
+        return parcalar.dropLast(1).any { it in oltaKelimeleri } ||
+            uzanti in supheliUzantilar ||
+            ucretsizBarindirma.any { host.endsWith(".$it") }
+    }
+
     private fun kurumTaklidi(host: String, kayitliAd: String): Bulgu? {
         if (belgeliUzantiMi(host)) return null
         val parcalar = host.split('.', '-', '_').toSet()

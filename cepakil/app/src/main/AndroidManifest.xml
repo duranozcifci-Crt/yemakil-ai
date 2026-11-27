@@ -38,6 +38,16 @@
     <!-- Anlık koruma ve web koruması uyarıları için (Android 13+; yalnız özellik açılınca sorulur). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--
+        Web koruması telefon yeniden başlayınca kendiliğinden açılsın ve Android onu uyutmasın diye:
+        açılış haberi, sabit bildirimli "ön plan hizmeti" (VPN uygulamalarına tanınan tür) ve
+        pil kısıtlamasından çıkarma sorusu. Hiçbiri kişisel veriye erişim vermez.
+    -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/veri_aktarim_kurallari"
@@ -72,6 +82,7 @@
         <service
             android:name=".koruma.CepAkilVpn"
             android:exported="false"
+            android:foregroundServiceType="systemExempted"
             android:permission="android.permission.BIND_VPN_SERVICE">
             <intent-filter>
                 <action android:name="android.net.VpnService" />
@@ -79,5 +90,12 @@
         </service>
 
         <receiver android:name=".koruma.IzinVerAlici" android:exported="false" />
+
+        <receiver android:name=".koruma.AcilisAlici" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -171,6 +171,13 @@ class UcUcaTest {
         }
         org.junit.Assert.assertTrue("Listedeki site engellenmedi", a.engellenenSayisi > once)
         org.junit.Assert.assertTrue(engelli in a.sonEngellenenler)
+        // Web koruması çalışırken sabit bildirim görünüyor (ön plan hizmeti).
+        org.junit.Assert.assertTrue("Sabit bildirim yok", nm.activeNotifications.any { it.id == com.cepakil.koruma.Bildirimler.KALICI_ID })
+        // Listede olmayan ama adı açıkça sahte olan site de engelleniyor.
+        val once2 = a.engellenenSayisi
+        kabuk("ping -c 1 -W 3 ziraatbank-giris-onay.com")
+        Thread.sleep(1500)
+        org.junit.Assert.assertTrue("Açıkça sahte adres engellenmedi", a.engellenenSayisi > once2)
         val normal = kabuk("ping -c 1 -W 5 google.com")
         org.junit.Assert.assertTrue("Web koruması açıkken normal site çözülemedi: $normal", normal.contains("PING"))
 
@@ -187,6 +194,22 @@ class UcUcaTest {
         // Temizlik
         com.cepakil.koruma.CepAkilVpn.durdur(ctx)
         k.waitUntil(15_000) { !com.cepakil.koruma.CepAkilVpn.aktifMi(ctx) }
+        // 4) Telefon yeniden başlayınca: açılış alıcısı web korumasını yeniden başlatıyor.
+        a.webKoruma = true
+        com.cepakil.koruma.AcilisAlici().onReceive(ctx, android.content.Intent(android.content.Intent.ACTION_BOOT_COMPLETED))
+        k.waitUntil(20_000) { com.cepakil.koruma.CepAkilVpn.aktifMi(ctx) }
+        com.cepakil.koruma.CepAkilVpn.durdur(ctx)
+        k.waitUntil(15_000) { !com.cepakil.koruma.CepAkilVpn.aktifMi(ctx) }
+
+        // 5) Haftalık kontrol: tarama arka planda yapılabiliyor ve özet bildirimi gidiyor.
+        val kayit = com.cepakil.veri.Tarayici.tara(ctx)
+        org.junit.Assert.assertTrue(kayit.incelenenUygulamaSayisi >= 0)
+        com.cepakil.koruma.Bildirimler.haftalikOzet(ctx, 1, 2)
+        k.waitUntil(15_000) {
+            nm.activeNotifications.any { it.notification.extras.getCharSequence("android.title")?.contains("Haftalık") == true }
+        }
+        nm.cancelAll()
+
         a.webKoruma = false
         a.izinliSiteler = emptySet()
         a.engellenenleriTemizle()

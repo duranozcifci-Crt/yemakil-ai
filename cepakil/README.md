@@ -12,7 +12,7 @@ dosya ve bağlantıları fark etmesine yardımcı olur.
 
 - Dil: Kotlin · Arayüz: Jetpack Compose (Material 3)
 - En düşük Android: **8.0 (API 26)** · Hedef: **Android 15 (API 35)**
-- Uygulamanın istediği izinler: `QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `INTERNET` (yükleme sırasında verilir) ve `POST_NOTIFICATIONS` (Android 13+, yalnız bir koruma özelliği açılınca sorulur)
+- Uygulamanın istediği izinler: `QUERY_ALL_PACKAGES`, `REQUEST_DELETE_PACKAGES`, `ACCESS_NETWORK_STATE`, `ACCESS_WIFI_STATE`, `INTERNET`, `RECEIVE_BOOT_COMPLETED`, `FOREGROUND_SERVICE` (+`_SYSTEM_EXEMPTED`), `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (yükleme sırasında verilir) ve `POST_NOTIFICATIONS` (Android 13+, yalnız bir koruma özelliği açılınca sorulur)
 - İsteğe bağlı, kullanıcının onayladığı: **VPN** (web koruması)
 - İnternet yalnız herkese açık tehdit listelerini **indirmek** ve web korumasında DNS sorgularını iletmek için kullanılır; kullanıcı verisi gönderilmez
 
@@ -326,3 +326,26 @@ cepakil/
   Ayarlar > Koruma'dan izin verilebilir ya da izin geri alınabilir. "Özel DNS" elle ayarlıysa kullanıcı uyarılır.
 - **Testler:** `UcUcaTest.t6_koruma` sanal telefonda bildirimi, listedeki sitenin engellenmesini, normal sitenin
   çözülmesini ve "İzin ver" akışını denetler.
+
+## 11. Arka plan davranışı, güncelleme ve hatırlatmalar
+
+- **Mobil veri:** Günlük liste güncellemesi kotalı bağlantıda atlanır; liste 3 günden eskiyse yine de indirilir.
+  "Şimdi güncelle" ve ilk onay her bağlantıda indirir. İndirilemeyen kaynaklar Ayarlar'da adıyla gösterilir.
+- **Web koruması:** VPN `setMetered(false)` ile kurulur (Android VPN'leri varsayılan olarak kotalı sayar). Hizmet,
+  sabit bildirimli ön plan hizmetidir (`systemExempted` türü; VPN uygulamalarına tanınır). `koruma/AcilisAlici`
+  telefon açılışında ve uygulama güncellenince, kullanıcı korumayı açık bıraktıysa ve VPN onayı duruyorsa yeniden başlatır.
+- **Listede olmayan sahte siteler:** `BaglantiDenetleyici.webdeEngellenmeli` yalnız "kurum adı + olta kelimesi / kötüye
+  kullanılan uzantı / ücretsiz barındırma" birleşimini engeller. Harf benzerliği ve karışık alfabe web korumasında
+  engelleme sebebi değildir (popüler 10.000 sitede 6 yanlış engelleme yapıyordu; yeni kuralda 1: `online-instagram.com`).
+- **Anında yakalama:** Web koruması çalışırken hizmet `PACKAGE_ADDED/REPLACED` haberlerini dinler ve anlık korumayı
+  hemen çalıştırır; kapalıyken 15 dakikalık periyodik iş geçerlidir.
+- **Pil:** Arka plan korumalarından biri açıkken uygulama pil kısıtlaması altındaysa Ayarlar > Koruma'da uyarı ve
+  "Pil kısıtlamasını kaldır" düğmesi çıkar (Samsung için "Hiç uyumayan uygulamalar" yönergesiyle).
+- **Haftalık kontrol** (isteğe bağlı): `HaftalikIsi` 7 günde bir `veri/Tarayici` ile tam tarama yapar, kaydı saklar,
+  incelenecek konu varsa tek bildirim gönderir.
+- **Play Protect:** `package_verifier_user_consent` ayarı -1 ise "Google Play Protect kapalı" (sarı); okunamazsa sessiz.
+- **Uygulama içi güncelleme:** `koruma/Guncelleme` günlük güncellemeyle birlikte ya da Ayarlar > "Yeni sürüm var mı?"
+  ile `cepakil-cikti/durum.txt` dosyasını okur; daha yeni sürüm varsa ana sayfada "İndir" kartı çıkar. APK tarayıcıda
+  iner, kurulumu Android sorar (`REQUEST_INSTALL_PACKAGES` istenmez). Başarısız derlemeler `cepakil-hata` dalına gider.
+- **Bilinen sınır:** Web koruması yalnız UDP DNS sorgularını iletir; çok uzun yanıt gerektirip TCP'ye düşen nadir
+  sorgular yanıtsız kalır.

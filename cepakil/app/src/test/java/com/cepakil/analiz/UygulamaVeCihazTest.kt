@@ -63,6 +63,13 @@ class UygulamaVeCihazTest {
     private fun cihaz(kilit: Boolean? = true, yama: String? = "2026-10-01", api: Int = 35, usb: Boolean? = false) =
         CihazDegerlendirici.CihazBilgisi(kilit, api, "15", yama, false, usb, LocalDate.of(2026, 11, 21))
 
+    @Test fun playProtectKapaliysaUyarir() {
+        assertTrue(CihazDegerlendirici.degerlendir(cihaz().copy(playProtect = false)).any { it.baslik == "Google Play Protect kapalı" && it.seviye == Seviye.SARI })
+        // Açıksa ya da okunamadıysa hiçbir şey söylenmez.
+        assertTrue(CihazDegerlendirici.degerlendir(cihaz().copy(playProtect = true)).none { it.baslik.contains("Play Protect") })
+        assertTrue(CihazDegerlendirici.degerlendir(cihaz()).none { it.baslik.contains("Play Protect") })
+    }
+
     @Test fun guncelKilitliTelefonSorunsuz() {
         assertEquals(Seviye.YESIL, CihazDegerlendirici.degerlendir(cihaz()).enYuksekSeviye())
     }

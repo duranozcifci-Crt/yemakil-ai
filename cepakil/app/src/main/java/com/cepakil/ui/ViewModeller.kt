@@ -136,22 +136,7 @@ class TaramaViewModel(app: Application) : AndroidViewModel(app) {
         _durum.update { it.copy(taraniyor = true, hata = null) }
         viewModelScope.launch {
             try {
-                val kayit = withContext(Dispatchers.Default) {
-                    val sistemDahil = depo.sistemUygulamalariDahil
-                    val cihazBulgulari = CihazDegerlendirici.degerlendir(cihaz.oku())
-                    val liste = uygulamalar.tumUygulamalar(sistemDahil)
-                    val sonuclar = liste.map { UygulamaDegerlendirici.degerlendir(it) }
-                    TaramaKaydi(
-                        zaman = System.currentTimeMillis(),
-                        cihazBulgulari = cihazBulgulari,
-                        uygulamalar = sonuclar
-                            .filter { it.seviye == Seviye.KIRMIZI || it.seviye == Seviye.SARI }
-                            .sortedByDescending { it.seviye.agirlik }
-                            .map { s -> TaramaKaydi.UygulamaOzeti(s.bilgi.paket, s.bilgi.ad, s.seviye, s.bulgular) },
-                        incelenenUygulamaSayisi = liste.size,
-                        sistemDahil = sistemDahil,
-                    )
-                }
+                val kayit = withContext(Dispatchers.Default) { com.cepakil.veri.Tarayici.tara(getApplication()) }
                 depo.kaydet(kayit)
                 _durum.update { it.copy(kayit = kayit, taraniyor = false, hata = null) }
             } catch (e: Exception) {

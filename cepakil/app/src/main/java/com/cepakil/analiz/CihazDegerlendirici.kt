@@ -23,6 +23,8 @@ object CihazDegerlendirici {
         val kullaniciSertifikalari: Int = 0,
         /** Açık olan ve mağaza dışından yüklenmiş klavyelerin adları. */
         val magazaDisiKlavyeler: List<String> = emptyList(),
+        /** Google Play Protect (uygulama taraması) açık mı? Okunamadıysa null. */
+        val playProtect: Boolean? = null,
     )
 
     enum class WifiGuvenlik { YOK, ACIK, OWE, WEP, WPA_KISISEL, WPA3, KURUMSAL, BILINMIYOR }
@@ -93,6 +95,14 @@ object CihazDegerlendirici {
             b += Bulgu(
                 Seviye.SARI, "Mağaza dışından yüklenmiş klavye açık",
                 "${c.magazaDisiKlavyeler.joinToString()} klavyesi açık. Klavyeler yazdığın her şeyi (şifreler dahil) görebilir; tanımıyorsan Ayarlar > Genel yönetim > Klavye listesinden kapat.",
+            )
+        }
+
+        if (c.playProtect == false) {
+            b += Bulgu(
+                Seviye.SARI, "Google Play Protect kapalı",
+                "Play Protect, telefondaki uygulamaları Google'ın zararlı yazılım veritabanıyla tarar; CepAkıl'ın yapamadığı bir denetimdir. " +
+                    "Play Store > profil resmi > Play Protect > ayarlar bölümünden açman önerilir.",
             )
         }
 

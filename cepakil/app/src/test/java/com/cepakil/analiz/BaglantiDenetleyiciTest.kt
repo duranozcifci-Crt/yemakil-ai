@@ -122,4 +122,16 @@ class BaglantiDenetleyiciTest {
         assertEquals("ziraatbank.com.tr", BaglantiDenetleyici.kayitliAlanAdi("a.b.ziraatbank.com.tr"))
         assertEquals("ornek.com", BaglantiDenetleyici.kayitliAlanAdi("x.y.ornek.com"))
     }
+
+    @Test fun webKorumasiYalnizAcikSahteleriEngeller() {
+        for (h in listOf(
+            "ziraatbank-giris.com", "turkiye-gov-tr.xyz", "garanti-bbva-sube.net", "e-devlet-odeme.com", "ptt-kargo-takip.top",
+            "isbank.com.tr.giris-onay.com", "trendyol-kampanya.shop", "akbank-mobil.duckdns.org",
+        )) assertTrue(h, BaglantiDenetleyici.webdeEngellenmeli(h))
+        // Gerçek siteler: resmi adresler, benzer adlı başka şirketler, kurum adının başka uzantısı.
+        for (h in listOf(
+            "ziraatbank.com.tr", "www.turkiye.gov.tr", "pcloud.com", "usbank.com", "qcloud.com", "ficbook.net",
+            "trendyol.com", "google.com", "ziraat.ankara.edu.tr", "garantiotomotiv.com", "example.com",
+        )) assertTrue(h, !BaglantiDenetleyici.webdeEngellenmeli(h))
+    }
 }

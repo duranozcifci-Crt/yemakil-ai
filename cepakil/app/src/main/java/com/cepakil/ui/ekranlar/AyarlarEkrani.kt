@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +36,9 @@ import com.cepakil.ui.bilesenler.BolumBasligi
 import com.cepakil.ui.bilesenler.IkincilDugme
 import com.cepakil.ui.bilesenler.UstCubuk
 import com.cepakil.veri.TaramaDeposu
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel) {
@@ -41,6 +46,10 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
     val sistemDahil by uygulamalarVm.sistemDahil.collectAsStateWithLifecycle()
     val tarama by taramaVm.durum.collectAsStateWithLifecycle()
     var silOnayi by rememberSaveable { mutableStateOf(false) }
+    val kapsam = rememberCoroutineScope()
+    var surumDenetleniyor by remember { mutableStateOf(false) }
+    var surumSonucu by remember { mutableStateOf<String?>(null) }
+    var yeniSurum by remember { mutableStateOf<Int?>(null) }
     var silindi by rememberSaveable { mutableStateOf(false) }
     val surum = remember {
         try { context.packageManager.getPackageInfo(context.packageName, 0).versionName } catch (e: Exception) { null } ?: "?"
@@ -135,6 +144,12 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
             }
             item {
                 Madde(
+                    "Açılışta başlama, sürekli çalışma ve pil (RECEIVE_BOOT_COMPLETED, FOREGROUND_SERVICE, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)",
+                    "Web koruması telefon yeniden başlayınca kendiliğinden açılsın, Android onu uyutmasın ve \"pil kısıtlamasını kaldır\" sorusu gösterilebilsin diye. Kişisel veriye erişim vermezler.",
+                )
+            }
+            item {
+                Madde(
                     "VPN (isteğe bağlı)",
                     "Yalnız \"Web koruması\" açıksa. Android onay penceresi gösterir. Yalnız site adı sorguları telefonda denetlenir; trafiğin başka bir sunucuya yönlendirilmez.",
                 )
@@ -182,6 +197,33 @@ fun AyarlarEkrani(taramaVm: TaramaViewModel, uygulamalarVm: UygulamalarViewModel
 
             item { BolumBasligi("Hakkında") }
             item { Text("CepAkıl sürüm $surum · Tüm kontroller telefonun üzerinde yapılır.", style = MaterialTheme.typography.bodyMedium) }
+            item {
+                Column {
+                    IkincilDugme(if (surumDenetleniyor) "Denetleniyor…" else "Yeni sürüm var mı?", {
+                        if (!surumDenetleniyor) {
+                            surumDenetleniyor = true
+                            kapsam.launch {
+                                val yeni = withContext(Dispatchers.IO) { com.cepakil.koruma.Guncelleme.denetle(context) }
+                                yeniSurum = yeni
+                                surumSonucu = when {
+                                    yeni != null -> "Yeni sürüm var: 0.2.$yeni"
+                                    com.cepakil.koruma.KorumaAyarlari(context).yayindakiSurum > 0 -> "En güncel sürümü kullanıyorsun."
+                                    else -> "Denetlenemedi. İnternet bağlantını kontrol et."
+                                }
+                                surumDenetleniyor = false
+                            }
+                        }
+                    })
+                    surumSonucu?.let { Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp)) }
+                    yeniSurum?.let {
+                        TextButton(onClick = { com.cepakil.veri.AyarYonlendirici.tarayicidaAc(context, com.cepakil.koruma.Guncelleme.APK_ADRESI) }) { Text("İndir") }
+                    }
+                    Text(
+                        "Bu düğme yalnız küçük bir sürüm bilgisini okur; hiçbir verin gönderilmez. İndirilen dosyayı açınca kurulumu Android sana sorar.",
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
     }
 

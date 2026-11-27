@@ -86,6 +86,7 @@ fun AnaEkran(
     val context = LocalContext.current
     var korumaSayisi by remember { mutableIntStateOf(0) }
     var listeSorusu by remember { mutableStateOf(false) }
+    var yeniSurum by remember { mutableStateOf<Int?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         val a = KorumaAyarlari(context)
         listeSorusu = !a.listeSoruldu && !a.tehditListeleri
@@ -93,7 +94,9 @@ fun AnaEkran(
             a.tehditListeleri,
             a.anlikKoruma,
             a.webKoruma && CepAkilVpn.aktifMi(context),
+            a.haftalikKontrol,
         ).count { it }
+        yeniSurum = com.cepakil.koruma.Guncelleme.bekleyenSurum(context)
     }
     // CepAkıl her ön plana geldiğinde: son açılıştan beri yeni yüklenen uygulamalar.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.degisiklikleriDenetle() }
@@ -107,6 +110,7 @@ fun AnaEkran(
         baglantiyaGit = baglantiyaGit,
         cihazEylemi = { cihazEylemi(context, it) },
         koruma = korumaSayisi to korumayaGit,
+        yeniSurum = yeniSurum?.let { s -> s to { AyarYonlendirici.tarayicidaAc(context, com.cepakil.koruma.Guncelleme.APK_ADRESI); Unit } },
         listeSorusu = if (!listeSorusu) null else { kabul ->
             val a = KorumaAyarlari(context)
             a.listeSoruldu = true
@@ -132,10 +136,12 @@ fun AnaEkranIcerik(
     dosyayaGit: () -> Unit,
     baglantiyaGit: () -> Unit,
     cihazEylemi: (Bulgu) -> (() -> Unit)? = { null },
-    /** Açık koruma sayısı (3 üzerinden) ve Ayarlar'a gitme eylemi. */
+    /** Açık koruma sayısı (4 üzerinden) ve Ayarlar'a gitme eylemi. */
     koruma: Pair<Int, () -> Unit>? = null,
     /** İlk açılış sorusu: tehdit listeleri indirilsin mi? (true = indir). Sorulmayacaksa null. */
     listeSorusu: ((Boolean) -> Unit)? = null,
+    /** Yayında daha yeni bir sürüm varsa: sürüm numarası ve indirme eylemi. */
+    yeniSurum: Pair<Int, () -> Unit>? = null,
 ) {
     val kayit = d.kayit
     LazyColumn(
@@ -227,6 +233,23 @@ fun AnaEkranIcerik(
             }
         }
 
+        yeniSurum?.let { (surum, indir) ->
+            item {
+                Grup {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("CepAkıl'ın yeni sürümü var (0.2.$surum)", style = MaterialTheme.typography.titleSmall)
+                        Spacer(Modifier.size(4.dp))
+                        Text(
+                            "\"İndir\"e basınca dosya tarayıcıda iner. İnince dosyayı aç; Android kurulumu sana sorar ve yeni sürüm eskisinin üzerine kurulur (ayarların korunur).",
+                            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        androidx.compose.material3.Button(onClick = indir) { Text("İndir") }
+                    }
+                }
+            }
+        }
+
         listeSorusu?.let { yanit ->
             item {
                 Grup {
@@ -252,11 +275,11 @@ fun AnaEkranIcerik(
         koruma?.let { (sayi, git) ->
             item {
                 Grup {
-                    val tam = sayi == 3
+                    val tam = sayi == 4
                     Satir(
-                        "Koruma: $sayi / 3 açık",
-                        if (tam) "Tehdit listeleri, anlık uygulama koruması ve web koruması çalışıyor."
-                        else "Anlık uygulama korumasını ve web korumasını Ayarlar'dan açabilirsin.",
+                        "Koruma: $sayi / 4 açık",
+                        if (tam) "Tehdit listeleri, anlık koruma, web koruması ve haftalık kontrol açık."
+                        else "Kapalı olan korumaları Ayarlar'dan açabilirsin.",
                         bas = {
                             TonluSimge(
                                 Icons.Filled.Shield,
@@ -368,6 +391,7 @@ private fun DurumPanosu(d: TaramaViewModel.Durum, taramayiBaslat: () -> Unit) {
 private fun cihazEylemi(context: Context, b: Bulgu): (() -> Unit)? = when {
     b.baslik.startsWith("Ekran kilidi") -> { { AyarYonlendirici.ekranKilidi(context) } }
     b.baslik.contains("güncelleme", ignoreCase = true) || b.baslik.contains("Android sürümü") -> { { AyarYonlendirici.sistemGuncelleme(context) } }
+    b.baslik.contains("Play Protect") -> { { AyarYonlendirici.playProtect(context) } }
     b.baslik.contains("USB") || b.baslik.contains("Geliştirici") -> { { AyarYonlendirici.gelistiriciSecenekleri(context) } }
     b.baslik.contains("yama", ignoreCase = true) -> { { AyarYonlendirici.sistemGuncelleme(context) } }
     else -> null

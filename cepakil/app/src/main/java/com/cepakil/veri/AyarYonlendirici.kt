@@ -45,6 +45,22 @@ object AyarYonlendirici {
         Intent(Settings.ACTION_SECURITY_SETTINGS),
     )
 
+    fun playProtect(context: Context) = ac(
+        context,
+        Intent().setClassName("com.google.android.gms", "com.google.android.gms.security.settings.VerifyAppsSettingsActivity"),
+        Intent(Settings.ACTION_SECURITY_SETTINGS),
+    )
+
+    /** Pil kısıtlaması: önce doğrudan "kısıtlama" sorusu, olmazsa liste, o da olmazsa uygulama ayarları. */
+    fun pilKisitlamasi(context: Context) = ac(
+        context,
+        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${context.packageName}")),
+        Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
+    )
+
+    fun tarayicidaAc(context: Context, adres: String) = ac(context, Intent(Intent.ACTION_VIEW, Uri.parse(adres)))
+
     fun guvenlik(context: Context) = ac(context, Intent(Settings.ACTION_SECURITY_SETTINGS))
 
     fun sistemGuncelleme(context: Context) = ac(
