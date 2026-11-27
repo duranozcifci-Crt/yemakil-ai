@@ -92,6 +92,8 @@ object Bildirimler {
             .setContentTitle("Web koruması açık")
             .setContentText("Zararlı ve sahte siteler engelleniyor.")
             .setOngoing(true)
+            // Android 12+ bu tür bildirimi 10 sn geciktirir; koruma açılır açılmaz görünsün.
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(ac(context, KALICI_ID) { })
             .build()

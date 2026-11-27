@@ -172,7 +172,7 @@ class UcUcaTest {
         org.junit.Assert.assertTrue("Listedeki site engellenmedi", a.engellenenSayisi > once)
         org.junit.Assert.assertTrue(engelli in a.sonEngellenenler)
         // Web koruması çalışırken sabit bildirim görünüyor (ön plan hizmeti).
-        org.junit.Assert.assertTrue("Sabit bildirim yok", nm.activeNotifications.any { it.id == com.cepakil.koruma.Bildirimler.KALICI_ID })
+        k.waitUntil(20_000) { nm.activeNotifications.any { it.id == com.cepakil.koruma.Bildirimler.KALICI_ID } }
         // Listede olmayan ama adı açıkça sahte olan site de engelleniyor.
         val once2 = a.engellenenSayisi
         kabuk("ping -c 1 -W 3 ziraatbank-giris-onay.com")
