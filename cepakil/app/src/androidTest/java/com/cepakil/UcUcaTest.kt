@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -185,9 +186,10 @@ class UcUcaTest {
         sekme("ana")
         sekme("ayarlar")
         bekle("Son engellenen siteler")
-        k.onNodeWithText("İzin ver").performScrollTo()
+        // İki site engellendi (en yenisi başta); listedeki deneme sitesi sonuncusu.
+        k.onAllNodesWithText("İzin ver").onLast().performScrollTo()
         foto("9_koruma")
-        k.onNodeWithText("İzin ver").performClick()
+        k.onAllNodesWithText("İzin ver").onLast().performClick()
         k.waitUntil(10_000) { engelli in a.izinliSiteler }
         bekle("İzin verdiğin siteler")
 
