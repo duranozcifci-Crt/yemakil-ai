@@ -69,14 +69,29 @@ const tl = (v) => tr(Math.round(v / 100) * 100);
 const yz = (v) => v === null || v === undefined || !isFinite(v) ? "—" : Math.abs(v) < 0.05 ? "0%" : (v > 0 ? "+" : "−") + tr(Math.abs(v), 1) + "%";
 const gun = (d) => d.slice(8, 10) + "." + d.slice(5, 7);
 
+// Boş ya da eksik dosya (denetim 27.11.2026, D5): içi boş ama geçerli dosyada ("{}") bildirim "Bugün önemli bir değişiklik yok … USD/TL 1,00" diyordu.
+// Fiyat serisi, kur ya da güncelleme tarihi yoksa neyin eksik olduğu döner; bildirim o zaman yalnız "veri okunamadı" der.
+export function veriSorunu(D) {
+  if (!D || typeof D !== "object" || Array.isArray(D)) return "dosyanın içi boş ya da biçimi bozuk";
+  const dolu = (L) => Array.isArray(L) && L.some((u) => u && Array.isArray(u.seri) && u.seri.length);
+  if (!dolu(D.urunler) && !dolu(D.yurtici && D.yurtici.urunler)) return "dosyada hiç fiyat yok";
+  if (!Array.isArray(D.usdtry) || !D.usdtry.length || !(D.usdtry[D.usdtry.length - 1][1] > 0)) return "dosyada dolar kuru yok";
+  if (!isFinite(Date.parse(D.guncel))) return "dosyanın güncelleme tarihi okunamıyor";
+  return null;
+}
+export const VERI_YOK = (neden) => `⚠ Fiyat verisi okunamadı\nFiyat dosyası (fiyatlar.json) eksik ya da bozuk: ${neden}. Bugün fiyat özeti çıkarılamadı; "değişiklik yok" anlamına gelmez.\n`;
+
 export function ozet(D, uy = [], opt = {}) {
+  const vs = veriSorunu(D);
+  if (vs) return VERI_YOK(vs);
   const simdi = opt.simdi != null ? +opt.simdi : Date.now();
   const o2 = { ...opt, simdi, yeniden: opt.yeniden != null ? +opt.yeniden : pencereBasi(simdi, opt.bildirim) };
   const A = analiz(D, uy, o2), K = D.usdtry || [];
   const satir = [];
   satir.push(A.baslik);
   const kurHf = K.length > 5 ? FJ.fpChange(K, 7) : null;
-  satir.push(`Borsa günü ${A.son ? gun(A.son) : "—"} · USD/TL ${tr(A.kur, 2)}${kurHf !== null ? ` (1 hf ${yz(kurHf)})` : ""}`);
+  // kur bayatsa (son kur 4 günden eski; denetim 27.11.2026, O2) tarihi satırda yazar; ayrıntısı "Dikkat" maddesinde (fiyat.js fpDikkat)
+  satir.push(`Borsa günü ${A.son ? gun(A.son) : "—"} · USD/TL ${tr(A.kur, 2)}${A.kurYas > 4 && A.kurD ? ` (${gun(A.kurD)} kuru, ESKİ)` : kurHf !== null ? ` (1 hf ${yz(kurHf)})` : ""}`);
   const ayar = [];
   if (opt.hata) ayar.push("⚠ " + opt.hata[0].toLocaleUpperCase("tr") + opt.hata.slice(1) + ".");
   if (A.sorun.length) ayar.push("⚠ Fiyat sınırlarında (uyarilar.json) çalışmayan satır: " + A.sorun.join("; ") + ".");
@@ -88,13 +103,17 @@ export function ozet(D, uy = [], opt = {}) {
   satir.push("", "| Ürün | Borsa en ucuz TL/t | 1 hf | İthal Mersin TL/t | Not |", "|---|--:|--:|--:|---|");
   const yok = [];
   for (const r of A.satir) {
+    // borsa ve ithal (FOB) kaynağı hiç tanımlı olmayan hammadde (pamuk tohumu küspesi; denetim O3) her sabah "fiyatı olmayan" diye yazılmaz
+    if (!r.ucuz && !r.eski && !r.ithal && r.kaynak === false) continue;
     if (!r.ucuz && !r.eski && !r.ithal) { yok.push(r.kisa + (r.diger ? ` (yalnız ${r.diger})` : "")); continue; }
     const not = [];
     let bor = "—", hf = "";
     if (r.ucuz) {
-      bor = `${tr(r.ucuz.tl)} ${r.ucuz.et}`;
+      // fiyat son borsa gününün değilse tarihi yazılır (denetim 27.11.2026, O4: bir haftalık Gaziantep fiyatı bugünkü gibi görünüyordu)
+      const fd = r.ucuz.x && r.ucuz.x.b && r.ucuz.x.b.l[0];
+      bor = `${tr(r.ucuz.tl)} ${r.ucuz.et}${fd && A.son && fd !== A.son ? ", " + gun(fd) : ""}`;
       hf = r.ucuz.supheli ? "?" : yz(r.ucuz.hf);
-      if (r.ucuz.supheli) not.push("fiyat çok oynuyor");
+      if (r.ucuz.supheli) not.push(r.ucuz.x && r.ucuz.x.b ? FJ.fpSupNeden(r.ucuz.x.b) : "fiyat çok oynuyor");
       else if (r.ucuz.az) not.push("az işlem");
       if (r.ucuz.ayni) not.push(`fiyat ${r.ucuz.ayni} gündür aynı (kote fiyat olabilir)`);
     } else if (r.eski) { bor = `${tr(r.eski.tl)}* ${r.eski.et}`; not.push("son işlem " + gun(r.eski.d)); }
@@ -103,7 +122,7 @@ export function ozet(D, uy = [], opt = {}) {
     satir.push(`| ${r.kisa} | ${bor} | ${hf} | ${it} | ${not.join(", ")} |`);
   }
   satir.push("");
-  satir.push(`Uyarı eşiği: bir öncekine göre ±%${tr(opt.esik || FJ.UYE_YUZDE || 2, 1).replace(/,0$/, "")}. Borsa: güncel ve düzgün fiyatların en ucuzu; 1 hf = son 1 haftaya göre. İthal = FOB + navlun + liman, bugünkü kurla; gümrük ve KDV hariç. Not'taki "FOB 30.10" ithal hesabının dayandığı FOB fiyatının tarihidir ("Ekim ort." = aylık ortalama): tarih eskiyse ithal rakamı da eskidir.`);
+  satir.push(`Uyarı eşiği: bir öncekine göre ±%${tr(opt.esik || FJ.UYE_YUZDE || 2, 1).replace(/,0$/, "")}. Borsa: güncel ve düzgün fiyatların en ucuzu; 1 hf = son 1 haftaya göre. İthal = FOB + navlun + liman, bugünkü kurla; gümrük ve KDV hariç. Borsa fiyatının yanında tarih varsa (örnek "Gaziantep, 20.11") fiyat o günündür; yoksa son borsa günündendir. Not'taki "FOB 30.10" ithal hesabının dayandığı FOB fiyatının tarihidir ("Ekim ort." = aylık ortalama): tarih eskiyse ithal rakamı da eskidir.`);
   const ek = [];
   if (A.disariAd.length) ek.push("Güncel olmadığı için ithal hesabına katılmayan: " + A.disariAd.join("; ") + ".");
   if (yok.length) ek.push("Fiyatı olmayan: " + yok.join(", ") + " — borsada işlem ve ithal (FOB) fiyatı yok.");
@@ -117,7 +136,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === fs.realpathSync(proces
   const arg = process.argv.slice(2), yol = arg.filter((a) => !a.startsWith("--")), sec = (k) => { const a = arg.find((x) => x.startsWith("--" + k + "=")); return a ? Date.parse(a.split("=")[1]) : NaN; };
   const a = ayarOku(yol[1] || KOK + "uyarilar.json");
   let D;
-  try { D = JSON.parse(fs.readFileSync(yol[0] || "fiyatlar.json", "utf8")); } catch (e) { process.stdout.write("⚠ Fiyat dosyası okunamadı\nfiyatlar.json bulunamadı ya da bozuk; bugün fiyat özeti çıkarılamadı.\n"); process.exit(1); }
+  try { D = JSON.parse(fs.readFileSync(yol[0] || "fiyatlar.json", "utf8")); } catch (e) { process.stdout.write(VERI_YOK("dosya bulunamadı ya da açılamadı")); process.exit(1); }
+  if (veriSorunu(D)) { process.stdout.write(VERI_YOK(veriSorunu(D))); process.exit(1); }
   const opt = {};
   if (a.esik) opt.esik = a.esik;
   if (a.bildirim) opt.bildirim = a.bildirim;

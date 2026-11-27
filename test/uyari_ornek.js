@@ -13,7 +13,7 @@ function ornek() {
   const usd = (s) => s.map(([d, v]) => [d, v * KUR]);
   const sabit = (a, b) => (i) => (i % 2 ? a : b);
   const D = {
-    guncel: "2026-11-13T22:30:00Z", kaynak: "test", not: "", usdtry: [["2026-01-01", KUR]],
+    guncel: "2026-11-13T22:30:00Z", kaynak: "test", not: "", usdtry: [["2026-01-01", KUR], [SON, KUR]] /* son kur güncel: "kur N gündür güncellenmedi" uyarısı (denetim 27.11.2026, O2) bu örneklerde çıkmaz */,
     urunler: [
       { ad: "Mısır", sembol: "FAO", merkez: "Ukrayna FOB (FAO)", seri: usd(gun(12, 7, () => 200, SON)) },
       { ad: "Mısır", sembol: "FAO", merkez: "Arjantin FOB (FAO)", seri: usd(gun(12, 7, (i, n) => (i === n - 1 ? 219 : i % 2 ? 223 : 224), SON)) },

@@ -48,8 +48,16 @@ function f(v,d){if(d===undefined)d=2;return Number(v).toLocaleString("tr-TR",{mi
 function num(v){var x=parseFloat(String(v).replace(",","."));return isNaN(x)?0:x}
 function oku(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
 /* Sipariş sayfası: kendi kaydı (siparis-v1); ilk açılışta rasyon programındaki eski sipariş verileri (rasyon-v1 → sip) bir kez kopyalanır. */
-var SP=oku("siparis-v1"),RS=SP?null:oku("rasyon-v1");
+/* V232 (denetim 19): kayıt VAR ama okunamıyorsa (yarım / bozuk metin) sessizce boş açılmaz: bozuk metin "siparis-v1-bozuk" olarak saklanır (ilk değişiklikte üzerine yazılıp kaybolmasın),
+   ekranda uyarı çıkar ve rasyondaki çok eski sipariş kopyası bu durumda kullanılmaz. */
+var SP=oku("siparis-v1"),_spBozuk=0;
+(function(){var ham=null;try{ham=localStorage.getItem("siparis-v1")}catch(e){}if(!ham||!ham.trim()||ham.trim().length<8)return;
+ var iyi=SP&&typeof SP==="object"&&!Array.isArray(SP)&&SP.sip&&typeof SP.sip==="object"&&!Array.isArray(SP.sip);if(iyi)return;
+ _spBozuk=1;SP=null;try{localStorage.setItem("siparis-v1-bozuk",ham)}catch(e){_spBozuk=2}})();
+var RS=(SP||_spBozuk)?null:oku("rasyon-v1");
 var S={sip:(SP&&SP.sip)||(RS&&RS.sip)||undefined};
+/* sipariş numarası: en az 3 hane; 999'dan sonra 4 haneye geçer (eskiden son 3 hane alınıp 1000 → "000" oluyor, numaralar tekrar ediyordu) */
+function spNoYaz(yil,no){no=Math.max(0,Math.floor(+no||0));var t=String(no);while(t.length<3)t="0"+t;return "SP-"+yil+"-"+t}
 /* V221 (denetim 3): Sipariş iki pencerede açıksa (YemAkıl girişinden + kendi simgesinden) biri ötekinin kaydını silmesin.
    _spHam: bu pencerenin telefondan en son okuduğu / telefona en son yazdığı kayıt metni. _spBaz: o andaki bellekteki hâl (karşılaştırma tabanı).
    1) Öteki pencere kaydedince (storage olayı; ayrıca pencereye dönünce) bu pencere kaydı telefondan yeniden okur ve ekranı yeniler;
@@ -83,7 +91,8 @@ function spBirlestir(M,B,T,H){var deg=false,J=JSON.stringify,ob=function(x){retu
  /* sipariş numarası: sayaç geri gitmez; iki pencerede aynı numarayla açılmış gönderilmemiş yeni siparişe yeni numara verilir */
  if(T.noY&&(!M.noY||String(T.noY)>String(M.noY))){M.noY=T.noY;M.no=T.no}else if(String(T.noY||"")===String(M.noY||"")&&T.no>(M.no||0))M.no=T.no;
  var nolar={};Object.keys(r.mT).forEach(function(id){nolar[r.mT[id].no]=1});
- (M.ls||[]).forEach(function(o){if(!o||r.mT[o.id]||r.mH[o.id]||!nolar[o.no]||Object.keys(o.gon||{}).length)return;var m=String(o.no||"").match(/^SP-(\d{4})-\d+$/);if(!m||m[1]!==String(M.noY||""))return;M.no=(+M.no||0)+1;o.no="SP-"+m[1]+"-"+("00"+M.no).slice(-3);nolar[o.no]=1;deg=true});
+ /* V232 (denetim 14): öteki pencere bu pencerenin boş taslağını silip numarasını yeni siparişine verdiyse (taslak eski kayıtta vardı), buradaki gönderilmemiş siparişe de yeni numara verilir */
+ (M.ls||[]).forEach(function(o){if(!o||r.mT[o.id]||!nolar[o.no]||Object.keys(o.gon||{}).length)return;var m=String(o.no||"").match(/^SP-(\d{4})-\d+$/);if(!m||m[1]!==String(M.noY||""))return;M.no=(+M.no||0)+1;o.no=spNoYaz(m[1],M.no);nolar[o.no]=1;deg=true});
  return deg}
 function save(){try{var ham=spHamOku();if(window._spKayitTam)window._spKayitTam=0;else if(ham!==_spHam&&S.sip&&typeof S.sip==="object"){var T=spCoz(ham),B=null;try{B=JSON.parse(_spBaz)}catch(e){}if(T&&spBirlestir(S.sip,B,T,spCoz(_spHam)))spCizIste()}
  var yeni=JSON.stringify({sip:S.sip});localStorage.setItem("siparis-v1",yeni);_spHam=yeni;_spBaz=JSON.stringify(S.sip||null)}catch(e){if(!window._qWarn){window._qWarn=1;try{alert("Kayıt yapılamadı: tarayıcı depolama alanı dolu veya kapalı.")}catch(x){}}}}

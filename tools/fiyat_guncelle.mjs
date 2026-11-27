@@ -18,7 +18,7 @@ const URUNLER = [
   { ad: "Soya fasulyesi", sembol: "ZS=F", carpan: 0.36744, birim: "sent/bushel → USD/ton (27,22 kg/bushel)" },
 ];
 // Yurt içi: Gaziantep Ticaret Borsası günlük bülteni (HTML) ve Konya Ticaret Borsası (JSON).
-// Her gün için ürün satırlarının miktar ağırlıklı ortalaması (TL/kg); "İTHAL" satış şekli (gümrük beyanı) hariç.
+// Her gün için ürün satırlarının miktar ağırlıklı ortalaması (TL/kg); "İTH…" ile başlayan satış şekilleri (İTHAL, İTHGT: gümrük beyanı) hariç.
 // Fiyat geçmişi ne kadar saklanır (kullanıcı kararı 2026-11-13: 2 yıl; "geçen yıl bu zaman" karşılaştırması için) → fiyat-arsiv.json.
 // Pano en çok 3 ay gösterir (grafik 91 gün; aylık seriler ~2,5 ay gecikmeli geldiği için 3 aylık yüzde ~170 gün geriye bakar) → fiyatlar.json yalnız son SAYFA_GUN gün (denetim F2).
 const SAKLA_GUN = 740;
@@ -67,8 +67,8 @@ export const YURTICI = [
   { ad: "Mısır gluten yemi (feed)", borsa: "Gaziantep", re: /^MISIR GLUTENİ YEMİ$/ },
   { ad: "Mısır gluteni (meal)", borsa: "Gaziantep", re: /^MISIR GLUTENİ$/ },
   { ad: "Ayçiçeği küspesi", borsa: "Gaziantep", re: /^AYÇİÇE(K|Ğİ) KÜSPES/ },
-  // Pamuk küspesi: bültendeki yazım farklarına açık (PAMUK KÜSPESİ, PAMUK TOHUMU KÜSPESİ, ÇİĞİT KÜSPESİ, KÜSPE (PAMUK) …)
-  { ad: "Pamuk tohumu küspesi", borsa: "Gaziantep", re: /^(PAMUK|ÇİĞİT)[^]*KÜSPE|^KÜSPE[^]*(PAMUK|ÇİĞİT)/ },
+  // Pamuk tohumu küspesi (denetim 27.11.2026, O3): Gaziantep'te hiç işlem görmüyor (13.07–27.11 arası 97 bültende tek satır yok; pamuk adlı satırlar lif pamuk).
+  // Boş seri kaldırıldı; bültende küspe/pamuk/çiğit adlı yeni bir satır çıkarsa günlükte "eşleşmeyen adlar" satırında görünür.
   // Adana çiğit = pamuk tohumunun kendisi (küspe değil; denetim Y3) → ayrı hammadde
   { ad: "Çiğit (pamuk tohumu)", borsa: "Adana", satir: /^Çiğit/, not: "en düşük–en yüksek ortası" },
   { ad: "Buğday kepeği", borsa: "Gaziantep", re: /^KEPEK \(BUĞDAY\)$/ },
@@ -126,7 +126,9 @@ export function polatliSatirlar(j) {
 export function urunFiyati(u, K) {
   const L = K && K[u.borsa];
   if (!L) return null;
-  if (u.borsa === "Gaziantep") return ortalama(L.filter((x) => u.re.test(x.ad) && x.sekil !== "İTHAL" && (!x.birim || /KG/i.test(x.birim))));
+  // Satış şekli "İTH…" (İTHAL = ithalat gümrük beyanı, İTHGT = aynısının geç tescili) borsadaki satış değildir (denetim 27.11.2026, Y2:
+  // 24 bin tonluk tek İTHGT beyanı 159 tonluk gerçek satışı ezdi, soya 29,546 yerine 22,338 göründü).
+  if (u.borsa === "Gaziantep") return ortalama(L.filter((x) => u.re.test(x.ad) && !/^İTH/.test(String(x.sekil || "").toLocaleUpperCase("tr-TR")) && (!x.birim || /KG/i.test(x.birim))));
   if (u.borsa === "Konya") return ortalama(L.filter((x) => u.gruplar.includes(x.GrupAdi)).map((x) => ({ ort: sayi(x.OrtFiyat), miktar: sayi(x.Miktar) })));
   if (u.borsa === "Polatlı") return ortalama(L.filter((x) => (u.kod ? u.kod.test(x.kod) : u.isim.test(x.ad))));
   if (u.borsa === "Adana") { const x = L.find((r) => u.satir.test(r.ad)); return x ? x.ort : null; }
@@ -134,12 +136,34 @@ export function urunFiyati(u, K) {
 }
 // Aynı tarihe iki kayıt (kontrol 18.11.2026): Yahoo gece seansının anlık fiyatını bir önceki günün tarihiyle ikinci kez veriyor
 // ([18.11 kapanış], [18.11 gece seansı]). İkincisi ertesi günün henüz bitmemiş fiyatıdır; ilki (kapanış) tutulur, yoksa "günlük +%2,6" diye sahte hareket çıkıyordu.
+// Eski kayıtların düzeltmesi (denetim 27.11.2026, Y2): İTHGT beyanının karıştığı 4 nokta. Betik yalnız son 5 günü yeniden okuduğu için
+// kendiliğinden düzelmez; kayıtlı değer hâlâ hatalı rakamsa doğrusu yazılır (null = o gün yalnız beyan vardı, kayıt silinir). Doğrular bültenlerden hesaplandı.
+export const BORSA_DUZELTME = [
+  ["Soya fasulyesi|Gaziantep", "2026-07-17", 28.61, null],
+  ["Ayçiçeği küspesi|Gaziantep", "2026-07-30", 12.071, 14.2],
+  ["Ayçiçeği küspesi|Gaziantep", "2026-10-14", 15.396, 16.716],
+  ["Soya fasulyesi|Gaziantep", "2026-11-20", 22.338, 29.546],
+];
+export function borsaDuzelt(urunler) {
+  const yapilan = [];
+  for (const [k, gun, yanlis, dogru] of BORSA_DUZELTME) {
+    const u = (urunler || []).find((x) => x.ad + "|" + x.borsa + (x.tur ? "|" + x.tur : "") === k), i = u ? u.seri.findIndex(([d, v]) => d === gun && v === yanlis) : -1;
+    if (i < 0) continue;
+    if (dogru == null) u.seri.splice(i, 1); else u.seri[i] = [gun, dogru];
+    yapilan.push(k + " " + gun + ": " + yanlis + " → " + (dogru == null ? "silindi" : dogru));
+  }
+  return yapilan;
+}
 export function gunTekil(L) {
   const out = [];
   for (const p of L) if (!out.length || out[out.length - 1][0] !== p[0]) out.push(p);
   return out;
 }
-export function yahooSeri(j) {
+// Bitmemiş gün (denetim 27.11.2026, Y1): Yahoo son satırda günün ANLIK fiyatını verir; Chicago'da bu rakam kesinleşen kapanıştan %3–4 farklı
+// çıkabiliyor (mısır 179,6 → 173,1) ve gün boyu "Mısır Chicago +%5" diye sahte uyarı üretiyordu. bitmis (şimdiki an, ms) verilirse son günün satırı
+// yalnız gün bittiyse alınır: (a) aynı tarihe iki satır varsa ilki kapanıştır (akşam seansı başlamış), alınır; (b) tek satırsa ve tarihi borsanın
+// saatine göre bugünse ya da zamanı Yahoo'nun "son işlem anı" (meta.regularMarketTime) ise anlık fiyattır, atılır. Kur için bitmis verilmez (anlık kur istenir).
+export function yahooSeri(j, bitmis) {
   const res = j && j.chart && j.chart.result && j.chart.result[0];
   if (!res) throw new Error("yanıt boş");
   const ts = res.timestamp || [], cl = ((res.indicators && res.indicators.quote && res.indicators.quote[0]) || {}).close || [];
@@ -147,15 +171,41 @@ export function yahooSeri(j) {
   // Tarih borsanın kendi saat diliminde (denetim K7: kur yaz aylarında Greenwich'e göre bir gün geride, Pazar tarihli kaydediliyordu)
   const tz = (res.meta && res.meta.exchangeTimezoneName) || "UTC";
   const gun = (t) => { try { return new Date(t * 1000).toLocaleDateString("en-CA", { timeZone: tz }); } catch { return new Date(t * 1000).toISOString().slice(0, 10); } };
-  ts.forEach((t, k) => { const v = cl[k]; if (v != null && isFinite(v)) out.push([gun(t), v]); });
-  return gunTekil(out);
+  ts.forEach((t, k) => { const v = cl[k]; if (v != null && isFinite(v)) out.push([gun(t), v, t]); });
+  const tek = gunTekil(out);
+  if (bitmis != null && tek.length) {
+    const son = tek[tek.length - 1], cift = out.filter((p) => p[0] === son[0]).length > 1, canli = res.meta && +res.meta.regularMarketTime;
+    if (!cift && (son[0] >= gun(bitmis / 1000) || (canli > 0 && Math.abs(son[2] - canli) <= 60))) tek.pop();
+  }
+  return tek.map(([d, v]) => [d, v]);
 }
-async function seri(sembol) {
+// Chicago serisini önceki kayıtla birleştirir (denetim 27.11.2026, Y1). eskiU: önceki dosyadaki ürün; yeni: Yahoo'dan gelen bitmiş günler (TL/ton); bugun: çalıştırma günü.
+// "kesin" = bu kuralla yazılmış son gün. Önceki kayıtta "kesin" yoksa (eski betiğin dosyası: son gün geçici olabilir) Yahoo'nun bitmiş günleri olduğu gibi alınır.
+// Varsa, kayıtlı son CBOT_PENCERE günde: Yahoo'nun o yanıtta vermediği gün silinmez (Pazar günleri kapanış satırı boş geliyor); kayıtlı rakamdan %2'den çok
+// farklı gelen rakam yazılmaz, günlüğe not düşülür (Pazar günü 20.11 mısır 171,1 → 176,7 olup Pazartesi geri dönmüştü). Aynı yeni rakam (±%0,5)
+// CBOT_GUN ayrı günde gelirse kaynağın gerçek düzeltmesi sayılıp kabul edilir (yanlış bir rakam sonsuza dek kilitlenmesin).
+export const CBOT_SAPMA = 0.02, CBOT_GUN = 3, CBOT_PENCERE = 10;
+export function chicagoBirlestir(eskiU, yeni, bugun) {
+  if (!eskiU || !eskiU.kesin || !Array.isArray(eskiU.seri)) return { seri: yeni, bekleyen: null, not: [], ilk: true };
+  const E = eskiU.seri.filter(([d]) => d <= eskiU.kesin).slice(-CBOT_PENCERE), M = new Map(yeni), bek = {}, not = [];
+  for (const [d, e] of E) {
+    const y = M.get(d);
+    if (y == null) { M.set(d, e); continue; }
+    if (!(e > 0) || Math.abs(y / e - 1) <= CBOT_SAPMA) continue;
+    const b = eskiU.bekleyen && eskiU.bekleyen[d], ayni = b && b.v > 0 && Math.abs(y / b.v - 1) <= 0.005;
+    const gunler = [...new Set([...(ayni ? b.gunler || [] : []), bugun])].sort(), fark = (y / e - 1) * 100;
+    if (gunler.length >= CBOT_GUN) { not.push(`${d}: ${e} → ${y} (${CBOT_GUN} ayrı gün aynı rakam geldi; kabul edildi)`); continue; }
+    M.set(d, e); bek[d] = { v: y, gunler };
+    not.push(`${d}: kesinleşmiş ${e} yerine ${y} geldi (${fark > 0 ? "+" : ""}${fark.toFixed(1)}%); yazılmadı (${gunler.length}/${CBOT_GUN} gün)`);
+  }
+  return { seri: [...M.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)), bekleyen: Object.keys(bek).length ? bek : null, not, ilk: false };
+}
+async function seri(sembol, bitmis) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sembol)}?range=2y&interval=1d`;
   let son;
   for (let i = 0; i < 2; i++) {
     try {
-      const out = yahooSeri(await getir(url, true));
+      const out = yahooSeri(await getir(url, true), bitmis);
       if (out.length < 20) throw new Error("az veri: " + out.length);
       return out;
     } catch (e) { son = e; if (vazgec(e) || agHatasi(e)) break; await bekle(2000 * (i + 1)); }
@@ -388,14 +438,22 @@ if (!kur) { console.error("Kur yok; dosya değiştirilmedi."); process.exit(1); 
 const kurAt = (d) => { let v = null; for (const [t, x] of kur) { if (t <= d) v = x; else break; } return v ?? kur[0][1]; };
 const sonuc = { guncel: new Date().toISOString(), kaynak: "CBOT vadeli (Yahoo Finance), FAO GIEWS, CEPEA (Brezilya), Arjantin tarım bakanlığı (FOB) ve USDA AMS haftalık yem raporları × USD/TRY", not: "Uluslararası referans fiyattır; Türkiye fiyatı değildir. Navlun, gümrük, vergi ve kalite farkı içermez; yönü ve değişim hızı için kullanın.", usdtry: kur.map(([d, v]) => [d, Math.round(v * 10000) / 10000]), urunler: [], cekim: { ...cekimEski } };
 let basarili = 0;
+// Chicago: yalnız bitmiş gün yazılır, kesinleşmiş rakam %2'den çok oynarsa yazılmaz (yahooSeri, chicagoBirlestir). "gorulme" damgası (gorulmeIsle)
+// serinin son tarihi ilerleyince vurulduğu için artık rakam kesinleşince vurulur. geriAlinan: eski betiğin yazdığı geçici son gün seriden çıkarsa
+// bir önceki günün fiyatı "yeni geldi" sayılıp ikinci kez uyarmasın diye damgası o günün sonuna çekilir.
+const geriAlinan = new Map();
 for (const u of URUNLER) {
+  const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === u.sembol);
   try {
-    const s = await seri(u.sembol);
+    const s = await seri(u.sembol, Date.now());
     if (!kur || (eski && kur === eski.usdtry)) throw new Error("güncel kur yok");
-    sonuc.urunler.push({ ad: u.ad, sembol: u.sembol, birim: u.birim, seri: s.map(([d, v]) => [d, Math.round(v * u.carpan * kurAt(d))]) });
+    const b = chicagoBirlestir(o, s.map(([d, v]) => [d, Math.round(v * u.carpan * kurAt(d))]), new Date().toISOString().slice(0, 10));
+    b.not.forEach((n) => console.error("Chicago", u.ad, n));
+    const sonD = b.seri[b.seri.length - 1][0];
+    if (b.ilk && o && Array.isArray(o.seri) && o.seri.length && o.seri[o.seri.length - 1][0] > sonD) { geriAlinan.set(u.sembol, sonD + "T23:59Z"); console.log("Chicago", u.ad + ":", o.seri[o.seri.length - 1][0], "geçici fiyatı seriden çıkarıldı (gün bitince yazılacak)"); }
+    sonuc.urunler.push({ ad: u.ad, sembol: u.sembol, birim: u.birim, seri: b.seri, kesin: sonD, ...(b.bekleyen ? { bekleyen: b.bekleyen } : {}) });
     basarili++;
   } catch (e) {
-    const o = eski && eski.urunler && eski.urunler.find((x) => x.sembol === u.sembol);
     if (o) sonuc.urunler.push({ ...o, eski: true });
     console.error(u.ad, "çekilemedi:", e.message);
   }
@@ -555,6 +613,9 @@ const yi = { kaynak: "Gaziantep, Konya, Polatlı ve Adana ticaret borsaları gü
   // tarandi: geriye 120 gün taraması yapılmış seriler (yeni eklenen ya da arama kalıbı değişen seri bir kez geriye doldurulur)
   tarandi: Object.assign({}, (yEski && yEski.tarandi) || Object.fromEntries(((yEski && yEski.urunler) || []).filter((x) => x.seri && x.seri.length).map((x) => [anahtar(x), (yEski.kontrolB && yEski.kontrolB[x.borsa]) || ""]))),
   urunler: YURTICI.map((u) => { const o = yEski && Array.isArray(yEski.urunler) && yEski.urunler.find((x) => anahtar(x) === anahtar(u)); return { ad: u.ad, borsa: u.borsa, ...(u.tur ? { tur: u.tur } : {}), ...(u.not ? { not: u.not } : {}), seri: ((o && o.seri) || []).slice() }; }) };
+// Eski hatalı noktalar (İTHGT beyanı) bir kez düzeltilir; artık tanımlı olmayan serilerin (pamuk küspesi) tarama kaydı silinir
+{ const dz = borsaDuzelt(yi.urunler); if (dz.length) console.log("Borsa geçmişi düzeltildi:", dz.join("; ")); }
+for (const k of Object.keys(yi.tarandi)) if (!YURTICI.some((u) => anahtar(u) === k)) delete yi.tarandi[k];
 const bugun = new Date().toISOString().slice(0, 10);
 const gunEkle = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 const basla = {}; BORSALAR.forEach((b) => { basla[b] = yi.kontrolB[b] ? gunEkle(yi.kontrolB[b], -5) : gunEkle(bugun, -120); });
@@ -646,6 +707,7 @@ asama("motorin", 60);
 }
 if (!basarili) { console.error("Hiç kaynak çekilemedi; dosya değiştirilmedi."); process.exit(1); }
 gorulmeIsle(sonuc, eski, sonuc.guncel.slice(0, 16) + "Z");
+for (const u of sonuc.urunler) if (geriAlinan.has(u.sembol)) u.gorulme = geriAlinan.get(u.sembol);
 const sn = Math.round((Date.now() - BASLANGIC) / 1000), eskiYas = eski ? Date.now() - Date.parse(eski.guncel) : NaN;
 // Veri değişmediyse dosyalara dokunulmaz (iş akışı "değişiklik yok" der, kayıt oluşmaz); yine de 20 saatte bir yazılır ki "güncelleme" saati ve sayfadaki "N gündür güncellenmedi" uyarısı doğru kalsın
 if (eski && fs.existsSync(OUT) && fs.existsSync(ARSIV) && eskiYas >= 0 && eskiYas < 20 * 36e5 && veriAyni(sonuc, eski)) {
