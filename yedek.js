@@ -14,6 +14,7 @@ var SP=(typeof Storage!=="undefined")?Storage.prototype:null,oSet=SP&&SP.setItem
 var ACILIS=Date.now(),GIRIS=function(){return !!document.getElementById("ykPanel")};
 function lsGet(k){try{return LS?LS.getItem(k):null}catch(e){return null}}
 function lsSet(k,v){try{oSet.call(LS,k,v);return true}catch(e){return false}}
+function lsRem(k){try{oRem.call(LS,k);return true}catch(e){return false}}
 function durum(){var d=null;try{d=JSON.parse(lsGet(DK)||"null")}catch(e){}return (d&&typeof d==="object"&&!Array.isArray(d))?d:{}}
 function durumYaz(d){lsSet(DK,JSON.stringify(d))}
 function iki(n){return (n<10?"0":"")+n}
@@ -73,7 +74,7 @@ function al(tur,not,zorla){clearTimeout(zam);zam=null;var ap=Object.keys(bekleye
   if(!deg.length&&!zorla)return Promise.resolve(null);
   if(!d.ilk)d.ilk=Date.now();d.son=refs;if(deg.length&&tur!=="geri"&&tur!=="dosya")d.sonDeg=Date.now();d.sonOto=Date.now();durumYaz(d);
   var kayit={t:Date.now(),tur:tur||"oto",apps:deg.length?deg:ap,refs:refs,sz:sz,not:not||""};
-  return yaz(kayit,v).then(function(id){haber();return id}).catch(function(){return null})}catch(e){return Promise.resolve(null)}}
+  return yaz(kayit,v).then(function(id){if(id&&(kayit.tur==="oto"||kayit.tur==="ilk"))try{oncekiSil()}catch(e){}haber();return id}).catch(function(){return null})}catch(e){return Promise.resolve(null)}}
 /* localStorage yazımları izlenir (yalnız üç kullanıcı kaydı); asıl yazma aynen yapılır, hatası (depolama dolu) programa aynen döner */
 if(SP&&oSet&&LS){try{
  SP.setItem=function(k,v){var izle=this===LS&&KEYS.indexOf(String(k))>=0,once=izle?lsGet(String(k)):null,r=oSet.apply(this,arguments);if(izle&&once!==String(v))isaretle(String(k));return r};
@@ -82,12 +83,36 @@ if(SP&&oSet&&LS){try{
 }catch(e){}}
 
 /* ---------- geri dönüş / dosyadan yükleme ---------- */
-/* veri: {anahtar: metin}; telefondaki anahtar ve yedek tarihleri korunur; açık program pencereleri yenilenir */
-function yukle(veri){var simdi=oku();Object.keys(veri).forEach(function(k){if(KEYS.indexOf(k)<0||typeof veri[k]!=="string")return;var s=veri[k],o=null;try{o=JSON.parse(s)}catch(e){}
-  if(o&&typeof o==="object"){if(simdi[k])geriKoy(o,simdi[k].cik);s=JSON.stringify(o)}var es=lsGet(k);if(es&&es!==s)lsSet(k+"-onceki",es);lsSet(k,s)});
- lsSet(GK,String(Date.now()))}
+/* veri: {anahtar: metin}; telefondaki anahtar ve yedek tarihleri korunur; açık program pencereleri yenilenir.
+   V232 (denetim 8, 12, 13):
+   - tam (yedeğe geri dönüş / "Geri al"): yedekte OLMAYAN programın kaydı da kaldırılır (o yedek alındığında program boştu); eskiden yerinde kalıyor,
+     "Geri al" boş programa yüklenen yedeği geri almıyordu. Dosyadan yüklemede (tam değil) dosyada olmayan programa dokunulmaz.
+   - Yazma sonucu denetlenir: depolama doluysa hiçbir kayıt değişmez (yazılanlar eski hâline döner) ve false döner; eskiden "başarılı" deniyordu.
+   - "-onceki" kopyası yalnız önceki hâl otomatik yedeğe ALINAMADIYSA yazılır (yoksa önceki hâl zaten "Geri dönmeden önceki hâl" yedeğinde durur; ikinci kopya depolamayı dolduruyordu).
+   - Kaldırılan kayıttaki yapay zekâ anahtarı ve yedek tarihleri ayrı saklanır (GZ); kayıt geri gelince yerine konur. */
+var OK_="yemakil-yedek-onceki",GZ="yemakil-yedek-gizli",PENCERE=15*60000;
+function gizOku(){var g=null;try{g=JSON.parse(lsGet(GZ)||"null")}catch(e){}return (g&&typeof g==="object"&&!Array.isArray(g))?g:{}}
+function yukle(veri,tam,dbVar){var simdi=oku(),giz=gizOku(),plan=[],eski={},yazilan=[],i;veri=veri||{};
+ KEYS.forEach(function(k){var s=veri[k];if(typeof s!=="string"||!s){if(tam&&lsGet(k)!==null)plan.push([k,null]);return}var o=null;try{o=JSON.parse(s)}catch(e){}
+  if(o&&typeof o==="object"){/* önce kaldırılırken saklanan anahtar/tarih, üstüne telefondaki güncel değer */var cik=(Array.isArray(giz[k])?giz[k]:[]).concat(simdi[k]?simdi[k].cik:[]);geriKoy(o,cik);s=JSON.stringify(o)}if(lsGet(k)!==s)plan.push([k,s])});
+ plan.forEach(function(p){eski[p[0]]=lsGet(p[0])});
+ for(i=0;i<plan.length;i++){var k=plan[i][0],s=plan[i][1],ok=s===null?(lsRem(k)&&lsGet(k)===null):(lsSet(k,s)&&lsGet(k)===s);yazilan.push(k);
+  if(!ok){yazilan.forEach(function(k2){if(eski[k2]===null)lsRem(k2);else lsSet(k2,eski[k2])});return false}}
+ var gd=false;plan.forEach(function(p){var k=p[0];if(p[1]===null){if(simdi[k]&&simdi[k].cik.length){giz[k]=simdi[k].cik;gd=true}}else if(giz[k]){delete giz[k];gd=true}});
+ if(gd){if(Object.keys(giz).length)lsSet(GZ,JSON.stringify(giz));else lsRem(GZ)}
+ if(!dbVar){var yz=[];plan.forEach(function(p){if(eski[p[0]]&&lsSet(p[0]+"-onceki",eski[p[0]]))yz.push(p[0]+"-onceki")});if(yz.length)oncekiIsaret(yz)}
+ lsSet(GK,String(Date.now()));return true}
+/* "-onceki" kopyaları: geri alma penceresi (15 dk) kapanınca ve önceki hâl otomatik yedekte dururken silinir. Yalnız bu dosyanın ve Sipariş'in "Yedeği yükle"sinin
+   yazdığı kopyalar (OK_ listesinde) ile rasyonun kendi "geri al"ının kullanamayacağı sahipsiz kopyalar silinir; rasyonun kendi geri yükleme kopyasına dokunulmaz. */
+function oncekiIsaret(L){var d={t:Date.now(),k:[]};try{var e=JSON.parse(lsGet(OK_)||"null");if(e&&Array.isArray(e.k))d.k=e.k.filter(function(x){return typeof x==="string"})}catch(x){}
+ (Array.isArray(L)?L:[L]).forEach(function(k){k=String(k);if(/-onceki$/.test(k)&&d.k.indexOf(k)<0)d.k.push(k)});lsSet(OK_,JSON.stringify(d))}
+function oncekiSil(now){var e=null;try{e=JSON.parse(lsGet(OK_)||"null")}catch(x){}now=now||Date.now();if(e&&typeof e==="object"&&now-(+e.t||0)<PENCERE)return 0;
+ var L=e&&Array.isArray(e.k)?e.k.slice():[],n=0;if(lsGet("rasyon-v1-onceki")===null)["siparis-v1-onceki","fiyat-v1-onceki"].forEach(function(k){if(L.indexOf(k)<0)L.push(k)});
+ L.forEach(function(k){if(/^(rasyon|fiyat|siparis)-v1-onceki$/.test(String(k))&&lsGet(k)!==null&&lsRem(k))n++});if(e!==null||lsGet(OK_)!==null)lsRem(OK_);return n}
+var DOLU="telefonun depolama alanı dolu. Kayıtlar değişmedi; yer açıp (eski fotoğraf, uygulama) yeniden deneyin.";
 function geriDon(id){return kayitGetir(id).then(function(r){if(!r)return {hata:"Bu yedek bulunamadı."};return parcalar(r.refs).then(function(v){if(!v||Object.keys(v).length<Object.keys(r.refs).length)return {hata:"Yedek okunamadı."};
-  return al("geri-oncesi","Geri dönmeden önceki hâl",true).then(function(onc){yukle(v);return al("geri",zaman(r.t)+" hâline dönüldü",true).then(function(){return {ok:true,oncesi:onc,t:r.t}})})})})}
+  return al("geri-oncesi","Geri dönmeden önceki hâl",true).then(function(onc){var vardi=KEYS.filter(function(k){return lsGet(k)!==null&&typeof v[k]!=="string"}).map(function(k){return AD[k]});
+   if(!yukle(v,true,!!onc))return {hata:"Geri dönülemedi: "+DOLU};return al("geri",zaman(r.t)+" hâline dönüldü",true).then(function(){return {ok:true,oncesi:onc,t:r.t,bosalan:vardi}})})})})}
 /* yedek dosyası: yeni biçim / rasyonun "Yedek al" dosyası ({app:"YemAkil",S,ek}) / siparişin "Yedek al" dosyası ({app:"YemAkil-Siparis",sip}) */
 function dosyaCoz(txt){var o;try{o=JSON.parse(txt)}catch(e){return {hata:"Dosya okunamadı: YemAkıl yedek dosyası değil."}}if(!o||typeof o!=="object")return {hata:"Bu dosya bir YemAkıl yedeği değil."};
  var v={},ob=function(x){return x&&typeof x==="object"&&!Array.isArray(x)};
@@ -96,12 +121,14 @@ function dosyaCoz(txt){var o;try{o=JSON.parse(txt)}catch(e){return {hata:"Dosya 
  if(ob(o.ek))KEYS.forEach(function(k){if(ob(o.ek[k]))v[k]=o.ek[k]});
  if(!v["siparis-v1"]&&ob(o.S)&&ob(o.S.sip))v["siparis-v1"]={sip:o.S.sip};
  if(!v["siparis-v1"]&&ob(o.sip))v["siparis-v1"]={sip:o.sip};
+ /* V232 (denetim 20): içinde sipariş kaydı (sip) olmayan "siparis-v1" kabul edilmez; eskiden sipariş kaydının yerine yazılıp programı boşaltıyordu */
+ if(v["siparis-v1"]&&!ob(v["siparis-v1"].sip))delete v["siparis-v1"];
  var ks=Object.keys(v);if(!ks.length)return {hata:"Bu dosya bir YemAkıl yedeği değil (içinde rasyon, fiyat ya da sipariş kaydı yok)."};
  var sp=v["siparis-v1"]&&v["siparis-v1"].sip,ek=[];if(sp){ek.push((Array.isArray(sp.ls)?sp.ls.length:0)+" sipariş, "+(Array.isArray(sp.cari)?sp.cari.length:0)+" cari")}
  var r=v["rasyon-v1"];if(r){ek.unshift((Array.isArray(r.saved)?r.saved.length:0)+" kayıtlı rasyon")}
  return {veri:v,tarih:o.date||null,programlar:KEYS.filter(function(k){return v[k]}).map(function(k){return AD[k]}),ozet:ek.join(", ")}}
 function dosyaYukle(c){if(!c||!c.veri)return Promise.resolve({hata:"Geçersiz yedek."});var v={};Object.keys(c.veri).forEach(function(k){v[k]=JSON.stringify(c.veri[k])});
- return al("geri-oncesi","Dosya yüklenmeden önceki hâl",true).then(function(onc){yukle(v);return al("dosya","Yedek dosyasından yüklendi"+(c.tarih?" ("+new Date(c.tarih).toLocaleDateString("tr-TR")+" tarihli)":""),true).then(function(){return {ok:true,oncesi:onc}})})}
+ return al("geri-oncesi","Dosya yüklenmeden önceki hâl",true).then(function(onc){if(!yukle(v,false,!!onc))return {hata:"Yedek yüklenemedi: "+DOLU};return al("dosya","Yedek dosyasından yüklendi"+(c.tarih?" ("+new Date(c.tarih).toLocaleDateString("tr-TR")+" tarihli)":""),true).then(function(){return {ok:true,oncesi:onc}})})}
 
 /* ---------- telefon dışına gönderme ---------- */
 function dosyaVeri(){var v=oku(),o={app:"YemAkil",yedek:2,ver:surum(),date:new Date().toISOString(),ek:{}};if(v["rasyon-v1"]&&v["rasyon-v1"].o)o.S=v["rasyon-v1"].o;
@@ -132,7 +159,7 @@ function basla(){try{if(navigator.storage&&navigator.storage.persisted)navigator
  try{if(navigator.storage&&navigator.storage.estimate)navigator.storage.estimate().then(function(e){if(e&&e.quota)CAP=Math.max(2*1048576,Math.min(25*1048576,e.quota*0.1))}).catch(function(){})}catch(e){}
  var d=durum();if(!d.ilk){d.ilk=Date.now();durumYaz(d)}
  try{uyariCiz()}catch(e){}
- setTimeout(function(){tumKayitlar().then(function(L){if(!L.length&&Object.keys(oku()).length)return al("ilk","İlk yedek",true);return al("oto")})},1200)}
+ setTimeout(function(){tumKayitlar().then(function(L){if(!L.length&&Object.keys(oku()).length)return al("ilk","İlk yedek",true);if(L.length)try{oncekiSil()}catch(e){}return al("oto")})},1200)}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",basla);else basla();
 /* sayfa kapanırken / arka plana geçerken bekleyen yedek hemen alınır (yetişmezse sonraki açılışta fark yakalanır) */
 document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"){if(zam)al("oto")}else{var g=+lsGet(GK)||0;if(g>ACILIS&&!GIRIS())location.reload();else try{uyariCiz()}catch(e){}}});
@@ -143,7 +170,7 @@ window.addEventListener("pageshow",function(e){if(e&&e.persisted){var g=+lsGet(G
 window.addEventListener("storage",function(e){if(e.key===GK&&!GIRIS())location.reload();else if(e.key===DK||KEYS.indexOf(e.key)>=0)haber()});
 
 window.YK={gonder:gonder,dosyaVeri:dosyaVeri,dosyaCoz:dosyaCoz,dosyaYukle:dosyaYukle,geriDon:geriDon,liste:tumKayitlar,al:function(){return al("oto")},
- durum:durum,uyariVar:uyariVar,zaman:zaman,AD:AD,dbYok:function(){return DBYOK},
+ durum:durum,uyariVar:uyariVar,zaman:zaman,AD:AD,dbYok:function(){return DBYOK},oncekiIsaret:oncekiIsaret,
  sonDisari:function(){return durum().sonDisari||0},dinle:function(f){dinleyen.push(f)},
- _ic:{parcaSay:function(){return islem(["parca"],"readonly",function(tx,out){var q=tx.objectStore("parca").count();q.onsuccess=function(){out.v=q.result}})},CAP:function(){return CAP},oku:oku,hash:hash,yaz:yaz,budama:budama,secim:secim,parcalar:parcalar,al:al,durumYaz:durumYaz,KEYS:KEYS}};
+ _ic:{parcaSay:function(){return islem(["parca"],"readonly",function(tx,out){var q=tx.objectStore("parca").count();q.onsuccess=function(){out.v=q.result}})},CAP:function(){return CAP},oku:oku,hash:hash,yaz:yaz,budama:budama,secim:secim,parcalar:parcalar,al:al,durumYaz:durumYaz,KEYS:KEYS,yukle:yukle,oncekiSil:oncekiSil,PENCERE:PENCERE}};
 })();
