@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuite name="com.cepakil.UcUcaTest" tests="6" failures="1" errors="0" skipped="0" time="58.341" timestamp="2026-11-27T20:33:36" hostname="localhost">
+  <properties>
+    <property name="device" value="emulator-5554 - 14" />
+    <property name="flavor" value="" />
+    <property name="project" value=":app" />
+  </properties>
+  <testcase name="t1_anaSayfaTaramasi" classname="com.cepakil.UcUcaTest" time="4.391" />
+  <testcase name="t2_magazaDisiUygulamaYakalanir" classname="com.cepakil.UcUcaTest" time="11.748" />
+  <testcase name="t3_kaldirilanUygulamaListedenDuser" classname="com.cepakil.UcUcaTest" time="4.478" />
+  <testcase name="t4_dolandiricilikMesaji" classname="com.cepakil.UcUcaTest" time="2.17" />
+  <testcase name="t5_dosyaVeAyarlar" classname="com.cepakil.UcUcaTest" time="2.217" />
+  <testcase name="t6_koruma" classname="com.cepakil.UcUcaTest" time="32.474">
+    <failure>androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 20000 ms
+at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+at com.cepakil.UcUcaTest.t6_koruma(UcUcaTest.kt:202)
+</failure>
+  </testcase>
+</testsuite>
